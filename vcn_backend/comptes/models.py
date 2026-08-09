@@ -1,5 +1,7 @@
 import uuid
+# pyrefly: ignore [missing-import]
 from django.contrib.auth.models import AbstractUser
+# pyrefly: ignore [missing-import]
 from django.db import models
 from core.models import BaseModel
 
@@ -60,6 +62,7 @@ class Demandeur(BaseModel):
         default=StatutVerificationEtudiant.NON_SOUMIS
     )
     carte_etudiant_date_validation = models.DateTimeField(null=True, blank=True)
+    valide_par = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="demandeurs_valides")
     score_fidelite = models.FloatField(default=0.0)
 
     def __str__(self):
@@ -83,3 +86,14 @@ class Notification(BaseModel):
 
     def __str__(self):
         return f"Notif -> {self.destinataire} [{self.canal}]"
+
+
+class JournalAudit(BaseModel):
+    """Journalisation des actions transverses declenchees par les utilisateurs (UC80-84)."""
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, related_name="audits")
+    action = models.CharField(max_length=255)
+    cible = models.CharField(max_length=255)
+    details = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Audit {self.action} par {self.utilisateur}"

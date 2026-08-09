@@ -1,5 +1,11 @@
-import { useAuth } from "../../context/AuthContext";
-import { STATUTS_VERIFICATION } from "../../utils/constants";
+import { useAuth } from "../../context/useAuth";
+
+const STATUTS_VERIFICATION = {
+  NON_SOUMIS: "NON_SOUMIS",
+  EN_ATTENTE: "EN_ATTENTE",
+  VALIDE: "VALIDE",
+  REJETE: "REJETE",
+};
 
 export default function Profile() {
   const { user } = useAuth();
@@ -22,15 +28,17 @@ export default function Profile() {
         <div className="space-y-4">
           <div>
             <label className="text-gray-500 text-sm">Nom complet</label>
-            <p className="text-lg font-semibold">{user?.nom_complet}</p>
+            <p className="text-lg font-semibold">
+              {user?.nom_complet || "Non défini"}
+            </p>
           </div>
           <div>
             <label className="text-gray-500 text-sm">Email</label>
-            <p className="text-lg">{user?.email}</p>
+            <p className="text-lg">{user?.email || "Non défini"}</p>
           </div>
           <div>
             <label className="text-gray-500 text-sm">Rôle</label>
-            <p className="text-lg">{user?.role}</p>
+            <p className="text-lg">{user?.role || "Non défini"}</p>
           </div>
           {user?.profil_demandeur && (
             <>
@@ -48,7 +56,8 @@ export default function Profile() {
                   <span
                     className={`inline-block ml-2 px-2 py-1 text-sm rounded ${getStatusBadge(user.profil_demandeur.statut_verification_etudiant)}`}
                   >
-                    {user.profil_demandeur.statut_verification_etudiant}
+                    {user.profil_demandeur.statut_verification_etudiant ||
+                      "Non soumis"}
                   </span>
                 </div>
               )}

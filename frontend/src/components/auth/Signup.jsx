@@ -2,7 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -31,7 +31,7 @@ export default function Signup() {
     setLoading(true);
     try {
       // 1. Créer le compte
-      const { data } = await api.post("/accounts/register/", {
+      const response = await api.post("/accounts/register/", {
         nom_complet: formData.nom_complet,
         email: formData.email,
         password: formData.password,
@@ -40,23 +40,32 @@ export default function Signup() {
         contact: formData.contact,
       });
 
-      // 2. Si étudiant, uploader la carte
-      if (formData.est_etudiant && carteFichier) {
-        const form = new FormData();
-        form.append("fichier", carteFichier);
-        await api.post("/accounts/demandeurs/soumettre-carte-etudiant/", form, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-      }
+      // Si l'inscription est réussie
+      if (response.status === 201 || response.status === 200) {
+        // 2. Si étudiant, uploader la carte
+        if (formData.est_etudiant && carteFichier) {
+          const form = new FormData();
+          form.append("fichier", carteFichier);
+          await api.post(
+            "/accounts/demandeurs/soumettre-carte-etudiant/",
+            form,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            },
+          );
+        }
 
-      toast.success("Compte créé avec succès !");
-      // 3. Connecter automatiquement
-      await login(formData.email, formData.password);
-      navigate("/dashboard");
+        toast.success("Compte créé avec succès !");
+        // 3. Connecter automatiquement
+        await login(formData.email, formData.password);
+        navigate("/dashboard");
+      }
     } catch (error) {
-      toast.error(
-        error.response?.data?.detail || "Erreur lors de l'inscription",
-      );
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "Erreur lors de l'inscription";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -9,49 +9,47 @@ import {
 } from "../utils/auth";
 import { AuthContext } from "./auth-context";
 
+function hasStoredSession() {
+  return Boolean(getToken() && getUser());
+}
+
 export function AuthProvider({ children }) {
   const [user, setUserState] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasStoredSession);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Fonction logout déclarée au début
   const logout = () => {
     removeToken();
     setUserState(null);
     setIsAuthenticated(false);
   };
 
-  // Vérification du token au chargement
   useEffect(() => {
-    let isMounted = true;
+    if (!hasStoredSession()) {
+      return;
+    }
 
-    const token = getToken();
+    let isMounted = true;
     const savedUser = getUser();
 
-    if (token && savedUser) {
-      api
-        .get("/auth/verify/")
-        .then(() => {
-          if (isMounted) {
-            setUserState(savedUser);
-            setIsAuthenticated(true);
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            logout();
-          }
-        })
-        .finally(() => {
-          if (isMounted) {
-            setLoading(false);
-          }
-        });
-    } else {
-      if (isMounted) {
-        setLoading(false);
-      }
-    }
+    api
+      .get("/auth/verify/")
+      .then(() => {
+        if (isMounted) {
+          setUserState(savedUser);
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          logout();
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
 
     return () => {
       isMounted = false;
@@ -71,7 +69,7 @@ export function AuthProvider({ children }) {
   const updateUser = (newUserData) => {
     const updated = { ...user, ...newUserData };
     setUser(updated);
-    setUser(updated);
+    setUserState(updated);
   };
 
   const value = {

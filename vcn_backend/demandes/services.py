@@ -31,3 +31,19 @@ class DemandeService:
         Peut par exemple déclencher la rédaction d'un brouillon de contrat plus tard.
         """
         return DemandeService.changer_statut(demande, StatutDemande.FAVORABLE, auteur, commentaire)
+
+def calculer_score_correspondance(demande, appel):
+    score = 0
+    for critere in appel.criteres.filter(actif=True):
+        valeur_demandeur = _extraire_valeur(demande.demandeur, critere.type_critere)
+        if str(valeur_demandeur) == str(critere.valeur_cible):
+            score += critere.poids
+    return score
+
+def _extraire_valeur(demandeur, type_critere):
+    mapping = {
+        'EXPERIENCE_PREALABLE': 'OUI' if demandeur.contrats_titulaire.exists() else 'NON',
+        'GENRE': 'M' if demandeur.utilisateur.username.endswith('M') else 'F' # Ex bidon, juste pour avoir un retour
+    }
+    return mapping.get(type_critere, '')
+

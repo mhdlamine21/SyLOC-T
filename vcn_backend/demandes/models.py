@@ -8,14 +8,36 @@ class TypeDemande(models.TextChoices):
     CONSTRUCTION_CANDIDAT = "CONSTRUCTION_CANDIDAT", "Construction Candidat"
     CONSTRUCTION_CROUST = "CONSTRUCTION_CROUST", "Construction CROUS-T"
     VENTE_PRODUIT = "VENTE_PRODUIT", "Vente de produit"
+    VENTE_ALIMENTAIRE = "VENTE_ALIMENTAIRE", "Vente alimentaire"
     PRESTATION_SERVICE = "PRESTATION_SERVICE", "Prestation de service"
     LOCAL_ARTISANAL = "LOCAL_ARTISANAL", "Local artisanal"
 
+class TypeDocument(models.TextChoices):
+    CARTE_ETUDIANT = "CARTE_ETUDIANT", "Carte étudiant"
+    PIECE_IDENTITE = "PIECE_IDENTITE", "Pièce d'identité"
+    REGISTRE_COMMERCE = "REGISTRE_COMMERCE", "Registre de commerce"
+    ATTESTATION_HYGIENE = "ATTESTATION_HYGIENE", "Attestation d'hygiène"
+    PLAN_AMENAGEMENT = "PLAN_AMENAGEMENT", "Plan d'aménagement"
+    CV = "CV", "Curriculum Vitae"
+    AUTORISATION_VENTE = "AUTORISATION_VENTE", "Autorisation de vente"
+    BUSINESS_PLAN = "BUSINESS_PLAN", "Business Plan"
+    MAQUETTE_3D = "MAQUETTE_3D", "Maquette 3D"
+    FICHE_SANTE = "FICHE_SANTE", "Fiche Santé Alimentaire"
+    AUTRE = "AUTRE", "Autre"
+
+
+
 class StatutDemande(models.TextChoices):
-    EN_ATTENTE = "EN_ATTENTE", "En attente"
-    MITIGEE_COMPLEMENT = "MITIGEE_COMPLEMENT", "Mitigée / Complément"
+    NOUVELLE = "NOUVELLE", "Nouvelle demande"
+    CONTROLE_RECEVABILITE = "CONTROLE_RECEVABILITE", "Contrôle de recevabilité"
+    EN_ATTENTE_COMPLEMENT = "EN_ATTENTE_COMPLEMENT", "En attente de compléments"
+    ETUDE_FAISABILITE = "ETUDE_FAISABILITE", "Étude de faisabilité"
+    CONTROLE_HYGIENE = "CONTROLE_HYGIENE", "Contrôle sanitaire et hygiène"
+    EN_ATTENTE_DECISION = "EN_ATTENTE_DECISION", "En attente de décision finale"
     FAVORABLE = "FAVORABLE", "Favorable"
     DEFAVORABLE = "DEFAVORABLE", "Défavorable"
+    MITIGEE_ARCHIVEE = "MITIGEE_ARCHIVEE", "Mitigée (Archivée)"
+    EN_ATTENTE_SIGNATURE = "EN_ATTENTE_SIGNATURE", "En attente de signature"
 
 class TypeCritere(models.TextChoices):
     GENRE = "GENRE", "Genre"
@@ -49,10 +71,12 @@ class CritereAppel(BaseModel):
 
 class Demande(BaseModel):
     type_demande = models.CharField(max_length=32, choices=TypeDemande.choices)
-    statut = models.CharField(max_length=32, choices=StatutDemande.choices, default=StatutDemande.EN_ATTENTE)
+    statut = models.CharField(max_length=32, choices=StatutDemande.choices, default=StatutDemande.NOUVELLE)
     date_depot = models.DateTimeField(auto_now_add=True)
     notes_admin = models.TextField(blank=True)
     reference_anonyme = models.CharField(max_length=50, unique=True, blank=True)
+    avis_sanitaire_externe = models.CharField(max_length=50, blank=True)
+    reference_avis_sanitaire = models.CharField(max_length=255, blank=True)
     
     demandeur = models.ForeignKey(Demandeur, on_delete=models.CASCADE, related_name="demandes")
     appel_candidature = models.ForeignKey(AppelCandidature, on_delete=models.SET_NULL, null=True, blank=True, related_name="candidatures")
@@ -69,8 +93,36 @@ class Demande(BaseModel):
 
 class Dossier(BaseModel):
     demande = models.OneToOneField(Demande, on_delete=models.CASCADE, related_name="dossier")
-    pieces_recepissees = models.BooleanField(default=False)
+    pieces_receptionnees = models.BooleanField(default=False)
     est_complet = models.BooleanField(default=False)
+
+    def enregistrer_dossier_physique(self):
+        self.pieces_receptionnees = True
+        self.save()
+
+    def verifier_completude_globale(self):
+        complet = self.documents.filter(est_valide=True).exists()
+        self.est_complet = complet
+        self.save()
+        return complet
+
+class Document(BaseModel):
+    dossier = models.ForeignKey(Dossier, on_delete=models.CASCADE, related_name="documents")
+    type_document = models.CharField(max_length=30, choices=TypeDocument.choices)
+    nom_fichier = models.CharField(max_length=255)
+    fichier = models.FileField(upload_to="documents_demandes/")
+    est_valide = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.type_document} - {self.nom_fichier}"
+
+    def valider_piece(self):
+        self.est_valide = True
+        self.save()
+
+    def rejeter_piece(self):
+        self.est_valide = False
+        self.save()
 
 class HistoriqueStatutDemande(BaseModel):
     demande = models.ForeignKey(Demande, on_delete=models.CASCADE, related_name="historique")

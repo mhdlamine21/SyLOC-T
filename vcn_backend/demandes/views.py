@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from comptes.models import RoleUtilisateur, Demandeur
 from .models import AppelCandidature, Demande, Dossier, VoteCommission, MembreCommission, StatutDemande
 from .serializers import (
-    AppelCandidatureSerializer, DemandeSerializer, DemandeAnonymeSerializer, DossierSerializer, VoteCommissionSerializer
+    AppelCandidatureSerializer, DemandeSerializer, DemandeAnonymeSerializer, DossierSerializer, VoteCommissionSerializer, MembreCommissionSerializer
 )
-from .services import DemandeService
+from .services import DemandeService, calculer_score_correspondance
 
 class AppelCandidatureViewSet(viewsets.ModelViewSet):
     queryset = AppelCandidature.objects.all()
@@ -59,6 +59,40 @@ class DemandeViewSet(viewsets.ModelViewSet):
         demande_maj = DemandeService.changer_statut(demande, nouveau_statut, request.user, commentaire)
         return Response(DemandeSerializer(demande_maj).data)
 
+    @action(detail=True, methods=['post'], url_path='avis-sanitaire', permission_classes=[permissions.IsAdminUser])
+    def enregistrer_avis_sanitaire(self, request, pk=None):
+        demande = self.get_object()
+        demande.avis_sanitaire_externe = request.data.get('avis', '')
+        demande.reference_avis_sanitaire = request.data.get('reference', '')
+        demande.save(update_fields=['avis_sanitaire_externe', 'reference_avis_sanitaire'])
+        
+        return Response({'avis_sanitaire_externe': demande.avis_sanitaire_externe})
+
+    @action(detail=False, methods=['get'], url_path='triees')
+    def demandes_triees(self, request):
+        appel_id = request.query_params.get('appel')
+        demandes = self.get_queryset()
+        if appel_id:
+            try:
+                appel = AppelCandidature.objects.get(pk=appel_id)
+                demandes = sorted(demandes, key=lambda d: calculer_score_correspondance(d, appel), reverse=True)
+            except AppelCandidature.DoesNotExist:
+                pass
+        
+        serializer = self.get_serializer(demandes, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def decider(self, request, pk=None):
+        demande = self.get_object()
+        decision = request.data.get('decision')
+        commentaire = request.data.get('commentaire', '')
+        if decision not in [StatutDemande.FAVORABLE, StatutDemande.DEFAVORABLE]:
+            return Response({"detail": "Décision invalide."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        demande_maj = DemandeService.changer_statut(demande, decision, request.user, commentaire)
+        return Response(DemandeSerializer(demande_maj).data)
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def valider(self, request, pk=None):
         demande = self.get_object()
@@ -107,6 +141,11 @@ class DemandeViewSet(viewsets.ModelViewSet):
 class DossierViewSet(viewsets.ModelViewSet):
     queryset = Dossier.objects.all()
     serializer_class = DossierSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class MembreCommissionViewSet(viewsets.ModelViewSet):
+    queryset = MembreCommission.objects.all()
+    serializer_class = MembreCommissionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 class VoteCommissionViewSet(viewsets.ModelViewSet):

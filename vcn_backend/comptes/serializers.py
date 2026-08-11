@@ -2,7 +2,12 @@
 from rest_framework import serializers
 # pyrefly: ignore [missing-import]
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Utilisateur, RoleUtilisateur
+from .models import Utilisateur, RoleUtilisateur, Demandeur
+
+class DemandeurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Demandeur
+        fields = '__all__'
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

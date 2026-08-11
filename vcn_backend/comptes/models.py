@@ -64,6 +64,10 @@ class Demandeur(BaseModel):
     valide_par = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="demandeurs_valides")
     score_fidelite = models.FloatField(default=0.0)
 
+    @property
+    def est_etudiant_verifie(self):
+        return self.statut_verification_etudiant == StatutVerificationEtudiant.VALIDE and self.carte_etudiant_date_validation is not None
+
     def __str__(self):
         if self.utilisateur.nom_complet:
             return self.utilisateur.nom_complet

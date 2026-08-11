@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegisterView, CustomTokenObtainPairView
+from .views import RegisterView, CustomTokenObtainPairView, DemandeurViewSet
 
 # Chaque personne enregistre ses viewsets ici, ex:
 # router = DefaultRouter()
 # router.register('demandes', DemandeViewSet, basename='demande')
 
 router = DefaultRouter()
+router.register('demandeurs', DemandeurViewSet, basename='demandeur')
 
 urlpatterns = [
     path('', include(router.urls)),

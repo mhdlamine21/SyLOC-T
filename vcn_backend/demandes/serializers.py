@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import AppelCandidature, CritereAppel, Demande, Dossier, HistoriqueStatutDemande, VoteCommission
+from .models import AppelCandidature, CritereAppel, Demande, Dossier, HistoriqueStatutDemande, VoteCommission, Document, MembreCommission
+
+class MembreCommissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MembreCommission
+        fields = '__all__'
 
 class CritereAppelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,11 +36,18 @@ class DemandeAnonymeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_creation', 'date_modification', 'statut', 'date_depot', 'notes_admin', 'reference_anonyme']
 
 
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = '__all__'
+        read_only_fields = ['id', 'date_creation', 'date_modification', 'dossier', 'est_valide']
+
 class DossierSerializer(serializers.ModelSerializer):
+    documents = DocumentSerializer(many=True, read_only=True)
     class Meta:
         model = Dossier
         fields = '__all__'
-        read_only_fields = ['id', 'date_creation', 'date_modification', 'demande']
+        read_only_fields = ['id', 'date_creation', 'date_modification', 'demande', 'est_complet']
 
 class HistoriqueStatutDemandeSerializer(serializers.ModelSerializer):
     class Meta:

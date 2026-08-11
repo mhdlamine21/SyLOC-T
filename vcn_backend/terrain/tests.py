@@ -3,7 +3,7 @@ from rest_framework import status
 from django.utils import timezone
 from comptes.models import Utilisateur, RoleUtilisateur, Demandeur
 from patrimoine.models import Local, TypeLocal
-from terrain.models import TypeSignalement, StatutPlainte, TypeControleQHSE, Sanction, NiveauSanction, StatutAvis
+from terrain.models import TypeSignalement, StatutPlainte, TypeControleQHSE, Sanction, NiveauSanction, StatutAvis, Plainte
 
 class TerrainTests(APITestCase):
     def setUp(self):
@@ -18,6 +18,36 @@ class TerrainTests(APITestCase):
         self.local = Local.objects.create(
             reference="LOC-TERRAIN", type_local=TypeLocal.MULTISERVICES, surface_m2=20.0
         )
+        
+    def test_escalade_sla_plainte(self):
+        # Création d'une plainte avec une SLA dans le passé
+        import datetime
+        plainte = Plainte.objects.create(
+            plaignant=self.usager,
+            type=TypeSignalement.ENVIRONNEMENT,
+            description="Problème urgent",
+            date_limite_sla=timezone.now() - datetime.timedelta(days=1)
+        )
+        self.assertEqual(plainte.urgence, "FAIBLE")
+        
+        # Action d'escalade
+        escalade = plainte.escalader_si_besoin()
+        self.assertTrue(escalade)
+        self.assertEqual(plainte.urgence, "ELEVEE")
+
+    def test_inspection_occupation(self):
+        self.client.force_authenticate(user=self.agent)
+        url = '/api/terrain/inspections/'
+        data = {
+            "local": self.local.id,
+            "type_controle": TypeControleQHSE.OCCUPATION,
+            "date_visite": timezone.now().isoformat(),
+            "est_conforme": False,
+            "observations": "Local non occupé par l'attributaire"
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['type_controle'], TypeControleQHSE.OCCUPATION)
         
     def test_depot_plainte_anonyme(self):
         self.client.force_authenticate(user=self.usager)

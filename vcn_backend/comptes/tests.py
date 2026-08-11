@@ -31,12 +31,16 @@ class ComptesModelsTest(TestCase):
         self.assertIsNone(demandeur.valide_par)
 
         # Validation de la carte
+        # pyrefly: ignore [missing-import]
+        from django.utils import timezone
         demandeur.statut_verification_etudiant = StatutVerificationEtudiant.VALIDE
         demandeur.valide_par = self.admin
+        demandeur.carte_etudiant_date_validation = timezone.now()
         demandeur.save()
 
         self.assertEqual(demandeur.valide_par, self.admin)
         self.assertIn(demandeur, self.admin.demandeurs_valides.all())
+        self.assertTrue(demandeur.est_etudiant_verifie)
 
     def test_creation_notification(self):
         notif = Notification.objects.create(
@@ -156,5 +160,34 @@ class ComptesAPITest(APITestCase):
         
         request.user = directeur
         self.assertTrue(permission.has_permission(request, None))
+
+from rest_framework.test import APITestCase
+from rest_framework import status
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class DemandeurAPITest(APITestCase):
+    def setUp(self):
+        self.usager = Utilisateur.objects.create_user(username="usg1", email="u1@test.com", password="pwd", role=RoleUtilisateur.USAGER)
+        self.demandeur = Demandeur.objects.create(utilisateur=self.usager, contact="123")
+        self.agent = Utilisateur.objects.create_user(username="ag1", email="ag@test.com", password="pwd", role=RoleUtilisateur.DIRECTEUR_DCUVE, is_staff=True)
+
+    def test_soumettre_carte(self):
+        self.client.force_authenticate(user=self.usager)
+        url = '/api/comptes/demandeurs/soumettre-carte-etudiant/'
+        dummy_file = SimpleUploadedFile("carte.jpg", b"file_content", content_type="image/jpeg")
+        response = self.client.post(url, {'fichier': dummy_file}, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.demandeur.refresh_from_db()
+        self.assertEqual(self.demandeur.statut_verification_etudiant, StatutVerificationEtudiant.EN_ATTENTE)
+
+    def test_valider_carte(self):
+        self.client.force_authenticate(user=self.agent)
+        url = f'/api/comptes/demandeurs/{self.demandeur.id}/valider-carte-etudiant/'
+        response = self.client.post(url, {'decision': StatutVerificationEtudiant.VALIDE})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.demandeur.refresh_from_db()
+        self.assertEqual(self.demandeur.statut_verification_etudiant, StatutVerificationEtudiant.VALIDE)
+        self.assertIsNotNone(self.demandeur.carte_etudiant_date_validation)
+        self.assertEqual(self.demandeur.valide_par, self.agent)
 
 

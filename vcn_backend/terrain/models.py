@@ -28,6 +28,7 @@ class TypeControleQHSE(models.TextChoices):
     SANITAIRE = 'SANITAIRE', 'Sanitaire'
     TECHNIQUE = 'TECHNIQUE', 'Technique'
     ELECTRIQUE = 'ELECTRIQUE', 'Electrique'
+    OCCUPATION = 'OCCUPATION', 'Occupation'
 
 class NiveauSanction(models.TextChoices):
     AVERTISSEMENT = 'AVERTISSEMENT', 'Avertissement'
@@ -55,9 +56,19 @@ class Plainte(BaseModel):
     urgence = models.CharField(max_length=50, choices=NiveauUrgence.choices, default=NiveauUrgence.FAIBLE)
     
     date_resolution = models.DateTimeField(null=True, blank=True)
+    date_limite_sla = models.DateTimeField(null=True, blank=True)
     description = models.TextField()
     localisation_libre = models.CharField(max_length=255, blank=True)
     photo_preuve = models.URLField(blank=True) # URLField pour simuler un stockage cloud
+    
+    def escalader_si_besoin(self):
+        from django.utils import timezone
+        if self.statut != StatutPlainte.RESOLUE and self.date_limite_sla and timezone.now() > self.date_limite_sla:
+            if self.urgence != NiveauUrgence.ELEVEE:
+                self.urgence = NiveauUrgence.ELEVEE
+                self.save(update_fields=['urgence'])
+                return True
+        return False
     est_anonyme = models.BooleanField(default=False)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)

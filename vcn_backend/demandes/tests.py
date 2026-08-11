@@ -2,8 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from comptes.models import Utilisateur, RoleUtilisateur, Demandeur
 from patrimoine.models import Local, TypeLocal
-from .models import Demande, TypeDemande, StatutDemande, HistoriqueStatutDemande
-
+from .models import Demande, TypeDemande, StatutDemande, HistoriqueStatutDemande, TypeDocument, Document
 class DemandesTests(APITestCase):
     def setUp(self):
         self.admin = Utilisateur.objects.create_user(
@@ -39,18 +38,18 @@ class DemandesTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
         url = f'/api/demandes/demandes/{demande.id}/changer_statut/'
         data = {
-            "statut": StatutDemande.MITIGEE_COMPLEMENT,
+            "statut": StatutDemande.EN_ATTENTE_COMPLEMENT,
             "commentaire": "Il manque une pièce."
         }
         
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['statut'], StatutDemande.MITIGEE_COMPLEMENT)
+        self.assertEqual(response.data['statut'], StatutDemande.EN_ATTENTE_COMPLEMENT)
         
         # Vérifier que l'historique a été créé
         historique = HistoriqueStatutDemande.objects.filter(demande=demande).first()
         self.assertIsNotNone(historique)
-        self.assertEqual(historique.nouveau_statut, StatutDemande.MITIGEE_COMPLEMENT)
+        self.assertEqual(historique.nouveau_statut, StatutDemande.EN_ATTENTE_COMPLEMENT)
         self.assertEqual(historique.commentaire_acteur, "Il manque une pièce.")
 
     def test_analyse_equidistance(self):
@@ -110,4 +109,67 @@ class DemandesTests(APITestCase):
         r_admin_revele = self.client.get(f'/api/demandes/demandes/{demande.id}/')
         self.assertIn('demandeur', r_admin_revele.data) # Déverrouillé !
 
+    def test_document_et_completude_dossier(self):
+        demande = Demande.objects.create(
+            demandeur=self.demandeur, type_demande=TypeDemande.PRESTATION_SERVICE, local=self.local
+        )
+        dossier = demande.dossier
+        
+        # Au départ, le dossier n'est pas complet
+        self.assertFalse(dossier.est_complet)
+        
+        # Ajout d'un document
+        doc1 = Document.objects.create(
+            dossier=dossier,
+            type_document=TypeDocument.PIECE_IDENTITE,
+            nom_fichier="cni.pdf"
+        )
+        
+        # Validation du document
+        doc1.valider_piece()
 
+
+class TestCommissionAPI(APITestCase):
+    def setUp(self):
+        from django.utils import timezone
+        from patrimoine.models import Local
+        from .models import TypeDemande, TypeCritere, AvisCommission, AppelCandidature, CritereAppel, MembreCommission
+        self.directeur = Utilisateur.objects.create_user(username="dir1", email="d@test.com", password="pwd", role=RoleUtilisateur.DIRECTEUR_CROUS_T, is_staff=True)
+        self.usager = Utilisateur.objects.create_user(username="usg1", email="u@test.com", password="pwd", role=RoleUtilisateur.USAGER)
+        self.demandeur = Demandeur.objects.create(utilisateur=self.usager, contact="123")
+        self.local = Local.objects.create(reference="LOC-TEST-COM", type_local="ARTISANAT", surface_m2=20)
+        self.appel = AppelCandidature.objects.create(titre="Test Appel", publie_par=self.directeur, local=self.local, date_lancement=timezone.now(), date_cloture=timezone.now(), description="test")
+        CritereAppel.objects.create(appel=self.appel, type_critere=TypeCritere.EXPERIENCE_PREALABLE, valeur_cible="NON", poids=5)
+        
+        self.demande = Demande.objects.create(demandeur=self.demandeur, type_demande=TypeDemande.LOCAL_ARTISANAL, appel_candidature=self.appel)
+        self.membre = MembreCommission.objects.create(utilisateur=self.directeur)
+        
+    def test_avis_sanitaire(self):
+        self.client.force_authenticate(user=self.directeur)
+        url = f'/api/demandes/demandes/{self.demande.id}/avis-sanitaire/'
+        response = self.client.post(url, {'avis': 'FAVORABLE'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.demande.refresh_from_db()
+        self.assertEqual(self.demande.avis_sanitaire_externe, 'FAVORABLE')
+        
+    def test_demandes_triees(self):
+        self.client.force_authenticate(user=self.directeur)
+        url = f'/api/demandes/demandes/triees/?appel={self.appel.id}'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(isinstance(response.data, list))
+        
+    def test_vote_commission(self):
+        from .models import AvisCommission
+        self.client.force_authenticate(user=self.directeur)
+        url = '/api/demandes/votes/'
+        response = self.client.post(url, {'demande': self.demande.id, 'avis': AvisCommission.FAVORABLE})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+    def test_decider(self):
+        self.client.force_authenticate(user=self.directeur)
+        url = f'/api/demandes/demandes/{self.demande.id}/decider/'
+        response = self.client.post(url, {'decision': StatutDemande.FAVORABLE})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.demande.refresh_from_db()
+        self.assertEqual(self.demande.statut, StatutDemande.FAVORABLE)

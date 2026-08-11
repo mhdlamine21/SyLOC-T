@@ -13,7 +13,7 @@ const removeToken = () => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "http://localhost:5000",
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || "30000"),
   headers: {
     "Content-Type": "application/json",

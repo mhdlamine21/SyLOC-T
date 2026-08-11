@@ -16,7 +16,7 @@ import Signup from "./components/auth/Signup";
 // Demandes
 import CommissionVote from "./components/demandes/CommissionVote";
 import DepotDemande from "./components/demandes/DepotDemande";
-import InstructionDCUVE from "./components/demandes/InstructionDCUVE";
+import InstructionDemande from "./pages/InstructionDemande";
 import SuiviDemande from "./components/demandes/SuiviDemande";
 
 // Contrats
@@ -89,7 +89,7 @@ const AppRoutes = () => {
           <Route path="/suivi" element={<SuiviDemande />} />
 
           {/* Demandes - DCUVE */}
-          <Route path="/instruction" element={<InstructionDCUVE />} />
+          <Route path="/instruction" element={<InstructionDemande />} />
           <Route path="/commission" element={<CommissionVote />} />
 
           {/* Contrats & Paiements */}

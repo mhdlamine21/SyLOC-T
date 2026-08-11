@@ -1,11 +1,12 @@
+# pyrefly: ignore [missing-import]
 from rest_framework import viewsets, permissions
 from .models import Local
 from .serializers import LocalSerializer
-from comptes.permissions import IsAdministrateurSI, IsDirecteurCrousT, IsAgentDcuve
+from comptes.permissions import IsAdministrateurSI, IsDirecteurCrousT, IsDirecteurDcuve
 
 class IsPatrimoineManager(permissions.BasePermission):
     """
-    Seuls l'Admin, le Directeur et l'Agent DCUVE peuvent modifier le patrimoine.
+    Seuls l'Admin, le Directeur et le Directeur DCUVE peuvent modifier le patrimoine.
     Les autres peuvent seulement consulter.
     """
     def has_permission(self, request, view):
@@ -17,7 +18,7 @@ class IsPatrimoineManager(permissions.BasePermission):
         allowed_roles = [
             IsAdministrateurSI.allowed_roles[0],
             IsDirecteurCrousT.allowed_roles[0],
-            IsAgentDcuve.allowed_roles[0]
+            IsDirecteurDcuve.allowed_roles[0]
         ]
         return request.user.role in allowed_roles
 

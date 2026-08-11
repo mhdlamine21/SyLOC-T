@@ -1,5 +1,6 @@
-import uuid
+# pyrefly: ignore [missing-import]
 from django.db import models
+from core.models import BaseModel
 
 class TypeLocal(models.TextChoices):
     RESTAURATION = 'RESTAURATION', 'Restauration'
@@ -18,8 +19,7 @@ class Gestionnaire(models.TextChoices):
     CROUS_T = 'CROUS_T', 'CROUS-T'
     AMICALE = 'AMICALE', 'Amicale'
 
-class Local(models.Model):
-    id_local = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
+class Local(BaseModel):
     reference = models.CharField(max_length=50, unique=True)
     localisation = models.CharField(max_length=200)
     type_local = models.CharField(max_length=30, choices=TypeLocal.choices)
@@ -28,6 +28,8 @@ class Local(models.Model):
     capacite_accueil = models.PositiveIntegerField(default=0)
     etat_physique = models.CharField(max_length=30, choices=EtatLocal.choices, default=EtatLocal.BON_ETAT)
     gestionnaire = models.CharField(max_length=20, choices=Gestionnaire.choices, default=Gestionnaire.CROUS_T)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     est_libre = models.BooleanField(default=True)
 
     def __str__(self):

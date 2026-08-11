@@ -26,25 +26,31 @@ Ce document est ta boussole. Ouvre-le tous les jours pour savoir où tu en es, c
 
 ### ÉTAPE 2 : Le Patrimoine (La base des données)
 *Ton objectif : Avoir des locaux dans la base pour pouvoir y affecter des contrats plus tard.*
-- [ ] Créer le modèle `Local` avec tous ses attributs (type, surface, état).
-- [ ] Coder les APIs pour ajouter, lister et modifier un local (`GET/POST/PUT /api/patrimoine/locaux/`).
-- [ ] Tester la création d'un local en base.
+- [x] Créer le modèle `Local` avec tous ses attributs (type, surface, état, géolocalisation).
+- [x] Coder les APIs pour ajouter, lister et modifier un local (`GET/POST/PUT /api/patrimoine/locaux/`).
+- [x] Tester la création d'un local en base.
 
 ### ÉTAPE 3 : Les Contrats et Finances
 *Ton objectif : Lier un occupant à un local et gérer l'argent.*
-- [ ] Créer les modèles `Contrat`, `Echeance`, et `Paiement`.
-- [ ] Coder l'API pour générer un contrat d'attribution.
-- [ ] Coder la logique qui génère automatiquement l'échéancier (les factures) quand un contrat est signé.
-- [ ] Coder l'API de paiement (qui solde une échéance).
+- [x] Créer les modèles `Contrat`, `Echeance`, et `Paiement` (avec logs Mobile Money).
+- [x] Coder l'API pour générer un contrat d'attribution.
+- [x] Coder la logique qui génère automatiquement l'échéancier (les factures) quand un contrat est signé.
+- [x] Coder l'API de paiement (qui solde une échéance).
 
 ### ÉTAPE 4 : Exploitation et Terrain
 *Ton objectif : Faire vivre les locaux (plaintes, hygiène, sanctions).*
-- [ ] Créer les modèles `Plainte`, `InspectionQHse`, `Sanction`, `AvisCantine`.
-- [ ] Coder l'API pour déposer et suivre une plainte.
-- [ ] Coder l'API pour les agents QHSE (créer un rapport d'inspection).
-- [ ] Coder la logique qui déclenche automatiquement une sanction si une inspection est mauvaise.
+- [x] Créer les modèles `Plainte`, `InspectionQHse`, `Sanction`, `AvisCantine`.
+- [x] Coder l'API pour déposer et suivre une plainte.
+- [x] Coder l'API pour les agents QHSE (créer un rapport d'inspection avec séparation stricte Agent Terrain / Agent QHSE).
+- [x] Coder la logique qui déclenche automatiquement une sanction si une inspection est mauvaise ou cumule 3 plaintes.
 
 ---
+
+### ÉTAPE 5 : L'intégration Finale (Ce qu'il reste à faire)
+*Ton objectif : Préparer l'API pour le frontend et le déploiement.*
+- [ ] Configurer l'authentification JWT (Login / Register).
+- [ ] Créer les fixtures/seeders pour remplir la base de données.
+- [ ] Ajouter drf-yasg/Swagger pour documenter l'API pour l'équipe Frontend.
 
 ## 📖 Espace Apprentissage (À remplir)
 *Ici, on notera les liens vers les fichiers d'explications pédagogiques que je te générerai à la fin de chaque grande étape.*

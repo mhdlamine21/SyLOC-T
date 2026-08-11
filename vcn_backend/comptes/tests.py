@@ -1,7 +1,6 @@
 # pyrefly: ignore [missing-import]
 from django.test import TestCase
 # pyrefly: ignore [missing-import]
-from django.db import IntegrityError
 from comptes.models import (
     Utilisateur, RoleUtilisateur, Demandeur,
     StatutVerificationEtudiant, Notification, CanalNotification, JournalAudit
@@ -65,7 +64,6 @@ from rest_framework.test import APITestCase
 # pyrefly: ignore [missing-import]
 from rest_framework import status
 # pyrefly: ignore [missing-import]
-from django.urls import reverse
 
 class ComptesAPITest(APITestCase):
     def setUp(self):

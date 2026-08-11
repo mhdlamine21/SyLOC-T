@@ -1,9 +1,8 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.urls import reverse
 from django.contrib.auth import get_user_model
 from comptes.models import RoleUtilisateur
-from .models import TypeLocal, EtatLocal, Gestionnaire, Local
+from .models import TypeLocal, Local
 
 Utilisateur = get_user_model()
 
@@ -17,12 +16,12 @@ class PatrimoineAPITest(APITestCase):
             nom_complet='John Doe',
             role=RoleUtilisateur.USAGER
         )
-        self.agent = Utilisateur.objects.create_user(
-            username='agent',
-            email='agent@test.com',
+        self.directeur_dcuve = Utilisateur.objects.create_user(
+            username='directeur_dcuve',
+            email='directeur_dcuve@test.com',
             password='pwd',
-            nom_complet='Agent Smith',
-            role=RoleUtilisateur.AGENT_DCUVE
+            nom_complet='Directeur DCUVE',
+            role=RoleUtilisateur.DIRECTEUR_DCUVE
         )
         self.url = '/api/patrimoine/locaux/'
 
@@ -39,8 +38,8 @@ class PatrimoineAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_creation_local_autorisee(self):
-        # Un agent DCUVE peut créer un local
-        self.client.force_authenticate(user=self.agent)
+        # Un directeur DCUVE peut créer un local
+        self.client.force_authenticate(user=self.directeur_dcuve)
         data = {
             "reference": "L-002",
             "localisation": "Bâtiment B",

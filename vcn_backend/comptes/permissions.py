@@ -22,8 +22,8 @@ class IsDirecteurCrousT(IsRoleBasePermission):
     allowed_roles = [RoleUtilisateur.DIRECTEUR_CROUS_T]
 
 
-class IsAgentDcuve(IsRoleBasePermission):
-    allowed_roles = [RoleUtilisateur.AGENT_DCUVE]
+class IsDirecteurDcuve(IsRoleBasePermission):
+    allowed_roles = [RoleUtilisateur.DIRECTEUR_DCUVE]
 
 
 class IsAgentTerrain(IsRoleBasePermission):

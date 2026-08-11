@@ -1587,6 +1587,26 @@ Responsable : BE-A pour carte_etudiant_fichier, BE-C pour photo_preuve — à aj
 
 Rate limiting global, authentification à deux facteurs, rotation automatique des tokens JWT, chiffrement au repos de la base de données, tests de pénétration. Ces sujets sont réels pour une mise en production commerciale, hors de proportion pour un projet académique de 10 jours — les lister ici plutôt que les ignorer silencieusement permet de répondre avec assurance si la question est posée en soutenance : “nous avons identifié ces points, ils sont documentés comme hors scope pour cette version.”
 
+## PARTIE 6.4 — Fonctionnalités Expertes Récentes (Addendum Backend)
+
+### 1. Évaluation à l'Aveugle (Anti-Népotisme)
+Afin de garantir l'impartialité des membres de la Commission, le système intègre une évaluation à l'aveugle (`Blind Review`) :
+- L'entité `Demande` génère un identifiant unique crypté (`reference_anonyme`, ex: `DOSSIER-XYZ123`).
+- Un `DemandeAnonymeSerializer` filtre strictement l'entité `Demandeur` (nom, contact, pièces d'identité).
+- **Verrouillage API** : Le `DemandeViewSet` force l'utilisation du serializer anonyme tant que la `Demande` n'est pas passée au statut `FAVORABLE` ou `DEFAVORABLE`.
+
+### 2. Le Radar d'Équidistance
+Pour éviter le monopole ou la sur-concentration de commerces de même nature (ex: 3 cantines côte à côte) :
+- Le modèle `Local` possède des coordonnées `latitude` et `longitude`.
+- Le backend utilise la formule de **Haversine** (dans `utils.py`) pour calculer les distances sphériques sans nécessiter PostGIS.
+- **Endpoint dédié** : `GET /api/demandes/demandes/{id}/analyse_equidistance/` permet à la commission d'identifier les doublons à moins de 200 mètres avant de voter.
+
+### 3. Séparation Stricte des Agents de Terrain (QHSE vs Technique)
+Au lieu de fusionner toutes les inspections, le backend vérifie l'intégrité des rapports :
+- Si un `AGENT_TERRAIN` soumet un `type_controle=SANITAIRE`, l'API lève une erreur `ValidationError`.
+- Si un `AGENT_QHSE` soumet un contrôle `TECHNIQUE` ou `ELECTRIQUE`, l'API bloque également.
+- La responsabilité est strictement cloisonnée au niveau de `InspectionQHseViewSet`.
+
 ---
 
 # Mon Suivi Quotidien - Projet SyLOC-T (Backend)

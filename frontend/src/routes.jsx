@@ -1,127 +1,187 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import Layout from "./components/common/Layout";
-import PrivateRoute from "./components/common/PrivateRoute";
-import { useAuth } from "./context/useAuth";
+import { Navigate, Route, Routes } from 'react-router-dom';
+import Layout from './components/common/Layout';
+import PrivateRoute from './components/common/PrivateRoute';
+import RoleRoute from './components/common/RoleRoute';
+import { useAuth } from './context/AuthContext';
 
-// Pages
-import Dashboard from "./pages/Dashboard";
-import Home from "./pages/Home";
-import Vitrine from "./pages/Vitrine";
+// Pages publiques
+import Home from './pages/Home';
 
 // Auth
-import Login from "./components/auth/Login";
-import Profile from "./components/auth/Profile";
-import Signup from "./components/auth/Signup";
+import Login from './components/auth/Login';
+import Profile from './components/auth/Profile';
+import Signup from './components/auth/Signup';
 
-// Demandes
-import CommissionVote from "./components/demandes/CommissionVote";
-import DepotDemande from "./components/demandes/DepotDemande";
-import InstructionDCUVE from "./components/demandes/InstructionDCUVE";
-import SuiviDemande from "./components/demandes/SuiviDemande";
+// Dashboard adaptatif
+import Dashboard from './pages/Dashboard';
 
-// Contrats
-import EspaceOccupant from "./components/contrats/EspaceOccupant";
-import Paiement from "./components/contrats/Paiement";
+// Demandes Usager
+import DepotDemande from './components/demandes/DepotDemande';
+import SuiviDemande from './components/demandes/SuiviDemande';
 
-// Terrain
-import DenoncerOccupation from "./components/terrain/DenoncerOccupation";
-import InspectionQHSE from "./components/terrain/InspectionQHSE";
-import SignalerProbleme from "./components/terrain/SignalerProbleme";
-import ValidationCartes from "./components/terrain/ValidationCartes";
+// Carte interactive & Catalogue Locaux
+import CatalogLocaux from './components/patrimoine/CatalogLocaux';
+
+// DCUVE & Commission
+import InstructionDCUVE from './components/demandes/InstructionDCUVE';
+import CommissionVote from './components/demandes/CommissionVote';
+import ValidationCartes from './components/terrain/ValidationCartes';
+
+// Service Juridique & Rédaction de Contrat
+import ServiceJuridiqueView from './components/juridique/ServiceJuridiqueView';
+
+// Service Technique & Expertise Maquettes
+import ServiceTechniqueView from './components/terrain/ServiceTechniqueView';
+
+// Cellule Communication — Publication Appels & Affiches Accueil
+import CelluleComView from './components/communication/CelluleComView';
+
+// Bureau Environnement (QHSE) & Agent Terrain
+import AgentTerrainView from './components/terrain/AgentTerrainView';
+import BureauEnvironnementView from './components/terrain/BureauEnvironnementView';
+
+// Patrimoine / Locaux (avec visualisation photo & CRUD)
+import GestionLocaux from './components/patrimoine/GestionLocaux';
+
+// Contrats / Occupant / Comptabilité
+import EspaceOccupant from './components/contrats/EspaceOccupant';
+import Paiement from './components/contrats/Paiement';
+
+// Terrain & QHSE
+import SignalerProbleme from './components/terrain/SignalerProbleme';
+import DenoncerOccupation from './components/terrain/DenoncerOccupation';
+import InspectionQHSE from './components/terrain/InspectionQHSE';
 
 // Avis
-import LaisserAvis from "./components/avis/LaisserAvis";
-import ModerationAvis from "./components/avis/ModerationAvis";
+import LaisserAvis from './components/avis/LaisserAvis';
 
-// Rapports
-import DashboardDirection from "./components/rapports/DashboardDirection";
+// Direction & Rapports
+import DashboardDirection from './components/rapports/DashboardDirection';
+import RapportPeriode from './components/rapports/RapportPeriode';
 
-// Admin
-import GestionComptes from "./components/admin/GestionComptes";
+// Administration SI
+import GestionComptes from './components/admin/GestionComptes';
+import JournalAudit from './components/admin/JournalAudit';
 
 const AppRoutes = () => {
-  const { isAuthenticated, loading } = useAuth();
-
-  // Afficher un écran de chargement pendant la vérification de l'authentification
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement de l'application...</p>
-        </div>
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
-      {/* ==================== ROUTES PUBLIQUES ==================== */}
+      {/* ── Routes publiques ───────────────────────────── */}
       <Route path="/" element={<Home />} />
-      <Route path="/vitrine" element={<Vitrine />} />
-
-      {/* Routes d'authentification - redirigent vers dashboard si déjà connecté */}
       <Route
         path="/login"
-        element={
-          !isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />
-        }
+        element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />}
       />
       <Route
         path="/signup"
-        element={
-          !isAuthenticated ? <Signup /> : <Navigate to="/dashboard" replace />
-        }
+        element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" replace />}
       />
 
-      {/* ==================== ROUTES PRIVÉES ==================== */}
+      {/* ── Routes privées (Layout avec Sidebar) ──────── */}
       <Route element={<PrivateRoute />}>
-        {/* Layout avec Header + Sidebar */}
         <Route element={<Layout />}>
-          {/* Dashboard principal */}
+          {/* Commun (Accessible à tout utilisateur connecté) */}
           <Route path="/dashboard" element={<Dashboard />} />
-
-          {/* Profil utilisateur */}
           <Route path="/profile" element={<Profile />} />
+          <Route path="/locaux-catalogue" element={<CatalogLocaux />} />
 
-          {/* Demandes - Public */}
-          <Route path="/depot" element={<DepotDemande />} />
-          <Route path="/suivi" element={<SuiviDemande />} />
+          {/* Demandes Usagers / Candidats (Strictement réservé au rôle USAGER) */}
+          <Route element={<RoleRoute allowedRoles={['USAGER']} />}>
+            <Route path="/depot" element={<DepotDemande />} />
+            <Route path="/suivi" element={<SuiviDemande />} />
+          </Route>
 
-          {/* Demandes - DCUVE */}
-          <Route path="/instruction" element={<InstructionDCUVE />} />
-          <Route path="/commission" element={<CommissionVote />} />
+          {/* Dénonciation d'occupations illégales (Restreint aux agents terrain et inspecteurs) */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_TERRAIN', 'AGENT_QHSE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/denoncer" element={<DenoncerOccupation />} />
+          </Route>
 
-          {/* Contrats & Paiements */}
-          <Route path="/espace-occupant" element={<EspaceOccupant />} />
-          <Route path="/paiement" element={<Paiement />} />
+          {/* Signalements techniques (Restreint aux OCCUPANTS et Service Technique) */}
+          <Route element={<RoleRoute allowedRoles={['OCCUPANT', 'AGENT_TERRAIN', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/signaler" element={<SignalerProbleme />} />
+          </Route>
 
-          {/* Terrain - Signalements */}
-          <Route path="/signaler" element={<SignalerProbleme />} />
-          <Route path="/denoncer" element={<DenoncerOccupation />} />
-
-          {/* Terrain - Inspections & Validation */}
-          <Route path="/inspection" element={<InspectionQHSE />} />
-          <Route path="/validation-cartes" element={<ValidationCartes />} />
-
-          {/* Avis Cantine */}
+          {/* Avis cantines (Vérification étudiante dans le composant) */}
           <Route path="/avis" element={<LaisserAvis />} />
-          <Route path="/moderation-avis" element={<ModerationAvis />} />
 
-          {/* Direction & Rapports */}
-          <Route path="/dashboard-direction" element={<DashboardDirection />} />
+          {/* Cellule Communication — Publication Appels & Affiches */}
+          <Route element={<RoleRoute allowedRoles={['CELLULE_COMMUNICATION', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/communication" element={<CelluleComView />} />
+          </Route>
 
-          {/* Administration SI */}
-          <Route path="/admin" element={<GestionComptes />} />
+          {/* Service Juridique — Rédaction de Contrats */}
+          <Route element={<RoleRoute allowedRoles={['SERVICE_JURIDIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/juridique" element={<ServiceJuridiqueView />} />
+          </Route>
 
-          {/* ==================== REDIRECTIONS ==================== */}
-          {/* Rediriger /dashboard vers /dashboard (déjà fait) */}
-          {/* Rediriger /accueil vers / */}
-          <Route path="/accueil" element={<Navigate to="/" replace />} />
+          {/* Service Technique — Expertise Maquettes & Maintenance */}
+          <Route element={<RoleRoute allowedRoles={['SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/service-technique" element={<ServiceTechniqueView />} />
+          </Route>
+
+          {/* Brigade Terrain & Bureau Environnement */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_TERRAIN', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/terrain/agent" element={<AgentTerrainView />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={['AGENT_QHSE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/bureau-environnement" element={<BureauEnvironnementView />} />
+          </Route>
+
+          {/* Espace Occupant Titulaire (Restreint à OCCUPANT) */}
+          <Route element={<RoleRoute allowedRoles={['OCCUPANT', 'SERVICE_COMPTABLE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/espace-occupant" element={<EspaceOccupant />} />
+          </Route>
+
+          {/* Paiements / Guichet Comptabilité (Restreint à OCCUPANT et SERVICE_COMPTABLE) */}
+          <Route element={<RoleRoute allowedRoles={['OCCUPANT', 'SERVICE_COMPTABLE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/paiement" element={<Paiement />} />
+          </Route>
+
+          {/* Services DCUVE */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/instruction" element={<InstructionDCUVE />} />
+          </Route>
+
+          {/* Commission Consultative */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/commission" element={<CommissionVote />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/validation-cartes" element={<ValidationCartes />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T', 'SERVICE_TECHNIQUE']} />}>
+            <Route path="/patrimoine/locaux" element={<GestionLocaux />} />
+          </Route>
+
+          {/* Operations Terrain & QHSE */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_TERRAIN', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/terrain/signalements" element={<SignalerProbleme />} />
+          </Route>
+
+          <Route element={<RoleRoute allowedRoles={['AGENT_QHSE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/terrain/inspections" element={<InspectionQHSE />} />
+          </Route>
+
+          {/* Pilotage Direction */}
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI']} />}>
+            <Route path="/dashboard-direction" element={<DashboardDirection />} />
+            <Route path="/rapports" element={<RapportPeriode />} />
+          </Route>
+
+          {/* Administration SI & Direction (Gestion des utilisateurs) */}
+          <Route element={<RoleRoute allowedRoles={['ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/admin/comptes" element={<GestionComptes />} />
+            <Route path="/admin/audit" element={<JournalAudit />} />
+          </Route>
         </Route>
       </Route>
 
-      {/* ==================== ROUTE 404 ==================== */}
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

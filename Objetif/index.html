@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyLOC — CROUS-T/VCN | Variante 3 · Guide candidat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Identité SyLOC — navy / or, thème "candidat" */
+  --navy:#172554; --navy-2:#0f1b3d;
+  --blue:#5f7f9c; --blue-soft:#eaf1f7;               /* devenu "ardoise" (steel) */
+  --orange:#c9a15c; --orange-soft:#faf1e1;           /* devenu "or" (gold) */
+  --green:#15803d; --green-soft:#f0fdf4;
+  --amber:#93714a; --amber-soft:#f2e7d5;
+  --red:#b91c1c; --red-soft:#fef2f2;
+  --bg:#f5f6fb; --surface:#fff; --surface-2:#f8fafc; --border:#e2e8f0;
+  --text:#172033; --muted:#64748b; --shadow:0 10px 30px rgba(15,27,61,.07);
+
+  /* Alias utilisés par les pages internes (Locaux/Contrats/Paiements/QHSE) */
+  --ink:var(--navy); --steel:var(--muted); --sand:var(--orange);
+  --danger:var(--red); --success:var(--green); --line:var(--border); --line2:#d8dee8;
+
+  /* Palette étendue pour le hero, les tuiles et les étapes */
+  --gold:#c9a15c; --gold-deep:#a97c33; --gold-soft:#faf1e1;
+  --slate:#5f7f9c; --slate-soft:#eaf1f7;
+  --stone:#eef1f4; --stone-ink:#8a94a6;
+  --umber:#93714a; --umber-soft:#f2e7d5;
+  --sand-tile:#e7d3a9; --sand-ink:#7a5b2c;
+  --lilac:#eae6fa; --violet:#7c6fc4;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+h1,h2,h3,h4{font-family:Sora,Inter,sans-serif}
+button,input,select{font:inherit}
+a{text-decoration:none;color:inherit}
+.view{display:none}.view.active{display:block}
+
+/* PUBLIC */
+.pub-header{
+ position:sticky;top:0;z-index:50;height:74px;background:rgba(255,255,255,.94);
+ backdrop-filter:blur(14px);border-bottom:1px solid var(--border);
+ display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,72px)
+}
+.pub-brand,.brand3{display:flex;align-items:center;gap:12px}
+.logo{
+ width:38px;height:38px;border-radius:10px;background:var(--navy);color:var(--gold);
+ display:grid;place-items:center;font-family:Sora;font-weight:800;box-shadow:0 6px 16px rgba(23,37,84,.25)
+}
+.pub-brand .name,.brand3 .name{font-family:Sora;font-weight:800;color:var(--navy);font-size:17px}
+.pub-brand .sub{display:block;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.5px;margin-top:2px}
+.pub-nav{display:flex;align-items:center;gap:26px;color:#475569;font-size:13px;font-weight:700}
+.pub-nav a{position:relative;padding-bottom:4px}
+.pub-nav a.active{color:var(--navy)}
+.pub-nav a.active:after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--navy)}
+.pub-nav a:hover{color:var(--slate)}
+.theme-toggle{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:#fff;display:grid;place-items:center;cursor:pointer;color:var(--gold-deep);font-size:14px}
+.header-actions{display:flex;align-items:center;gap:12px}
+.btn{border:0;cursor:pointer;font-weight:800;border-radius:10px;padding:12px 18px}
+.btn-primary{background:var(--navy);color:#fff;box-shadow:0 7px 16px rgba(23,37,84,.22)}
+.btn-primary:hover{background:var(--navy-2)}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid #cbd5e1}
+.btn-outline-gold{background:#fff;color:var(--gold-deep);border:1.5px solid var(--gold);font-weight:800;border-radius:10px;padding:12px 18px;cursor:pointer}
+.btn-outline-gold:hover{background:var(--gold-soft)}
+.btn-orange{background:var(--gold);color:#fff}
+.btn-orange:hover{background:var(--gold-deep)}
+
+.hero{
+ background:linear-gradient(135deg,#eef2fb 0%,#fff 55%,#faf4ea 100%);
+ padding:74px clamp(20px,7vw,100px) 0;border-bottom:1px solid var(--border)
+}
+.hero-grid{max-width:1180px;margin:auto;display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center;padding-bottom:56px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--slate);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px}
+.eyebrow:before{content:"";width:24px;height:2px;background:var(--gold)}
+.pill{display:inline-block;background:var(--blue-soft);color:var(--navy);font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:7px 14px;border-radius:20px;margin-bottom:18px}
+.hero h1{font-size:clamp(34px,4.6vw,50px);line-height:1.12;color:var(--navy);margin:0 0 18px;letter-spacing:-1px;font-weight:800}
+.hero h1 span{color:var(--gold)}
+.hero p{max-width:560px;color:var(--muted);font-size:15.5px;line-height:1.75;margin:0 0 24px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero-note{margin-top:24px;display:flex;flex-direction:column;gap:12px}
+.hero-note span{display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:700;color:var(--navy)}
+.hero-note i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;flex:none}
+.hero-note span:nth-child(1) i{background:var(--navy)}
+.hero-note span:nth-child(2) i{background:var(--slate)}
+.hero-note span:nth-child(3) i{background:var(--gold)}
+
+/* Illustration + tuiles, sur le modèle de la maquette de référence */
+.hero-visual{position:relative}
+.hero-illustration{border-radius:24px;overflow:hidden;box-shadow:0 25px 55px rgba(23,37,84,.14);line-height:0}
+.hero-illustration svg{display:block;width:100%;height:auto}
+.hero-tiles{background:#fff;border-radius:20px;box-shadow:0 20px 45px rgba(23,37,84,.16);padding:14px;margin:-64px 20px 0;position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{border:0;border-radius:13px;padding:16px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;text-align:left;font-family:Inter,sans-serif}
+.tile svg{width:20px;height:20px}
+.tile span{font-size:11.5px;font-weight:800;line-height:1.3}
+.tile.t-navy{background:var(--navy);color:#fff}
+.tile.t-slate{background:var(--slate);color:#fff}
+.tile.t-stone{background:var(--stone);color:var(--stone-ink)}
+.tile.t-umber{background:var(--umber);color:#fff}
+.tile.t-sand{background:var(--sand-tile);color:var(--sand-ink)}
+.tile.t-lilac{background:var(--lilac);color:var(--violet)}
+.tile:hover{filter:brightness(1.04);transform:translateY(-1px)}
+
+/* Barre de statistiques (données réelles issues du fichier) */
+.stats-bar{max-width:1180px;margin:34px auto 0;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:26px clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.stat-item{display:flex;align-items:center;gap:14px}
+.stat-icon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
+.stat-icon.violet{background:var(--lilac);color:var(--violet)}
+.stat-icon.slate{background:var(--blue-soft);color:var(--slate)}
+.stat-icon.green{background:var(--green);color:#fff}
+.stat-icon.gold{background:var(--gold-soft);color:var(--gold-deep)}
+.stat-num{font-family:Sora;font-weight:800;color:var(--navy);font-size:21px;line-height:1.1}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+.section{max-width:1180px;margin:auto;padding:76px 24px}
+.section-head{max-width:700px;margin-bottom:34px}
+.section-head .eyebrow{margin-bottom:10px}
+.section-head h2{font-size:31px;color:var(--navy);margin:0 0 10px}
+.section-head p{color:var(--muted);line-height:1.7;margin:0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.step{background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;box-shadow:var(--shadow)}
+.step-num{width:38px;height:38px;border-radius:10px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:900;font-family:Sora}
+.step:nth-child(even) .step-num{background:var(--orange-soft);color:var(--orange)}
+.step h3{font-size:16px;color:var(--navy);margin:18px 0 8px}
+.step p{font-size:13px;color:var(--muted);line-height:1.65;margin:0}
+
+/* Section "Comment ça marche ?" — 5 étapes reliées, sur le modèle de la maquette */
+.howto-head{text-align:center;max-width:640px;margin:0 auto 34px}
+.howto-head .eyebrow{justify-content:center;display:flex}
+.howto-head .eyebrow:before{display:none}
+.howto-head h2{font-size:28px;color:var(--navy);margin:8px 0 0}
+.steps5-wrap{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr auto 1fr;gap:0;align-items:start}
+.step5{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px 16px;text-align:center;box-shadow:var(--shadow);position:relative;margin:0 6px}
+.step5-num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-family:Sora;font-size:13px;color:#fff;margin:0 auto 14px}
+.step5:nth-child(1) .step5-num{background:var(--navy)}
+.step5:nth-child(3) .step5-num{background:var(--slate)}
+.step5:nth-child(5) .step5-num{background:var(--stone-ink);opacity:.6}
+.step5:nth-child(7) .step5-num{background:var(--umber)}
+.step5:nth-child(9) .step5-num{background:var(--gold)}
+.step5-icon{font-size:22px;margin-bottom:12px;color:var(--navy)}
+.step5 h3{font-size:14px;color:var(--navy);margin:0 0 8px}
+.step5 p{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0}
+.step5-arrow{align-self:center;text-align:center;color:#c7cee0;font-size:16px;letter-spacing:2px;margin-top:34px}
+@media(max-width:1000px){.steps5-wrap{grid-template-columns:1fr}.step5-arrow{display:none}.step5{margin:0 0 14px}}
+
+/* Appels à candidature — données réelles (locaux existants) */
+.appels{background:var(--surface-2)}
+.appel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.appel-card{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.appel-top{padding:20px 20px 0}
+.appel-code{font-family:Sora;font-weight:800;font-size:11px;color:var(--slate)}
+.appel-badge{display:inline-block;padding:5px 10px;border-radius:20px;font-size:10.5px;font-weight:800;float:right}
+.appel-badge.open{background:var(--green-soft);color:var(--green)}
+.appel-badge.soon{background:var(--gold-soft);color:var(--gold-deep)}
+.appel-card h3{font-size:16.5px;color:var(--navy);margin:16px 20px 6px}
+.appel-card p.meta{margin:0 20px 14px;color:var(--muted);font-size:12.5px}
+.appel-foot{margin-top:auto;border-top:1px solid var(--border);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.appel-foot a{color:var(--navy);font-weight:800;cursor:pointer}
+.appel-foot a:hover{color:var(--gold-deep)}
+.types{background:var(--navy-2);color:#fff}
+.types .section-head h2,.types .section-head p{color:#fff}
+.types .section-head p{opacity:.72}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.type-card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);border-radius:16px;padding:24px}
+.type-icon{font-size:27px}
+.type-card h3{margin:15px 0 7px;font-size:17px}
+.type-card p{margin:0;color:#cbd5e1;font-size:13px;line-height:1.65}
+.faq{max-width:800px}
+.faq-item{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.faq-q{padding:18px 20px;display:flex;justify-content:space-between;gap:15px;font-weight:800;color:var(--navy);cursor:pointer}
+.faq-a{max-height:0;overflow:hidden;padding:0 20px;color:var(--muted);font-size:13px;line-height:1.7;transition:.25s}
+.faq-item.open .faq-a{max-height:150px;padding:0 20px 18px}
+.final-cta{background:#fff;border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center;box-shadow:var(--shadow)}
+.final-cta h2{margin:0 0 10px;color:var(--navy)}
+.final-cta p{margin:0 0 22px;color:var(--muted)}
+
+/* Pied de page — 4 colonnes, sur le modèle de la maquette */
+footer{background:var(--navy-2);color:#94a3b8}
+.foot-main{max-width:1180px;margin:auto;padding:56px clamp(20px,5vw,72px) 40px;display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:32px}
+.foot-brand p{color:#94a3b8;font-size:12.5px;line-height:1.7;margin:14px 0 18px}
+.foot-social{display:flex;gap:10px}
+.foot-social a{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;color:#e2e8f0;font-size:12px}
+.foot-social a:hover{background:var(--gold);color:#fff}
+.foot-col h4{color:#fff;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 16px}
+.foot-col a{display:block;color:#94a3b8;font-size:13px;margin-bottom:11px}
+.foot-col a:hover{color:#fff}
+.foot-contact div{display:flex;align-items:flex-start;gap:10px;color:#94a3b8;font-size:12.5px;margin-bottom:13px;line-height:1.5}
+.foot-contact span.ic{flex:none;width:16px}
+.foot-bottom{background:var(--gold-deep);color:#fff;text-align:center;padding:14px;font-size:11.5px;font-weight:600}
+@media(max-width:1000px){.foot-main{grid-template-columns:1fr 1fr;gap:28px}}
+@media(max-width:600px){.foot-main{grid-template-columns:1fr}}
+
+/* LOGIN */
+.login-overlay{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,var(--navy-2),#20356e)}
+.login-shell{width:min(920px,100%);display:grid;grid-template-columns:1fr 1fr;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.28)}
+.login-info{padding:48px;background:linear-gradient(160deg,#1e326c,#172554);color:#fff}
+.login-info .logo{background:var(--gold);color:var(--navy);margin-bottom:28px}
+.login-info h2{font-size:30px;line-height:1.2;margin:0 0 14px}
+.login-info p{color:#cbd5e1;line-height:1.7;font-size:13px}
+.login-points{margin-top:30px;display:grid;gap:13px}
+.login-points div{font-size:12px;color:#e2e8f0}
+.login-card3{padding:48px 42px}
+.login-card3 h2{color:var(--navy);font-size:24px;margin:0 0 6px}
+.login-card3 p.sub{color:var(--muted);font-size:13px;margin:0 0 26px}
+.field{margin-bottom:16px}.field label{display:block;font-size:12px;font-weight:800;color:var(--navy);margin-bottom:7px}
+.field input{width:100%;padding:13px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff}
+.field input:focus{outline:2px solid #bfdbfe;border-color:var(--blue)}
+.row-between{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);margin:4px 0 22px}
+.row-between a{color:var(--blue);font-weight:800}
+.btn-full{width:100%;padding:13px;border:0;border-radius:10px;background:var(--navy);color:#fff;font-weight:800;cursor:pointer}
+.btn-full:hover{background:var(--navy-2)}
+.login-hint3{margin-top:14px;padding:10px;border-radius:9px;background:var(--surface-2);font-size:11px;color:var(--muted)}
+.back3{display:block;margin-top:18px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+
+/* APP */
+.app-shell{min-height:100vh;display:grid;grid-template-columns:245px 1fr}
+.sidebar{background:var(--navy-2);color:#cbd5e1;padding:22px 15px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side-brand{display:flex;align-items:center;gap:10px;padding:0 10px 24px;border-bottom:1px solid rgba(255,255,255,.1)}
+.side-brand .logo{background:var(--gold);color:var(--navy);width:34px;height:34px}
+.side-brand strong{color:#fff;font-family:Sora}
+.side-brand small{display:block;font-size:9px;color:#94a3b8;margin-top:2px}
+.side-label{text-transform:uppercase;font-size:9px;letter-spacing:1.3px;color:#64748b;font-weight:900;padding:22px 11px 8px}
+.side-nav{display:grid;gap:4px}
+.side-nav button{border:0;background:transparent;color:#cbd5e1;text-align:left;padding:11px 12px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12.5px}
+.side-nav button:hover,.side-nav button.active{background:rgba(255,255,255,.09);color:#fff}
+.side-nav button.active{box-shadow:inset 3px 0 var(--orange)}
+.side-bottom{margin-top:auto;border-top:1px solid rgba(255,255,255,.1);padding-top:15px}
+.side-user{display:flex;align-items:center;gap:10px;padding:8px}
+.avatar3{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--navy);display:grid;place-items:center;font-size:11px;font-weight:900}
+.side-user strong{display:block;color:#fff;font-size:12px}.side-user span{font-size:10px;color:#94a3b8}
+.app-main{min-width:0}
+.topbar3{height:72px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:20}
+.mobile-menu{display:none}
+.top-title{font-family:Sora;color:var(--navy);font-size:15px;font-weight:800}
+.top-right{display:flex;align-items:center;gap:13px}
+.bell{font-size:18px;position:relative}.bell .dot{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--red);right:-2px;top:0;border:2px solid #fff}
+.logout3{border:1px solid var(--border);background:#fff;color:var(--navy);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer}
+.app3-page{max-width:1240px;margin:auto;padding:30px}
+.greeting{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}
+.greeting h1{font-size:25px;color:var(--navy);margin:0 0 5px}
+.greeting p{font-size:12.5px;color:var(--muted);margin:0}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.kpi-pill{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.kpi-pill .num{font-family:Sora;font-size:25px;font-weight:900;color:var(--navy)}
+.kpi-pill .label{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+.kpi-pill.coral{border-top:3px solid var(--orange)}
+.section3-title{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#475569;margin:28px 0 13px}
+.dashboard-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:16px}
+.chart3-card,.action-card,.acc-item{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.chart3-card{padding:20px}
+.chart-head{display:flex;justify-content:space-between;color:var(--navy);font-size:12px;font-weight:800;margin-bottom:15px}
+.chart{display:flex;align-items:flex-end;gap:12px;height:170px}
+.chart .bar-col{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.chart .bar{width:100%;max-width:34px;background:var(--blue);border-radius:6px 6px 2px 2px}
+.chart .m{font-size:10px;color:var(--muted);margin-top:7px}
+.action-card{padding:18px}
+.action{padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:12px}
+.action:last-child{border-bottom:0}.action b{font-size:11.5px;color:var(--navy)}.action p{margin:4px 0 0;font-size:10.5px;color:var(--muted)}
+.dot-status{width:8px;height:8px;border-radius:50%;background:var(--orange);margin-top:4px;flex:none}
+.dot-status.green{background:var(--green)}
+.filters3{display:flex;gap:9px;margin-bottom:17px;flex-wrap:wrap}
+.filters3 input[type=text]{flex:1;min-width:230px;padding:11px 14px;border:1px solid var(--border);border-radius:9px;background:#fff}
+.filters3 select{padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:#fff;color:#475569}
+.btn-primary3{background:var(--blue);color:#fff;border:0;padding:11px 15px;border-radius:9px;font-weight:800;cursor:pointer}
+.acc-item{margin-bottom:10px;overflow:hidden}
+.acc-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;cursor:pointer;gap:15px}
+.acc-head .left{display:flex;align-items:center;gap:13px;min-width:0}
+.acc-head .idnum{font-family:Sora;font-weight:900;color:var(--blue);font-size:11px;min-width:72px}
+.acc-head .cand{font-weight:800;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-head .chev{color:var(--muted);transition:.2s}.acc-item.open .chev{transform:rotate(180deg)}
+.badge3{display:inline-block;padding:5px 9px;border-radius:20px;font-size:9.5px;font-weight:900;white-space:nowrap}
+.badge3.instr{background:var(--blue-soft);color:var(--blue)}.badge3.ok{background:var(--green-soft);color:var(--green)}
+.badge3.incomplete{background:var(--amber-soft);color:var(--amber)}.badge3.refuse{background:var(--red-soft);color:var(--red)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .25s}.acc-item.open .acc-body{max-height:180px}
+.acc-body-in{padding:14px 18px 17px;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);gap:15px;color:var(--muted);font-size:11px}
+.acc-body-in b{display:block;color:var(--navy);font-size:9px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.acc-body-in .consult{grid-column:span 3;text-align:right;color:var(--blue);font-weight:800;cursor:pointer}
+.placeholder3{background:#fff;border:1px dashed #cbd5e1;border-radius:14px;padding:90px 20px;text-align:center;color:var(--muted)}
+.placeholder3 .big{font-size:38px;margin-bottom:8px}
+.pagi3{text-align:center;color:var(--muted);font-size:11px;margin-top:17px}
+
+/* responsive */
+@media(max-width:1000px){
+ .pub-nav{display:none}.hero-grid{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}
+ .kpi-strip{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}
+ .stats-bar{grid-template-columns:repeat(2,1fr)}.appel-grid{grid-template-columns:1fr}
+ .hero-tiles{margin-top:-40px}
+}
+@media(max-width:760px){
+ .app-shell{display:block}.sidebar{height:auto;position:relative;padding:12px}.side-label,.side-bottom{display:none}
+ .side-nav{display:flex;overflow:auto}.side-nav button{white-space:nowrap}.side-brand{border:0;padding-bottom:10px}
+ .topbar3{padding:0 16px}.mobile-menu{display:block}.app3-page{padding:22px 16px}
+ .steps,.type-grid,.kpi-strip{grid-template-columns:1fr}.login-shell{grid-template-columns:1fr}.login-info{display:none}
+ .hero{padding-top:48px}.hero h1{font-size:32px}.greeting{display:block}.greeting p{margin-top:7px}
+ .acc-head .idnum{min-width:auto}.acc-head .left{min-width:0}.acc-body-in{grid-template-columns:1fr}.acc-body-in .consult{grid-column:span 1}
+ .stats-bar{grid-template-columns:1fr}.hero-tiles{grid-template-columns:repeat(3,1fr);margin:16px 0 0}
+ .header-actions .btn-secondary{display:none}
+}
+</style>
+
+<style>
+.app-nav-real{position:absolute;top:76px;left:0;right:0;height:56px;background:var(--ink);display:flex;padding-left:44px;z-index:10}
+.app-nav-real button{height:56px;padding:0 27px;border:0;border-bottom:3px solid transparent;background:transparent;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+.app-nav-real button:hover,.app-nav-real button.active{background:#17315f;border-bottom-color:var(--sand)}
+.app-nav-real button span{margin-left:7px}
+.breadcrumb3{font-size:12px;color:var(--steel);margin-bottom:20px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px}
+.page-head h1{margin:0 0 5px;font-size:29px;color:var(--ink)}
+.page-head p{margin:0;color:var(--steel);font-size:14px}
+.row-title{display:flex;justify-content:space-between;align-items:center}
+.row-title button{border:0;background:transparent;color:var(--steel);font-weight:800;cursor:pointer}
+.dash-two-col{display:grid;grid-template-columns:1.45fr .75fr;gap:28px}
+.actions-card{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+.actions-card div{padding:18px 20px;border-bottom:1px solid var(--line);color:var(--steel);font-size:13px}
+.actions-card div:last-child{border-bottom:0}
+.actions-card b{color:var(--danger);margin-right:10px}.actions-card .warn b{color:#e5a900}
+.local-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.local-card{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);padding:22px}
+.local-top{display:flex;justify-content:space-between}.local-code{font-family:Sora;color:var(--steel);font-size:12px;font-weight:800}
+.local-card h3{color:var(--ink);font-size:18px;margin:18px 0 7px}.local-card p{color:var(--steel);margin:0;font-size:13px}
+.local-meta{margin:18px 0;color:var(--steel);font-size:12px}.local-meta b{color:var(--ink)}
+.local-card button{border:0;background:none;color:var(--steel);font-weight:800;cursor:pointer;padding:0}
+.table-card{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:800px}
+th{background:#f2f5f9;color:var(--steel);font-size:11px;text-align:left;padding:14px 20px}
+td{padding:16px 20px;border-top:1px solid var(--line);color:var(--steel);font-size:13px}
+td b{color:var(--ink)}td a{color:var(--steel);font-weight:800;cursor:pointer}
+.payment-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.payment-kpis>div{background:#fff;border:1px solid var(--line);padding:18px;box-shadow:var(--shadow)}
+.payment-kpis b{display:block;font-family:Sora;color:var(--ink);font-size:25px}.payment-kpis span{display:block;color:var(--steel);font-size:12px;margin-top:5px}
+.qhse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.qhse-card{background:#fff;border:1px solid var(--line);padding:22px;box-shadow:var(--shadow);position:relative}
+.qhse-card .q-icon{display:block;color:var(--success);font-size:22px}.qhse-card b{display:block;font-family:Sora;font-size:29px;color:var(--ink);margin-top:8px}.qhse-card small{color:var(--steel)}
+.export-btn{background:#fff;border:1px solid var(--line2);color:var(--steel);padding:11px 16px;font-weight:800;cursor:pointer}
+.demo-toast{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;padding:14px 18px;box-shadow:0 12px 35px rgba(7,23,57,.2);z-index:100;border-left:4px solid var(--sand)}
+@media(max-width:900px){.dash-two-col,.local-grid{grid-template-columns:1fr}.payment-kpis{grid-template-columns:repeat(2,1fr)}.app-nav-real{padding-left:10px;overflow:auto}.app-nav-real button{padding:0 16px;white-space:nowrap}}
+@media(max-width:600px){.page-head{display:block}.page-head button{margin-top:15px}.payment-kpis,.qhse-grid{grid-template-columns:1fr}.app-nav-real button{font-size:12px;padding:0 11px}.top-right strong{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- VUE 1 — ACCUEIL PUBLIC (parcours guidé, scroll vertical)       -->
+<!-- ============================================================ -->
+<div class="view active" id="view-landing">
+  <header class="pub-header">
+    <div class="pub-brand">
+      <div class="logo">S</div>
+      <div><div class="name">SyLOC</div><div class="sub">CROUS-T · VCN</div></div>
+    </div>
+    <nav class="pub-nav">
+      <a href="#view-landing" class="active" onclick="window.scrollTo({top:0,behavior:'smooth'})">Accueil</a>
+      <a href="#parcours">Le parcours</a>
+      <a href="#appels">Appels à candidature</a>
+      <a href="#espaces">Espaces</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-toggle" title="Thème" onclick="demoToast('Mode sombre — bientôt disponible')">☀</button>
+      <button class="btn btn-secondary" onclick="showView('view-login')">Se connecter</button>
+      <button class="btn btn-primary" onclick="showView('view-login')">Créer un compte</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="pill">Plateforme officielle</div>
+        <h1>Votre local commercial,<br>notre <span>priorité.</span></h1>
+        <p>SyLOC vous accompagne dans toutes vos démarches de demande et de gestion d'occupation commerciale au CROUS-T / VCN : cantines, boutiques et espaces artisanaux.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="showView('view-login')">✈ Faire une demande</button>
+          <button class="btn-outline-gold" onclick="document.getElementById('parcours').scrollIntoView({behavior:'smooth'})">📖 Guide du candidat</button>
+        </div>
+        <div class="hero-note">
+          <span><i>✓</i> Démarches 100 % en ligne</span>
+          <span><i>✓</i> Suivi en temps réel</span>
+          <span><i>✓</i> Notifications instantanées</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-illustration">
+          <svg viewBox="0 0 600 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration d'un local commercial du site VCN">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#dbe7fb"/><stop offset="1" stop-color="#f3ecdd"/>
+              </linearGradient>
+              <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2b3f6b"/><stop offset="1" stop-color="#172554"/>
+              </linearGradient>
+            </defs>
+            <rect width="600" height="460" fill="url(#sky)"/>
+            <circle cx="500" cy="80" r="46" fill="#f3d9a3" opacity=".8"/>
+            <g opacity=".9" fill="#fff">
+              <ellipse cx="120" cy="70" rx="46" ry="16"/><ellipse cx="160" cy="62" rx="34" ry="14"/>
+              <ellipse cx="400" cy="120" rx="40" ry="14"/><ellipse cx="435" cy="112" rx="28" ry="12"/>
+            </g>
+            <rect x="0" y="330" width="600" height="130" fill="#e7ded0"/>
+            <rect x="0" y="322" width="600" height="10" fill="#cfc3ab"/>
+            <!-- bâtiment principal -->
+            <rect x="70" y="150" width="460" height="185" rx="10" fill="url(#wall)"/>
+            <rect x="70" y="150" width="460" height="14" fill="#0f1b3d"/>
+            <!-- auvent rayé -->
+            <g>
+              <rect x="150" y="190" width="300" height="26" fill="#c9a15c"/>
+              <rect x="150" y="190" width="30" height="26" fill="#f4e3c2"/>
+              <rect x="210" y="190" width="30" height="26" fill="#f4e3c2"/>
+              <rect x="270" y="190" width="30" height="26" fill="#f4e3c2"/>
+              <rect x="330" y="190" width="30" height="26" fill="#f4e3c2"/>
+              <rect x="390" y="190" width="30" height="26" fill="#f4e3c2"/>
+              <path d="M150 216 l14 16 h272 l14 -16 Z" fill="#a97c33"/>
+            </g>
+            <!-- baie vitrée -->
+            <rect x="180" y="230" width="240" height="80" rx="4" fill="#cfe0f7" opacity=".9"/>
+            <line x1="300" y1="230" x2="300" y2="310" stroke="#0f1b3d" stroke-width="3"/>
+            <line x1="180" y1="270" x2="420" y2="270" stroke="#0f1b3d" stroke-width="3"/>
+            <!-- porte -->
+            <rect x="270" y="230" width="0" height="0"/>
+            <rect x="90" y="230" width="60" height="80" rx="4" fill="#0f1b3d"/>
+            <circle cx="132" cy="270" r="3" fill="#c9a15c"/>
+            <!-- enseigne -->
+            <rect x="255" y="160" width="90" height="24" rx="6" fill="#f4e3c2"/>
+            <text x="300" y="177" text-anchor="middle" font-family="Sora, sans-serif" font-weight="800" font-size="13" fill="#172554">SyLOC</text>
+            <!-- étal / terrasse -->
+            <rect x="440" y="270" width="70" height="45" rx="4" fill="#e7d3a9"/>
+            <rect x="440" y="262" width="70" height="10" rx="3" fill="#93714a"/>
+            <!-- arbre -->
+            <rect x="40" y="290" width="10" height="40" fill="#7a5b2c"/>
+            <circle cx="45" cy="278" r="26" fill="#5f7f9c"/>
+            <circle cx="30" cy="292" r="20" fill="#6b8ba6"/>
+            <circle cx="62" cy="292" r="20" fill="#6b8ba6"/>
+            <!-- banc -->
+            <rect x="500" y="322" width="60" height="6" fill="#93714a"/>
+            <rect x="505" y="316" width="6" height="12" fill="#7a5b2c"/><rect x="550" y="316" width="6" height="12" fill="#7a5b2c"/>
+          </svg>
+        </div>
+        <div class="hero-tiles">
+          <button class="tile t-navy" onclick="showView('view-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>Demande de local</span></button>
+          <button class="tile t-slate" onclick="showView('view-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>Suivi de dossier</span></button>
+          <button class="tile t-stone" onclick="demoToast('Aucune nouvelle notification')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>Notifications</span></button>
+          <button class="tile t-umber" onclick="showView('view-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg><span>Échéances</span></button>
+          <button class="tile t-sand" onclick="showView('view-login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/></svg><span>Documents</span></button>
+          <button class="tile t-lilac" onclick="document.getElementById('faq').scrollIntoView({behavior:'smooth'})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1118 0v4a2 2 0 01-2 2h-1v-7h3M3 12v4a2 2 0 002 2h1v-7H3z"/></svg><span>Support</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-icon violet">👥</div><div><div class="stat-num">47+</div><div class="stat-label">Dossiers traités</div></div></div>
+    <div class="stat-item"><div class="stat-icon slate">🏢</div><div><div class="stat-num">18</div><div class="stat-label">Locaux gérés sur le site VCN</div></div></div>
+    <div class="stat-item"><div class="stat-icon green">✓</div><div><div class="stat-num">91%</div><div class="stat-label">Taux de conformité QHSE</div></div></div>
+    <div class="stat-item"><div class="stat-icon gold">⏱</div><div><div class="stat-num">3–6 sem.</div><div class="stat-label">Délai moyen d'instruction</div></div></div>
+  </div>
+
+  <section class="section appels" id="appels">
+    <div class="section-head">
+      <div class="eyebrow">Opportunités du moment</div>
+      <h2>Appels à candidature en cours</h2>
+      <p>Ces locaux du portefeuille du CROUS-T / VCN sont ouverts aux candidatures. Les données ci-dessous proviennent du référentiel des locaux de la plateforme.</p>
+    </div>
+    <div class="appel-grid">
+      <div class="appel-card">
+        <div class="appel-top"><span class="appel-code">LOC-001</span><span class="appel-badge open">Candidatures ouvertes</span></div>
+        <h3>Cafétéria Rangueil — Bât. C</h3>
+        <p class="meta">Restauration · 72 m² · RDC · Loyer indicatif 920 €/mois</p>
+        <div class="appel-foot"><span>Clôture : 31/03/2025</span><a onclick="showView('view-login')">Postuler ›</a></div>
+      </div>
+      <div class="appel-card">
+        <div class="appel-top"><span class="appel-code">LOC-003</span><span class="appel-badge open">Candidatures ouvertes</span></div>
+        <h3>Espace artisanal MDE Mirail</h3>
+        <p class="meta">Artisanat · 46 m² · Hall · Loyer indicatif 640 €/mois</p>
+        <div class="appel-foot"><span>Clôture : 05/04/2025</span><a onclick="showView('view-login')">Postuler ›</a></div>
+      </div>
+      <div class="appel-card">
+        <div class="appel-top"><span class="appel-code">LOC-004</span><span class="appel-badge soon">Bientôt disponible</span></div>
+        <h3>Cafétéria IUT Blagnac</h3>
+        <p class="meta">Restauration · 91 m² · Réouverture prévue sept. 2025</p>
+        <div class="appel-foot"><span>Ouverture des candidatures : à venir</span><a onclick="showView('view-login')">Être informé ›</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="parcours">
+    <div class="howto-head">
+      <div class="eyebrow">Votre parcours</div>
+      <h2>Comment ça marche ?</h2>
+    </div>
+    <div class="steps5-wrap">
+      <div class="step5"><div class="step5-num">1</div><div class="step5-icon">👤➕</div><h3>Créer un compte</h3><p>Inscrivez-vous en quelques minutes avec les informations de votre structure.</p></div>
+      <div class="step5-arrow">···›</div>
+      <div class="step5"><div class="step5-num">2</div><div class="step5-icon">📄</div><h3>Faire une demande</h3><p>Choisissez le type d'espace et déposez votre dossier de candidature en ligne.</p></div>
+      <div class="step5-arrow">···›</div>
+      <div class="step5"><div class="step5-num">3</div><div class="step5-icon">⏳</div><h3>Suivi du dossier</h3><p>Suivez l'avancement de votre dossier et son instruction en temps réel.</p></div>
+      <div class="step5-arrow">···›</div>
+      <div class="step5"><div class="step5-num">4</div><div class="step5-icon">✅</div><h3>Résultat</h3><p>Recevez la décision de la commission par notification et par e-mail.</p></div>
+      <div class="step5-arrow">···›</div>
+      <div class="step5"><div class="step5-num">5</div><div class="step5-icon">🔑</div><h3>Attribution</h3><p>Signez votre contrat et récupérez les clés de votre local.</p></div>
+    </div>
+  </section>
+
+  <section class="types" id="espaces">
+    <div class="section">
+      <div class="section-head">
+        <div class="eyebrow">Espaces disponibles</div>
+        <h2>Trois familles d'espaces commerciaux</h2>
+        <p>Choisissez la catégorie correspondant à votre projet lors du dépôt de votre demande.</p>
+      </div>
+      <div class="type-grid">
+        <div class="type-card"><div class="type-icon">🍽️</div><h3>Restauration</h3><p>Cafétérias et points de restauration rapide répartis sur les bâtiments du campus.</p></div>
+        <div class="type-card"><div class="type-icon">🛍️</div><h3>Commerce</h3><p>Boutiques de proximité, presse et papeterie pour la vie quotidienne des étudiants.</p></div>
+        <div class="type-card"><div class="type-icon">🧰</div><h3>Artisanat</h3><p>Ateliers dédiés aux auto-entrepreneurs de la Maison des étudiants.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="section-head">
+      <div class="eyebrow">Aide</div>
+      <h2>Questions fréquentes</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Combien de temps dure l'instruction ? <span>＋</span></div><div class="faq-a">Comptez en moyenne 3 à 6 semaines selon la complétude du dossier et la disponibilité du local demandé.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Puis-je modifier mon dossier après dépôt ? <span>＋</span></div><div class="faq-a">Oui, tant que le dossier est au statut « incomplet » ou « en instruction », vous pouvez compléter les pièces manquantes.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">Que se passe-t-il après l'acceptation ? <span>＋</span></div><div class="faq-a">Un contrat est généré et votre espace bascule vers le suivi des paiements et des contrôles QHSE liés à votre local.</div></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="final-cta">
+      <h2>Prêt à démarrer votre projet ?</h2>
+      <p>Connectez-vous pour déposer votre demande ou suivre un dossier déjà en cours.</p>
+      <button class="btn btn-orange" onclick="showView('view-login')">Accéder à mon espace</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-main">
+      <div class="foot-brand">
+        <div class="brand3"><div class="logo">S</div><div><div class="name" style="color:#fff">SyLOC</div><div class="sub" style="color:#94a3b8">CROUS-T / VCN</div></div></div>
+        <p>La plateforme officielle de demande et de gestion des locaux commerciaux du site VCN, pour le compte du CROUS-T.</p>
+        <div class="foot-social">
+          <a href="#" aria-label="Facebook">f</a><a href="#" aria-label="Twitter">𝕏</a><a href="#" aria-label="Instagram">◎</a><a href="#" aria-label="LinkedIn">in</a>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h4>Navigation</h4>
+        <a href="#view-landing">Accueil</a>
+        <a href="#parcours">Le parcours</a>
+        <a href="#appels">Appels à candidature</a>
+        <a href="#espaces">Espaces</a>
+      </div>
+      <div class="foot-col">
+        <h4>Liens utiles</h4>
+        <a href="#faq">FAQ</a>
+        <a href="#">Règlement intérieur</a>
+        <a href="#">Tarifs</a>
+        <a href="#">Mentions légales</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+      <div class="foot-col foot-contact">
+        <h4>Contact</h4>
+        <div><span class="ic">📍</span> CROUS-T / VCN, Thiès</div>
+        <div><span class="ic">📞</span> +221 33 951 12 12</div>
+        <div><span class="ic">✉</span> contact@syloc.sn</div>
+        <div><span class="ic">🕘</span> Lun – Ven : 8h – 18h</div>
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 SyLOC — CROUS-T / VCN · Maquette produit · Données fictives</div>
+  </footer>
+</div>
+
+<!-- ============================================================ -->
+<!-- VUE 2 — CONNEXION (superposition plein écran)                 -->
+<!-- ============================================================ -->
+<div class="view" id="view-login">
+  <div class="login-overlay">
+    <div class="login-shell">
+      <div class="login-info">
+        <div class="logo">S</div>
+        <h2>Votre espace SyLOC</h2>
+        <p>Une interface unique pour déposer une candidature, suivre son instruction et gérer les contrats, paiements et contrôles liés à votre local.</p>
+        <div class="login-points">
+          <div>✓ Suivi des demandes en temps réel</div>
+          <div>✓ Documents et commentaires centralisés</div>
+          <div>✓ Contrats, échéanciers et QHSE</div>
+        </div>
+      </div>
+      <div class="login-card3">
+        <h2>Se connecter</h2>
+        <p class="sub">Retrouvez votre espace candidat, occupant ou gestionnaire.</p>
+        <form onsubmit="event.preventDefault(); showView('view-app');">
+          <div class="field"><label>Adresse e-mail</label><input type="email" placeholder="marie.dupont@crous-t.fr" required></div>
+          <div class="field"><label>Mot de passe</label><input type="password" placeholder="••••••••" required></div>
+          <div class="row-between"><label><input type="checkbox"> Se souvenir de moi</label><a href="#">Mot de passe oublié ?</a></div>
+          <button class="btn-full" type="submit">Se connecter</button>
+        </form>
+        <div class="login-hint3">Démo : tout couple e-mail / mot de passe donne accès à l'espace interne.</div>
+        <span class="back3" onclick="showView('view-landing')">← Retour à l'accueil</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VUE 3 — ESPACE INTERNE (fil d'activité)                        -->
+<!-- ============================================================ -->
+<div class="view" id="view-app">
+  <div class="app-shell">
+    <main class="app-main">
+      <header class="topbar3">
+        <div><span class="top-title">Accueil</span></div>
+        <div class="top-right">
+          <div class="bell" title="Notifications">🔔<span class="dot"></span></div>
+          <div class="avatar3">MD</div>
+          <strong style="color:var(--ink);font-size:13px">Marie Dupont</strong>
+          <button class="logout3" onclick="showView('view-landing')">Déconnexion</button>
+        </div>
+      </header>
+
+      <nav class="app-nav-real">
+        <button class="active" data-view="accueil">⌂ <span>Accueil</span></button>
+        <button data-view="demandes">▣ <span>Demandes</span></button>
+        <button data-view="locaux">▦ <span>Locaux</span></button>
+        <button data-view="contrats">▤ <span>Contrats</span></button>
+        <button data-view="paiements">▰ <span>Paiements</span></button>
+        <button data-view="qhse">◇ <span>QHSE</span></button>
+      </nav>
+
+      <div class="app3-page app-view active" id="app-accueil">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>Accueil</strong></div>
+        <div class="greeting">
+          <div><h1>Tableau de bord</h1><p>Exercice 2025 — mis à jour le 10 août 2025 à 09:14</p></div>
+        </div>
+        <div class="kpi-strip">
+          <div class="kpi-pill"><div class="num">7</div><div class="label">Demandes en cours<br><span>+2 ce mois</span></div></div>
+          <div class="kpi-pill"><div class="num">4</div><div class="label">Locaux disponibles<br><span>sur 18 au total</span></div></div>
+          <div class="kpi-pill"><div class="num">14</div><div class="label">Contrats actifs<br><span>3 expirent &lt; 90 j</span></div></div>
+          <div class="kpi-pill"><div class="num">1</div><div class="label">Impayé en retard<br><span>920 € dus</span></div></div>
+        </div>
+        <div class="dash-two-col">
+          <div>
+            <div class="section3-title">Activité — demandes & contrats</div>
+            <div class="chart3-card">
+              <div class="chart"><div class="bar-col"><div class="bar" style="height:38%"></div><div class="m">Jan</div></div><div class="bar-col"><div class="bar" style="height:58%"></div><div class="m">Fév</div></div><div class="bar-col"><div class="bar" style="height:78%"></div><div class="m">Mar</div></div><div class="bar-col"><div class="bar" style="height:44%"></div><div class="m">Avr</div></div><div class="bar-col"><div class="bar" style="height:90%"></div><div class="m">Mai</div></div><div class="bar-col"><div class="bar" style="height:100%"></div><div class="m">Jun</div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="section3-title">Actions requises</div>
+            <div class="actions-card">
+              <div><b>●</b> Dossier 2025-0347 — Instruction à compléter</div>
+              <div><b>●</b> Contrôle QHSE CTR-2025-09 — Levée de réserves</div>
+              <div class="warn"><b>●</b> Contrat LOC-003 — Renouvellement à initier</div>
+              <div class="warn"><b>●</b> Redevance PAY-2025-042 — Relance locataire</div>
+            </div>
+          </div>
+        </div>
+        <div class="section3-title row-title">Dernières demandes reçues <button onclick="showAppView('demandes')">Voir toutes　›</button></div>
+        <div id="dashboard-acc"></div>
+      </div>
+
+      <div class="app3-page app-view" id="app-demandes">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>Demandes</strong></div>
+        <div class="page-head"><div><h1>Gestion des demandes</h1><p>Dépôt, instruction et décision des dossiers de candidature</p></div><button class="btn-primary3" onclick="demoToast('Nouvelle demande — formulaire de démonstration')">＋ Nouvelle demande</button></div>
+        <div class="filters3"><input id="searchDemandes" type="text" placeholder="⌕  Rechercher par candidat, local, n° dossier..."><select id="statusFilter"><option>Tous les statuts</option><option>En instruction</option><option>Acceptée</option><option>Incomplète</option><option>Refusée</option></select><select id="typeFilter"><option>Tous les types</option><option>Restauration</option><option>Commerce</option><option>Artisanat</option></select><button class="export-btn" onclick="demoToast('Export CSV simulé')">⇩ Exporter</button></div>
+        <div id="demandes-acc"></div>
+        <div class="pagi3">5 résultats sur 47 <span>　1　 2　 3　 …　 9</span></div>
+      </div>
+
+      <div class="app3-page app-view" id="app-locaux">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>Locaux</strong></div>
+        <div class="page-head"><div><h1>Gestion des locaux</h1><p>Inventaire, disponibilité et occupation des espaces commerciaux</p></div><button class="btn-primary3" onclick="demoToast('Ajout de local — démonstration')">＋ Nouveau local</button></div>
+        <div class="local-grid">
+          <div class="local-card"><div class="local-top"><span class="local-code">LOC-001</span><span class="badge3 ok">Disponible</span></div><h3>Cafétéria Rangueil — Bât. C</h3><p>Restauration · 72 m²</p><div class="local-meta">Loyer indicatif <b>920 €/mois</b> · RDC</div><button onclick="demoToast('Détail LOC-001')">Consulter　›</button></div>
+          <div class="local-card"><div class="local-top"><span class="local-code">LOC-002</span><span class="badge3 refuse">Occupé</span></div><h3>Boutique Université Capitole</h3><p>Commerce · 38 m²</p><div class="local-meta">Contrat <b>LOC-002</b> · échéance 2026</div><button onclick="demoToast('Détail LOC-002')">Consulter　›</button></div>
+          <div class="local-card"><div class="local-top"><span class="local-code">LOC-003</span><span class="badge3 ok">Disponible</span></div><h3>Espace artisanal MDE Mirail</h3><p>Artisanat · 46 m²</p><div class="local-meta">Loyer indicatif <b>640 €/mois</b> · Hall</div><button onclick="demoToast('Détail LOC-003')">Consulter　›</button></div>
+          <div class="local-card"><div class="local-top"><span class="local-code">LOC-004</span><span class="badge3 instr">Maintenance</span></div><h3>Cafétéria IUT Blagnac</h3><p>Restauration · 91 m²</p><div class="local-meta">Réouverture <b>sept. 2025</b></div><button onclick="demoToast('Détail LOC-004')">Consulter　›</button></div>
+        </div>
+      </div>
+
+      <div class="app3-page app-view" id="app-contrats">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>Contrats</strong></div>
+        <div class="page-head"><div><h1>Contrats d'occupation</h1><p>Suivi des conventions, échéances et renouvellements</p></div><button class="btn-primary3" onclick="demoToast('Nouveau contrat — démonstration')">＋ Nouveau contrat</button></div>
+        <div class="table-card"><table><thead><tr><th>N° CONTRAT</th><th>OCCUPANT</th><th>LOCAL</th><th>ÉCHÉANCE</th><th>STATUT</th><th>ACTION</th></tr></thead><tbody><tr><td><b>LOC-001</b></td><td>SAS Les Tables du Campus</td><td>Cafétéria Rangueil</td><td>12/09/2026</td><td><span class="badge3 ok">Actif</span></td><td><a onclick="demoToast('Contrat LOC-001')">Consulter</a></td></tr><tr><td><b>LOC-002</b></td><td>SARL Presse & Culture</td><td>Boutique Capitole</td><td>18/11/2026</td><td><span class="badge3 ok">Actif</span></td><td><a onclick="demoToast('Contrat LOC-002')">Consulter</a></td></tr><tr><td><b>LOC-003</b></td><td>SAS Campus Café</td><td>Boutique Rangueil</td><td>22/08/2025</td><td><span class="badge3 instr">À renouveler</span></td><td><a onclick="demoToast('Renouvellement LOC-003')">Traiter</a></td></tr></tbody></table></div>
+      </div>
+
+      <div class="app3-page app-view" id="app-paiements">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>Paiements</strong></div>
+        <div class="page-head"><div><h1>Redevances & paiements</h1><p>Échéanciers, encaissements et relances locataires</p></div><button class="btn-primary3" onclick="demoToast('Nouvelle relance — démonstration')">＋ Relance</button></div>
+        <div class="payment-kpis"><div><b>14</b><span>Échéances ce mois</span></div><div><b>13</b><span>Payées</span></div><div><b>1</b><span>En retard</span></div><div><b>920 €</b><span>Montant dû</span></div></div>
+        <div class="table-card"><table><thead><tr><th>RÉFÉRENCE</th><th>LOCATAIRE</th><th>ÉCHÉANCE</th><th>MONTANT</th><th>STATUT</th><th>ACTION</th></tr></thead><tbody><tr><td><b>PAY-2025-041</b></td><td>SAS Les Tables du Campus</td><td>05/08/2025</td><td>920 €</td><td><span class="badge3 ok">Payé</span></td><td>Voir</td></tr><tr><td><b>PAY-2025-042</b></td><td>SAS Campus Café</td><td>05/08/2025</td><td>920 €</td><td><span class="badge3 refuse">En retard</span></td><td><a onclick="demoToast('Relance envoyée')">Relancer</a></td></tr></tbody></table></div>
+      </div>
+
+      <div class="app3-page app-view" id="app-qhse">
+        <div class="breadcrumb3">⌂　›　SyLOC　›　<strong>QHSE</strong></div>
+        <div class="page-head"><div><h1>Suivi QHSE</h1><p>Contrôles qualité, hygiène, sécurité et environnement</p></div><button class="btn-primary3" onclick="demoToast('Nouveau contrôle — démonstration')">＋ Nouveau contrôle</button></div>
+        <div class="qhse-grid"><div class="qhse-card"><span class="q-icon">✓</span><b>12</b><small>Contrôles réalisés</small></div><div class="qhse-card"><span class="q-icon">!</span><b>3</b><small>Réserves ouvertes</small></div><div class="qhse-card"><span class="q-icon">✓</span><b>91%</b><small>Taux de conformité</small></div></div>
+        <div class="table-card"><table><thead><tr><th>RÉFÉRENCE</th><th>LOCAL</th><th>DATE</th><th>RÉSULTAT</th><th>SUIVI</th></tr></thead><tbody><tr><td><b>CTR-2025-09</b></td><td>Cafétéria Rangueil</td><td>08/08/2025</td><td><span class="badge3 instr">Réserves</span></td><td>Levée à programmer</td></tr><tr><td><b>CTR-2025-08</b></td><td>Boutique Capitole</td><td>01/08/2025</td><td><span class="badge3 ok">Conforme</span></td><td>Aucune action</td></tr></tbody></table></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+const demandes=[
+{id:"2025-0347",candidat:"SAS Les Tables du Campus",type:"Restauration",local:"Cafétéria Rangueil — Bât. C",date:"12/03/2025",statut:"instr",label:"En instruction"},
+{id:"2025-0312",candidat:"SARL Presse & Culture",type:"Commerce",local:"Boutique Université Capitole",date:"08/03/2025",statut:"ok",label:"Acceptée"},
+{id:"2025-0298",candidat:"Auto-ent. Ateliers Bleu",type:"Artisanat",local:"Espace artisanal MDE Mirail",date:"02/03/2025",statut:"incomplete",label:"Incomplète"},
+{id:"2025-0281",candidat:"EURL Saveurs Express",type:"Restauration",local:"Cafétéria IUT Blagnac",date:"24/02/2025",statut:"refuse",label:"Refusée"},
+{id:"2025-0265",candidat:"SAS Campus Café",type:"Commerce",local:"Boutique Rangueil — Hall",date:"18/02/2025",statut:"ok",label:"Acceptée"}];
+
+function accItem(d,withType){
+return `<div class="acc-item"><div class="acc-head" onclick="this.parentElement.classList.toggle('open')"><div class="left"><span class="idnum">${d.id}</span><span class="cand">${d.candidat}</span></div><div style="display:flex;align-items:center;gap:14px"><span class="badge3 ${d.statut}">${d.label}</span><span class="chev">⌄</span></div></div><div class="acc-body"><div class="acc-body-in">${withType?`<div><b>Type</b>${d.type}</div>`:""}<div><b>Local</b>${d.local}</div><div><b>Date de dépôt</b>${d.date}</div><div class="consult" onclick="demoToast('Ouverture du dossier ${d.id}')">◎ Consulter le dossier</div></div></div></div>`;
+}
+document.getElementById("dashboard-acc").innerHTML=demandes.map(d=>accItem(d,false)).join("");
+document.getElementById("demandes-acc").innerHTML=demandes.map(d=>accItem(d,true)).join("");
+
+function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");window.scrollTo({top:0})}
+const navItems=document.querySelectorAll(".app-nav-real button");
+function showAppView(name){document.querySelectorAll(".app-view").forEach(v=>v.classList.remove("active"));document.getElementById("app-"+name).classList.add("active");navItems.forEach(n=>n.classList.toggle("active",n.dataset.view===name));window.scrollTo({top:0})}
+navItems.forEach(item=>item.addEventListener("click",()=>showAppView(item.dataset.view)));
+
+function demoToast(message){
+const old=document.querySelector(".demo-toast");if(old)old.remove();
+const t=document.createElement("div");t.className="demo-toast";t.textContent="Mode démonstration — "+message;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)
+}
+
+const search=document.getElementById("searchDemandes"),sf=document.getElementById("statusFilter"),tf=document.getElementById("typeFilter");
+function filterDemandes(){
+const q=(search.value||"").toLowerCase(),s=sf.value,t=tf.value;
+const filtered=demandes.filter(d=>(!q||[d.id,d.candidat,d.local].join(" ").toLowerCase().includes(q))&&
+(s==="Tous les statuts"||d.label===s)&&(t==="Tous les types"||d.type===t));
+document.getElementById("demandes-acc").innerHTML=filtered.map(d=>accItem(d,true)).join("")||'<div class="placeholder3">Aucun dossier ne correspond aux critères.</div>';
+}
+[search,sf,tf].forEach(x=>x&&x.addEventListener("input",filterDemandes));
+</script>
+</body>

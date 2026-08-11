@@ -1,88 +1,69 @@
-import { useEffect, useState } from "react";
-import api from "../api/axios";
-import {
-  getToken,
-  getUser,
-  removeToken,
-  setToken,
-  setUser,
-} from "../utils/auth";
-import { AuthContext } from "./auth-context";
+import { createContext, useContext, useEffect, useState } from 'react';
+import { DEMO_ACCOUNTS } from '../mocks/data';
+
+const AuthContext = createContext(null);
+
+const TOKEN_KEY = 'syloct_access_token';
+const USER_KEY  = 'syloct_user';
 
 export function AuthProvider({ children }) {
   const [user, setUserState] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Fonction logout déclarée au début
-  const logout = () => {
-    removeToken();
-    setUserState(null);
-    setIsAuthenticated(false);
-  };
-
-  // Vérification du token au chargement
+  // Restaurer la session depuis localStorage au démarrage
   useEffect(() => {
-    let isMounted = true;
-
-    const token = getToken();
-    const savedUser = getUser();
-
-    if (token && savedUser) {
-      api
-        .get("/auth/verify/")
-        .then(() => {
-          if (isMounted) {
-            setUserState(savedUser);
-            setIsAuthenticated(true);
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            logout();
-          }
-        })
-        .finally(() => {
-          if (isMounted) {
-            setLoading(false);
-          }
-        });
-    } else {
-      if (isMounted) {
-        setLoading(false);
-      }
+    try {
+      const savedUser = localStorage.getItem(USER_KEY);
+      if (savedUser) setUserState(JSON.parse(savedUser));
+    } catch (_) {
+      localStorage.removeItem(USER_KEY);
+    } finally {
+      setLoading(false);
     }
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  const login = async (email, password) => {
-    const response = await api.post("/auth/login/", { email, password });
-    const data = response.data;
-    setToken(data.access);
-    setUser(data.user);
-    setUserState(data.user);
-    setIsAuthenticated(true);
-    return data;
+  /**
+   * Connexion — deux modes :
+   *  1. clé demo  (ex. 'demandeur', 'agent_dcuve') → compte de démo local
+   *  2. objet user → utilisé par le formulaire quand l'API réelle répondra
+   */
+  const login = (profileKeyOrUser, token = 'demo-token') => {
+    let account;
+    if (typeof profileKeyOrUser === 'string') {
+      account = DEMO_ACCOUNTS[profileKeyOrUser] ?? DEMO_ACCOUNTS.demandeur;
+    } else {
+      account = profileKeyOrUser;
+    }
+    setUserState(account);
+    localStorage.setItem(USER_KEY, JSON.stringify(account));
+    localStorage.setItem(TOKEN_KEY, token);
+    return account;
   };
 
-  const updateUser = (newUserData) => {
-    const updated = { ...user, ...newUserData };
-    setUser(updated);
-    setUser(updated);
+  const logout = () => {
+    setUserState(null);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
   };
 
-  const value = {
-    user,
-    loading,
-    isAuthenticated,
-    login,
-    logout,
-    updateUser,
-    role: user?.role || null,
+  const updateUser = (patch) => {
+    const updated = { ...user, ...patch };
+    setUserState(updated);
+    localStorage.setItem(USER_KEY, JSON.stringify(updated));
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const isAuthenticated = !!user;
+  const role = user?.role ?? null;
+
+  return (
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, role, login, logout, updateUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth doit être dans <AuthProvider>');
+  return ctx;
 }

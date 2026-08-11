@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-bg text-ink font-sans;
+  font-size: 15.5px;
+}
+h1, h2, .font-display { font-family: 'Lora', serif; }
+
+:focus-visible {
+  outline: 2.5px solid theme('colors.gold.DEFAULT');
+  outline-offset: 2px;
+}

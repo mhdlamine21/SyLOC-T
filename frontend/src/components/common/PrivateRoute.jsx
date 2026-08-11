@@ -1,16 +1,17 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function PrivateRoute() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Chargement...
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--navy)', fontFamily: 'var(--font-body)' }}>
+        <div>Chargement...</div>
       </div>
     );
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  // Rediriger vers l'accueil (Home.jsx) et non une page de connexion isolée
+  return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 }

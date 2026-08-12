@@ -1,0 +1,35 @@
+.notif {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+.notif--success {
+  background: #e8f3e9;
+  color: #205531;
+  border-color: #bfe0c6;
+}
+.notif--error {
+  background: #fbe9e7;
+  color: #7a2a21;
+  border-color: #f1c3bb;
+}
+.notif-icon {
+  font-weight: 700;
+  flex: none;
+}
+.notif-text { flex: 1; }
+.notif-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: .6;
+}
+.notif-close:hover { opacity: 1; }

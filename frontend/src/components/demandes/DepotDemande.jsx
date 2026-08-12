@@ -1,57 +1,65 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
 import {
   PageWrapper, SectionHeader, Card, Button, Field, Input, Textarea, Select, AlertBanner,
 } from '../common/ui';
-import { TYPE_DEMANDE_OPTIONS, locauxMock } from '../../mocks/data';
+import { locauxMock } from '../../mocks/data';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
+const TYPE_DEMANDE_OPTIONS = [
+  { value: 'VENTE_PRODUIT',         label: 'Vente de produits alimentaires / marchandises' },
+  { value: 'PRESTATION_SERVICE',    label: 'Prestation de service commercial' },
+  { value: 'LOCAL_ARTISANAL',       label: 'Local artisanal & création' },
+  { value: 'RENOVATION',            label: "Rénovation d'un local existant" },
+  { value: 'CONSTRUCTION_CANDIDAT', label: 'Construction financée par le candidat' },
+  { value: 'CONSTRUCTION_CROUST',   label: 'Construction financée par le CROUS-T' },
+  { value: 'AUTRE',                 label: 'Autre prestation / projet spécifique' },
+];
+
 const EXIGENCES_DOCUMENTS = {
   VENTE_PRODUIT: [
-    { code: 'NINEA', label: 'Copie NINEA / Registre de Commerce', obligatoire: true },
+    { code: 'CV', label: 'Curriculum Vitae', obligatoire: true },
     { code: 'CNI', label: 'Photocopie CNI du demandeur', obligatoire: true },
-    { code: 'QUITUS_FISCAL', label: 'Quitus fiscal à jour', obligatoire: true },
-    { code: 'CASIER', label: 'Extrait du casier judiciaire (< 3 mois)', obligatoire: true },
-    { code: 'CATALOGUE', label: 'Liste et grille tarifaire des produits proposés', obligatoire: true },
+    { code: 'AUTORISATION_VENTE', label: 'Autorisation de vente', obligatoire: true },
+    { code: 'FICHE_SANTE', label: 'Fiche santé alimentaire', obligatoire: true },
   ],
   PRESTATION_SERVICE: [
-    { code: 'NINEA', label: 'Registre de commerce ou agrément professionnel', obligatoire: true },
+    { code: 'CV', label: 'Curriculum Vitae', obligatoire: true },
     { code: 'CNI', label: 'Photocopie CNI du responsable', obligatoire: true },
-    { code: 'DESCRIPTIF', label: 'Note de présentation des services & équipements', obligatoire: true },
-    { code: 'CASIER', label: 'Extrait de casier judiciaire', obligatoire: true },
+    { code: 'DESCRIPTIF', label: 'Description du service', obligatoire: true },
   ],
   LOCAL_ARTISANAL: [
-    { code: 'CARTE_ETUDIANT', label: 'Carte d\'étudiant UIDT validée (Obligatoire pour Régime Gratuité)', obligatoire: true },
+    { code: 'FORMULAIRE', label: 'Formulaire / Lettre de demande d\'autorisation', obligatoire: true },
     { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
-    { code: 'ATTESTATION_ART', label: 'Attestation de compétence / Brevet artisanal', obligatoire: true },
   ],
   RENOVATION: [
-    { code: 'DOSSIER_TECH', label: 'Dossier technique de rénovation (Descriptif des aménagement)', obligatoire: true },
-    { code: 'DEVIS_TRAVAUX', label: 'Devis estimatif des travaux de réfection', obligatoire: true },
-    { code: 'PLAN_INTERIEUR', label: 'Plan de réaménagement intérieur', obligatoire: true },
-    { code: 'SOLVABILITE', label: 'Justificatif de capacité financière / Relevé bancaire', obligatoire: true },
+    { code: 'MAQUETTE', label: 'Maquette architecturale', obligatoire: true },
+    { code: 'BUSINESS_PLAN', label: 'Business plan du projet', obligatoire: true },
+    { code: 'PREUVE_CONTRAT', label: 'Preuve du contrat en cours', obligatoire: true },
     { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
   ],
   CONSTRUCTION_CANDIDAT: [
-    { code: 'MAQUETTE_3D', label: 'Maquette architecturale 3D & Plan d\'architecte homologué (*)', obligatoire: true },
-    { code: 'DEVIS_DESCRIPTIF', label: 'Devis descriptif complet des matériaux de construction', obligatoire: true },
-    { code: 'CV_ENTREPRENEUR', label: 'CV & Références du maître d\'œuvre / Entrepreneur', obligatoire: true },
-    { code: 'NINEA', label: 'Immatriculation NINEA / RCCM', obligatoire: true },
-    { code: 'GARANTIE_FIN', label: 'Attestation de garantie financière bancaire', obligatoire: true },
+    { code: 'MAQUETTE_3D', label: 'Maquette architecturale 3D', obligatoire: true },
+    { code: 'BUSINESS_PLAN', label: 'Business plan du projet', obligatoire: true },
     { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
   ],
   CONSTRUCTION_CROUST: [
-    { code: 'NOTE_BESOIN', label: 'Note de besoin détaillée & opportunité commerciale', obligatoire: true },
-    { code: 'PLAN_SOUHAITE', label: 'Plan de masse / Implantation souhaitée', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI / NINEA', obligatoire: true },
+    { code: 'NOTE_BESOIN', label: 'Note de besoin détaillée', obligatoire: true },
+    { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
+  ],
+  AUTRE: [
+    { code: 'DOSSIER_PROJET', label: 'Dossier complet de présentation', obligatoire: true },
+    { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
   ],
 };
+
+const generateRef = () => `DM-2026-${Date.now().toString().slice(-5)}`;
 
 export default function DepotDemande() {
   const { user } = useAuth();
   const [form, setForm] = useState({
     type: 'VENTE_PRODUIT',
+    titre_service_custom: '',
     local_id: 'LOC-002',
     description: '',
     documents_fournis: {},
@@ -60,7 +68,18 @@ export default function DepotDemande() {
   const [loading, setLoading] = useState(false);
   const [demandeCreee, setDemandeCreee] = useState(null);
 
-  const docsRequis = EXIGENCES_DOCUMENTS[form.type] || EXIGENCES_DOCUMENTS.VENTE_PRODUIT;
+  const isEtudiant = user?.role === 'USAGER' || user?.username?.includes('etudiant');
+
+  const docsRequis = (EXIGENCES_DOCUMENTS[form.type] || EXIGENCES_DOCUMENTS.VENTE_PRODUIT)
+    .filter(doc => isEtudiant || doc.code !== 'CARTE_ETUDIANT') // Enlève complètement la carte étudiant si non étudiant
+    .map(doc => {
+      if (doc.code === 'CARTE_ETUDIANT') {
+        return { ...doc, obligatoire: true }; // Obligatoire si étudiant
+      }
+      return doc;
+    });
+
+  const selectedLocal = locauxMock.find(l => l.id === form.local_id);
 
   const toggleDocument = (code) => {
     setForm((f) => ({
@@ -74,6 +93,9 @@ export default function DepotDemande() {
 
   const validate = () => {
     const e = {};
+    if (form.type === 'AUTRE' && !form.titre_service_custom.trim()) {
+      e.titre_service_custom = 'Veuillez préciser le titre de votre service ou projet spécifique.';
+    }
     if (!form.description || form.description.length < 25) {
       e.description = 'Veuillez rédiger un descriptif détaillé du projet (min. 25 caractères).';
     }
@@ -93,7 +115,7 @@ export default function DepotDemande() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 900));
 
-    const ref = `DM-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+    const ref = generateRef();
     setDemandeCreee(ref);
     setLoading(false);
   };
@@ -115,7 +137,7 @@ export default function DepotDemande() {
             <Link to="/suivi">
               <Button variant="primary">🔍 Suivre mon dossier</Button>
             </Link>
-            <Button variant="ghost" onClick={() => { setDemandeCreee(null); setForm({ type: 'VENTE_PRODUIT', local_id: 'LOC-002', description: '', documents_fournis: {} }); }}>
+            <Button variant="ghost" onClick={() => { setDemandeCreee(null); setForm({ type: 'VENTE_PRODUIT', titre_service_custom: '', local_id: 'LOC-002', description: '', documents_fournis: {} }); }}>
               Déposer une autre demande
             </Button>
           </div>
@@ -146,6 +168,16 @@ export default function DepotDemande() {
               </Select>
             </Field>
 
+            {form.type === 'AUTRE' && (
+              <Field label="Titre spécifique de la prestation / du projet *" required error={errors.titre_service_custom}>
+                <Input
+                  value={form.titre_service_custom}
+                  onChange={(e) => setForm((f) => ({ ...f, titre_service_custom: e.target.value }))}
+                  placeholder="Ex. Service d'impression 3D & Reprographie numérique"
+                />
+              </Field>
+            )}
+
             <Field label="Local commercial ciblé *" required>
               <Select
                 value={form.local_id}
@@ -153,17 +185,17 @@ export default function DepotDemande() {
               >
                 {locauxMock.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.reference} — {l.localisation} ({l.surface_m2} m², {l.est_libre ? 'Libre' : 'Occupé'})
+                    {l.reference} - {l.localisation} ({l.surface_m2} m², {l.est_libre ? 'Libre' : 'Occupé'})
                   </option>
                 ))}
               </Select>
             </Field>
 
-            <Field label="Descriptif détaillé de l'activité ou de la construction *" required error={errors.description}>
+            <Field label="Descriptif détaillé de l'activité commerciale / Projet *" required error={errors.description}>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Décrivez précisément votre projet commercial, la provenance des produits, la stratégie tarifaire ou les travaux prévus..."
+                placeholder="Décrivez précisément votre projet commercial, le modèle de service, la provenance des produits..."
                 rows={5}
               />
             </Field>
@@ -171,10 +203,7 @@ export default function DepotDemande() {
             {/* EXIGENCES DOCUMENTAIRES DYNAMIQUES */}
             <div className="mt-6 pt-4 border-t border-ink/10">
               <p className="font-display font-bold text-sm text-ink mb-1">
-                📌 Pièces justificatives exigées pour la catégorie : <span className="text-teal font-mono">{form.type}</span>
-              </p>
-              <p className="text-xs text-muted mb-4">
-                Veuillez joindre ou confirmer la présence de chaque document réclamé avant soumission.
+                📌 Pièces justificatives exigées : <span className="text-teal font-mono">{form.type}</span>
               </p>
 
               {errors.documents && (
@@ -224,24 +253,49 @@ export default function DepotDemande() {
 
         {/* Sidebar Info */}
         <div className="md:col-span-4 space-y-4">
+          {/* Prévisualisation du local sélectionné */}
+          {selectedLocal && (
+            <Card className="bg-paper border border-teal/20 shadow-sm overflow-hidden p-0">
+              {/* Photo du local (ou placeholder) */}
+              <div 
+                className="w-full h-32 bg-cover bg-center" 
+                style={{ backgroundImage: `url(${selectedLocal.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80'})` }}
+              />
+              <div className="p-4">
+                <h3 className="font-display font-bold text-teal mb-1">
+                  📍 {selectedLocal.reference}
+                </h3>
+                <p className="text-sm font-bold text-ink mb-3">{selectedLocal.localisation}</p>
+                <div className="space-y-1.5 text-xs text-slate">
+                  <p className="flex justify-between">
+                    <span>Type:</span> <span className="font-bold text-ink">{selectedLocal.type_local || 'Commercial'}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>Surface:</span> <span className="font-bold text-ink">{selectedLocal.surface_m2} m²</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>État:</span> <span className="font-bold text-ink">{selectedLocal.etat_physique || 'Bon état'}</span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span>Gestionnaire:</span> <span className="font-bold text-ink">{selectedLocal.gestionnaire || 'CROUS-T'}</span>
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="bg-paper2">
-            <h3 className="font-display font-bold text-base mb-2">Identité du Candidat</h3>
+            <h3 className="font-display font-bold text-base mb-2">Identité du Demandeur</h3>
             <div className="space-y-2 text-xs">
               <p><strong>Nom :</strong> {user?.nom_complet || 'Babacar Ndiaye'}</p>
               <p><strong>Email :</strong> {user?.email}</p>
-              <p><strong>Statut :</strong> {user?.est_etudiant ? '🎓 Étudiant UIDT' : '💼 Candidat Commercial'}</p>
+              <p><strong>Statut :</strong> {isEtudiant ? '🎓 Étudiant UIDT (Gratuité éligible)' : '💼 Candidat Externe / Commercial'}</p>
             </div>
           </Card>
 
-          {form.type === 'LOCAL_ARTISANAL' && !user?.est_etudiant && (
-            <AlertBanner type="warn">
-              ⚠️ <strong>Régime Spécial Artisanat :</strong> La gratuité de la redevance est exclusivement réservée aux étudiants UIDT certifiés avec carte validée.
-            </AlertBanner>
-          )}
-
-          {form.type === 'CONSTRUCTION_CANDIDAT' && (
+          {!isEtudiant && (
             <AlertBanner type="info">
-              📐 <strong>Expertise Technique Obligatoire :</strong> Les dossiers de construction financée par le candidat sont obligatoirement transmis au <strong>Service Technique</strong> pour analyse des plans et maquettes avant commission.
+              💼 <strong>Régime Général :</strong> La gratuité de la redevance est exclusivement réservée aux étudiants récurrents de l'UIDT. Le dépôt du dossier de projet complet est obligatoire.
             </AlertBanner>
           )}
         </div>

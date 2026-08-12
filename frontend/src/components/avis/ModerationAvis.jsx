@@ -30,7 +30,7 @@ export default function ModerationAvis() {
             </div>
 
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--navy)' }}>
-              {a.cantine} — {'⭐'.repeat(a.note)}
+              {a.cantine} - {'⭐'.repeat(a.note)}
             </h3>
             <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 10px' }}>
               Auteur : <strong>{a.etudiant}</strong> (Étudiant Vérifié)

@@ -41,9 +41,9 @@ export default function InspectionQHSE() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label="Local commercial inspecté *" required>
             <Select value={local} onChange={(e) => setLocal(e.target.value)}>
-              <option value="LOC-004">LOC-004 — Cantine A (Mamadou Lô)</option>
-              <option value="LOC-001">LOC-001 — Kiosque Bloc A (Aïssatou Ndiaye)</option>
-              <option value="LOC-002">LOC-002 — Multiservices (Ousmane Traoré)</option>
+              <option value="LOC-004">LOC-004 - Cantine A (Mamadou Lô)</option>
+              <option value="LOC-001">LOC-001 - Kiosque Bloc A (Aïssatou Ndiaye)</option>
+              <option value="LOC-002">LOC-002 - Multiservices (Ousmane Traoré)</option>
             </Select>
           </Field>
 

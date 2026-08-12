@@ -15,6 +15,9 @@ import Signup from './components/auth/Signup';
 // Dashboard adaptatif
 import Dashboard from './pages/Dashboard';
 
+// Bureau du Courrier
+import BureauCourrierView from './components/courrier/BureauCourrierView';
+
 // Demandes Usager
 import DepotDemande from './components/demandes/DepotDemande';
 import SuiviDemande from './components/demandes/SuiviDemande';
@@ -33,7 +36,7 @@ import ServiceJuridiqueView from './components/juridique/ServiceJuridiqueView';
 // Service Technique & Expertise Maquettes
 import ServiceTechniqueView from './components/terrain/ServiceTechniqueView';
 
-// Cellule Communication — Publication Appels & Affiches Accueil
+// Cellule Communication - Publication Appels & Affiches Accueil
 import CelluleComView from './components/communication/CelluleComView';
 
 // Bureau Environnement (QHSE) & Agent Terrain
@@ -106,17 +109,17 @@ const AppRoutes = () => {
           {/* Avis cantines (Vérification étudiante dans le composant) */}
           <Route path="/avis" element={<LaisserAvis />} />
 
-          {/* Cellule Communication — Publication Appels & Affiches */}
+          {/* Cellule Communication - Publication Appels & Affiches */}
           <Route element={<RoleRoute allowedRoles={['CELLULE_COMMUNICATION', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/communication" element={<CelluleComView />} />
           </Route>
 
-          {/* Service Juridique — Rédaction de Contrats */}
+          {/* Service Juridique - Rédaction de Contrats */}
           <Route element={<RoleRoute allowedRoles={['SERVICE_JURIDIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/juridique" element={<ServiceJuridiqueView />} />
           </Route>
 
-          {/* Service Technique — Expertise Maquettes & Maintenance */}
+          {/* Service Technique - Expertise Maquettes & Maintenance */}
           <Route element={<RoleRoute allowedRoles={['SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/service-technique" element={<ServiceTechniqueView />} />
           </Route>
@@ -140,17 +143,22 @@ const AppRoutes = () => {
             <Route path="/paiement" element={<Paiement />} />
           </Route>
 
+          {/* Bureau du Courrier - Enregistrement & Réception */}
+          <Route element={<RoleRoute allowedRoles={['BUREAU_COURRIER', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T', 'DIRECTEUR_DCUVE']} />}>
+            <Route path="/courrier" element={<BureauCourrierView />} />
+          </Route>
+
           {/* Services DCUVE */}
-          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/instruction" element={<InstructionDCUVE />} />
           </Route>
 
           {/* Commission Consultative */}
-          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/commission" element={<CommissionVote />} />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/validation-cartes" element={<ValidationCartes />} />
           </Route>
 

@@ -18,7 +18,7 @@ export default function BureauEnvironnementView() {
             <span style={{ background: 'var(--amber-pale)', color: 'var(--amber-deep)', padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>Rappel à l'ordre</span>
           </div>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, margin: '0 0 6px', color: 'var(--navy)' }}>
-            Mamadou Lô (Cantine A — LOC-004)
+            Mamadou Lô (Cantine A - LOC-004)
           </h3>
           <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 12px' }}>
             Motif : Température réfrigérateur non conforme lors du contrôle sanitaire du 6 août.

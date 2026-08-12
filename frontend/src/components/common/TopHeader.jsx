@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,9 +11,21 @@ export default function TopHeader({ onToggleMobileSidebar }) {
   const { user, role, logout } = useAuth();
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const initials = user?.nom_complet?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   const navItems = getNavigationItems(user, role);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -59,11 +71,11 @@ export default function TopHeader({ onToggleMobileSidebar }) {
 
       {/* ── Centre : MENU HORIZONTAL (Grand Écran / Ordinateur / Portable) ── */}
       <nav 
-        className="desktop-top-menu"
+        className="desktop-top-menu hidden md:flex"
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
+          alignItems: 'center', justifyContent: 'center', gap: 6,
           overflowX: 'auto', padding: '4px 8px',
-          maxWidth: '55vw',
+          flex: 1, margin: '0 20px',
         }}
       >
         {navItems.map((item, i) => {
@@ -91,65 +103,100 @@ export default function TopHeader({ onToggleMobileSidebar }) {
         })}
       </nav>
 
-      {/* ── Droite : Actions (Toggle Sombre, Notification, Profil & Déconnexion) ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Toggle Mode Sombre */}
-        <button
-          className="theme-toggle"
-          onClick={toggle}
-          title={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
-          aria-label="Basculer le mode sombre"
-        >
-          {dark ? '☀️' : '🌙'}
-        </button>
-
-        {/* Cloche de notification */}
+      {/* ── Droite : Actions (Notification + Menu Déroulant Utilisateur) ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Cloche de notification (juste à côté du profil) */}
         <NotificationBell position="header" />
 
-        {/* Badge profil utilisateur */}
+        {/* Menu Déroulant Utilisateur (Tout à droite) */}
         {user && (
-          <div
-            style={{
-              display: 'flex', alignItems: 'center', gap: 9,
-              background: 'var(--surface-2)', padding: '6px 12px',
-              borderRadius: 10, border: '1px solid var(--border)',
-            }}
-            className="user-header-chip"
-          >
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%',
-              background: 'var(--navy)', color: '#fff',
-              display: 'grid', placeItems: 'center',
-              fontSize: 10, fontWeight: 900, flexShrink: 0,
-            }}>
-              {initials}
-            </div>
-            <div style={{ textAlign: 'left', lineHeight: 1.25 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy)', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user.nom_complet}
+          <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'var(--surface-2)', padding: '6px 12px 6px 6px',
+                borderRadius: 24, border: '1px solid var(--border)',
+                cursor: 'pointer', transition: 'all 0.2s ease',
+              }}
+              className="hover:border-teal/50 hover:bg-teal-pale/30"
+              title="Menu Utilisateur"
+            >
+              <div style={{
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'var(--navy)', color: '#fff',
+                display: 'grid', placeItems: 'center',
+                fontSize: 11, fontWeight: 900, flexShrink: 0,
+              }}>
+                {initials}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--gold-deep)', fontWeight: 800, textTransform: 'uppercase' }}>
-                {role?.replace(/_/g, ' ')}
+              <span className="hidden md:block" style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>
+                {user.nom_complet.split(' ')[0]}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--slate)', marginLeft: 2 }}>▼</span>
+            </button>
+
+            {isDropdownOpen && (
+              <div 
+                style={{
+                  position: 'absolute', top: '110%', right: 0,
+                  width: 240, background: 'var(--surface)',
+                  border: '1px solid var(--border)', borderRadius: 12,
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                  padding: '8px', zIndex: 100,
+                  display: 'flex', flexDirection: 'column', gap: 4
+                }}
+              >
+                <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.nom_complet}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--gold-deep)', fontWeight: 800, textTransform: 'uppercase' }}>
+                    {role?.replace(/_/g, ' ')}
+                  </div>
+                </div>
+
+                <NavLink 
+                  to="/profile" 
+                  onClick={() => setIsDropdownOpen(false)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, textDecoration: 'none', color: 'var(--navy)', fontSize: 13, fontWeight: 600 }}
+                  className="hover:bg-surface-2"
+                >
+                  <span>👤</span> Voir le profil
+                </NavLink>
+
+                <button
+                  onClick={() => { toggle(); setIsDropdownOpen(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'transparent', border: 'none', color: 'var(--navy)', cursor: 'pointer', fontSize: 13, fontWeight: 600, width: '100%', textAlign: 'left' }}
+                  className="hover:bg-surface-2"
+                >
+                  <span>{dark ? '☀️' : '🌙'}</span> Mode {dark ? 'clair' : 'sombre'}
+                </button>
+
+                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }}></div>
+
+                <button
+                  onClick={() => { 
+                    setIsDropdownOpen(false); 
+                    toast('📞 Contact : contact@crous-thies.sn | 33 951 12 34', { icon: 'ℹ️' }); 
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'transparent', border: 'none', color: 'var(--navy)', cursor: 'pointer', fontSize: 13, fontWeight: 600, width: '100%', textAlign: 'left' }}
+                  className="hover:bg-surface-2"
+                >
+                  <span>📞</span> Contacter le service
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 13, fontWeight: 700, width: '100%', textAlign: 'left', marginTop: 4 }}
+                  className="hover:bg-red/20"
+                >
+                  <span>🚪</span> Déconnexion
+                </button>
               </div>
-            </div>
+            )}
           </div>
         )}
-
-        {/* Bouton Déconnexion rapide (Grand écran) */}
-        <button
-          onClick={handleLogout}
-          className="desktop-logout-btn"
-          title="Déconnexion"
-          style={{
-            background: 'var(--surface-2)', border: '1px solid var(--border)',
-            borderRadius: 10, padding: '8px 12px', cursor: 'pointer',
-            fontSize: 12, fontWeight: 700, color: 'var(--navy)',
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}
-        >
-          <span>🚪</span>
-          <span className="hidden xl:inline">Déconnexion</span>
-        </button>
       </div>
 
       <style>{`

@@ -6,7 +6,6 @@ export function getNavigationItems(user, role) {
 
   const NAV = [
     { label: 'Tableau de bord', path: '/dashboard', icon: '🏠', roles: null },
-    { label: 'Mon profil', path: '/profile', icon: '👤', roles: null },
 
     { group: 'Espace Candidat', roles: ['USAGER'] },
     { label: 'Catalogue Locaux', path: '/locaux-catalogue', icon: '🗺️', roles: ['USAGER'] },
@@ -31,9 +30,12 @@ export function getNavigationItems(user, role) {
       { label: "Commission d'évaluation", path: '/commission', icon: '⚖', roles: null },
     ] : []),
 
-    { group: 'Instruction DCUVE', roles: ['AGENT_DCUVE', 'DIRECTEUR_DCUVE'] },
-    { label: 'Dossiers à instruire', path: '/instruction', icon: '📂', roles: ['AGENT_DCUVE', 'DIRECTEUR_DCUVE'] },
-    { label: 'Validation cartes', path: '/validation-cartes', icon: '🪪', roles: ['AGENT_DCUVE'] },
+    { group: 'Bureau du Courrier', roles: ['BUREAU_COURRIER'] },
+    { label: 'Réception Courrier & Dossiers', path: '/courrier', icon: '📬', roles: ['BUREAU_COURRIER'] },
+
+    { group: 'Instruction DCUVE', roles: ['DIRECTEUR_DCUVE'] },
+    { label: 'Dossiers à instruire', path: '/instruction', icon: '📂', roles: ['DIRECTEUR_DCUVE'] },
+    { label: 'Validation cartes', path: '/validation-cartes', icon: '🪪', roles: ['DIRECTEUR_DCUVE'] },
     { label: 'Référentiel des locaux', path: '/patrimoine/locaux', icon: '🏗️', roles: ['DIRECTEUR_DCUVE'] },
 
     { group: 'Guichet Comptabilité', roles: ['SERVICE_COMPTABLE'] },

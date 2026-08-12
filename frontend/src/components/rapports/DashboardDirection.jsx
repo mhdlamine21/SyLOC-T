@@ -4,8 +4,9 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { PageWrapper, SectionHeader, StatCard, Card, Button, StatusBadge, Modal, Field, Select, Textarea } from '../common/ui';
+import { PageWrapper, SectionHeader, StatCard, Card, Button, StatusBadge, Modal, Field, Select, Textarea, AlertBanner } from '../common/ui';
 import { kpisMock, evolutionDemandesMock, repartitionTypesMock, topOccupantsMock } from '../../mocks/data';
+import { exporterCSV } from '../../utils/pdfGenerator';
 
 const COLORS = ['#1f4b3f', '#c98a2c', '#a6362b', '#2f7d4f'];
 
@@ -32,6 +33,15 @@ export default function DashboardDirection() {
         title="Tableau de bord de pilotage & Analytique des occupants"
         subtitle={`Données de supervision arrêtées au ${new Date().toLocaleDateString('fr-SN', { day: '2-digit', month: 'long', year: 'numeric' })}`}
       />
+
+      <div className="flex justify-end gap-4 mb-4">
+        <Button variant="navy" onClick={() => {
+          exporterCSV(topOccupants, 'Rapport_Top_Occupants_Direction');
+          toast.success("📊 Rapport d'audit exporté avec succès (CSV) !");
+        }}>
+          📥 Exporter le Rapport Complet (Excel)
+        </Button>
+      </div>
 
       {/* Top KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -148,7 +158,7 @@ export default function DashboardDirection() {
       </div>
 
       {/* Modal Dépêcher une mission terrain */}
-      <Modal open={!!showMissionModal} onClose={() => setShowMissionModal(null)} title={showMissionModal ? `Mission d'inspection terrain — ${showMissionModal.nom}` : ''}>
+      <Modal open={!!showMissionModal} onClose={() => setShowMissionModal(null)} title={showMissionModal ? `Mission d'inspection terrain - ${showMissionModal.nom}` : ''}>
         {showMissionModal && (
           <div className="space-y-4">
             <AlertBanner type="warn">

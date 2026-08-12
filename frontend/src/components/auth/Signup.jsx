@@ -15,10 +15,10 @@ export default function Signup() {
     adresse: "",
     est_etudiant: false,
   });
+  // eslint-disable-next-line no-unused-vars
   const [carteFichier, setCarteFichier] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ export default function Signup() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", fontFamily: "Inter, sans-serif" }}>
-      {/* Colonne gauche — Illustration & Identité */}
+      {/* Colonne gauche - Illustration & Identité */}
       <div style={{ flex: "0 0 420px", background: "var(--teal-deep)", color: "var(--paper)", padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }} className="hidden md:flex">
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
@@ -102,13 +102,14 @@ export default function Signup() {
         </div>
 
         <p style={{ fontSize: 12, color: "rgba(243,238,225,0.35)", margin: 0, fontFamily: "IBM Plex Mono, monospace" }}>
-          © 2026 CROUS-T — Université Iba Der Thiam de Thiès
+          © 2026 CROUS-T - Université Iba Der Thiam de Thiès
         </p>
       </div>
 
-      {/* Colonne droite — Formulaire */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 28px", overflowY: "auto" }}>
-        <div style={{ width: "100%", maxWidth: 520 }}>
+      {/* Colonne droite - Formulaire */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0", overflowY: "auto" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
+          <div style={{ width: "100%", maxWidth: 520 }}>
           <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontFamily: "IBM Plex Mono, monospace", color: "var(--teal)", textDecoration: "none", fontWeight: 600, marginBottom: 32 }}>
             ← Retour à l'accueil
           </Link>
@@ -222,7 +223,7 @@ export default function Signup() {
             {typeUsager === "ETUDIANT" && (
               <div style={{ background: "rgba(201,138,44,0.08)", border: "1px solid rgba(201,138,44,0.2)", padding: "14px 16px", marginBottom: 20 }}>
                 <label style={{ ...labelStyle, marginBottom: 8 }}>
-                  Carte étudiante (photo ou PDF) — optionnel mais recommandé
+                  Carte étudiante (photo ou PDF) - optionnel mais recommandé
                 </label>
                 <input
                   type="file"
@@ -253,6 +254,11 @@ export default function Signup() {
             </button>
           </form>
         </div>
+        </div>
+        
+        <footer style={{ marginTop: 24, paddingBottom: 20, textAlign: 'center', fontSize: 12, color: 'var(--muted)' }}>
+          © 2026 CROUS de Thiès - SyLOC-T. Tous droits réservés.
+        </footer>
       </div>
     </div>
   );

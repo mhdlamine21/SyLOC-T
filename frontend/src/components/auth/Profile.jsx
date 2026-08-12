@@ -72,11 +72,11 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="font-mono text-xs text-muted uppercase">Prénom</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.prenom || user?.nom_complet?.split(' ')[0] || '—'}</p>
+              <p className="font-semibold text-ink mt-0.5">{user?.prenom || user?.nom_complet?.split(' ')[0] || '-'}</p>
             </div>
             <div>
               <p className="font-mono text-xs text-muted uppercase">Nom</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.nom || user?.nom_complet?.split(' ')[1] || '—'}</p>
+              <p className="font-semibold text-ink mt-0.5">{user?.nom || user?.nom_complet?.split(' ')[1] || '-'}</p>
             </div>
             <div>
               <p className="font-mono text-xs text-muted uppercase">Téléphone</p>
@@ -163,6 +163,37 @@ export default function Profile() {
           </div>
         </Card>
       </div>
+
+      {/* Détails du Contrat & Règles (Uniquement pour OCCUPANT ou AMICALE) */}
+      {(user?.role === 'OCCUPANT' || user?.role === 'AMICALE') && (
+        <Card className="mt-6 border-l-4" style={{ borderLeftColor: 'var(--navy)' }}>
+          <SectionHeader 
+            eyebrow="Mes Engagements"
+            title="Détails du Contrat & Règles d'Occupation"
+            subtitle="Modalités, règles QHSE et conditions spécifiques liées à votre local domanial."
+            className="mb-4"
+          />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-display font-bold text-ink mb-2">📜 Modalités & Règles Spécifiques</h3>
+              <ul className="text-sm text-muted space-y-2">
+                <li>• <strong>Loyer :</strong> Paiement exigible avant le 05 de chaque mois.</li>
+                <li>• <strong>Horaires :</strong> Ouverture autorisée de 07h00 à 22h00 maximum.</li>
+                <li>• <strong>Sous-location :</strong> Strictement interdite sous peine de résiliation immédiate.</li>
+                <li>• <strong>Modifications :</strong> Aucune modification de la structure du local sans aval du CROUS-T.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-ink mb-2">🛡️ Règles QHSE & Cas de Vol</h3>
+              <ul className="text-sm text-muted space-y-2">
+                <li>• <strong>Hygiène :</strong> Entretien quotidien obligatoire du local et de ses abords.</li>
+                <li>• <strong>Sécurité :</strong> Extincteur obligatoire et interdiction de stocker des matières inflammables.</li>
+                <li>• <strong className="text-red">Vols & Pertes :</strong> Le CROUS-T décline toute responsabilité en cas de vol ou dégradation du matériel appartenant à l'occupant. Le contrat ne prend pas en charge la sécurisation des biens privés.</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
     </PageWrapper>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * SyLOC-T — Bibliothèque de composants UI réutilisables
+ * SyLOC-T - Bibliothèque de composants UI réutilisables
  * Thème Navy / Or (Objetif/index.html reference)
  */
 
@@ -177,8 +177,13 @@ export function SectionHeader({ eyebrow, title, subtitle }) {
 // ─── PAGE WRAPPER ──────────────────────────────────────────────────────────────
 export function PageWrapper({ children, className = '' }) {
   return (
-    <div className={`fade-in ${className}`} style={{ padding: 'clamp(16px,3vw,28px)', maxWidth: 1240, margin: '0 auto' }}>
-      {children}
+    <div className={`fade-in ${className}`} style={{ padding: 'clamp(16px,3vw,28px)', maxWidth: 1240, margin: '0 auto', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1 }}>
+        {children}
+      </div>
+      <footer style={{ marginTop: 'auto', paddingTop: 40, paddingBottom: 10, textAlign: 'center', fontSize: 12, color: 'var(--muted)' }}>
+        © 2026 CROUS de Thiès - SyLOC-T. Tous droits réservés.
+      </footer>
     </div>
   );
 }
@@ -206,15 +211,15 @@ export function LoadingState({ label = 'Chargement…' }) {
 }
 
 // ─── MODAL ─────────────────────────────────────────────────────────────────────
-export function Modal({ open, onClose, title, children, size = 'md' }) {
+export function Modal({ open, onClose, title, children, size = 'md', maxWidth: customMaxWidth }) {
   if (!open) return null;
   const maxWidths = { sm: 400, md: 540, lg: 760, xl: 960 };
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(15,27,61,.60)',
-        backdropFilter: 'blur(4px)',
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(11, 19, 43, 0.70)',
+        backdropFilter: 'blur(5px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16, animation: 'fadeIn 0.15s ease-out both',
       }}
@@ -222,14 +227,14 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
     >
       <div
         style={{
-          background: 'var(--surface)',
+          background: 'var(--surface-card)',
           border: '1px solid var(--border)',
           borderRadius: 20,
-          width: '100%', maxWidth: maxWidths[size],
+          width: '100%', maxWidth: customMaxWidth || maxWidths[size],
           maxHeight: '90vh', overflowY: 'auto',
           position: 'relative',
           animation: 'fadeIn 0.2s ease-out both',
-          boxShadow: '0 30px 80px rgba(0,0,0,.25)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
         }}
       >
         {/* Header de la modale */}
@@ -317,7 +322,7 @@ export function Timeline({ items }) {
             {item.statut ? <StatusBadge statut={item.statut} /> : item.titre}
           </p>
           {item.commentaire && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{item.commentaire}</p>}
-          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>— {item.auteur}</p>}
+          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>- {item.auteur}</p>}
         </li>
       ))}
     </ol>
@@ -405,3 +410,5 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
     </div>
   );
 }
+
+// End of ui.jsx

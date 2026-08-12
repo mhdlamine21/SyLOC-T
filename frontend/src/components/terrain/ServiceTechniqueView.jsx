@@ -24,7 +24,7 @@ export default function ServiceTechniqueView() {
             Construction Kiosque Restauration (Ousmane Traoré)
           </h3>
           <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 12px' }}>
-            Dossier de construction financé par le candidat — Plan & Maquette 3D soumis.
+            Dossier de construction financé par le candidat - Plan & Maquette 3D soumis.
           </p>
           <Button variant="amber" size="sm" onClick={() => setSelectedExpertise('DEM-2026-003')}>
             📐 Examiner les Maquettes & Plans →

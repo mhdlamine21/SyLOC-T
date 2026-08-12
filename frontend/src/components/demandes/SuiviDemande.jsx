@@ -16,7 +16,7 @@ export default function SuiviDemande() {
     redevance: 45000,
     caution: 90000,
     modalites: 'Paiement mensuel par Wave, Orange Money, Virement bancaire ou en espèces au Guichet Comptable.',
-    reglements: `ARTICLE 1 — USAGE DU LOCAL : Le local est concédé à titre d'occupation domaniale précaire et révocable. Toute sous-location est formellement interdite sous peine de résiliation immédiate.\n\nARTICLE 2 — NORMES SANITAIRES ET PRIX : L'occupant s'engage à respecter scrupuleusement la grille des prix arrêtée avec le CROUS-T et à maintenir un état de propreté irréprochable.\n\nARTICLE 3 — PAIEMENT DES REDEVANCES : La redevance est payable d'avance le 15 de chaque mois. Tout retard supérieur à 10 jours entraînera des pénalités de 5% et l'émission d'un rappel à l'ordre.\n\nARTICLE 4 — SANCTIONS & EXPULSION : En cas de 3 avis défavorables QHSE ou d'impayé persistant, le contrat sera résilié de plein droit avec préavis d'urgence de 48 heures.`,
+    reglements: `ARTICLE 1 - USAGE DU LOCAL : Le local est concédé à titre d'occupation domaniale précaire et révocable. Toute sous-location est formellement interdite sous peine de résiliation immédiate.\n\nARTICLE 2 - NORMES SANITAIRES ET PRIX : L'occupant s'engage à respecter scrupuleusement la grille des prix arrêtée avec le CROUS-T et à maintenir un état de propreté irréprochable.\n\nARTICLE 3 - PAIEMENT DES REDEVANCES : La redevance est payable d'avance le 15 de chaque mois. Tout retard supérieur à 10 jours entraînera des pénalités de 5% et l'émission d'un rappel à l'ordre.\n\nARTICLE 4 - SANCTIONS & EXPULSION : En cas de 3 avis défavorables QHSE ou d'impayé persistant, le contrat sera résilié de plein droit avec préavis d'urgence de 48 heures.`,
     dates_rdv: ['2026-08-22 à 10h00', '2026-08-23 à 14h30', '2026-08-25 à 11h00'],
   };
 
@@ -112,7 +112,7 @@ export default function SuiviDemande() {
       <Modal
         open={!!selectedContratDossier}
         onClose={() => setSelectedContratDossier(null)}
-        title={selectedContratDossier ? `Proposition de Bail Officiel — ${selectedContratDossier.id_demande}` : ''}
+        title={selectedContratDossier ? `Proposition de Bail Officiel - ${selectedContratDossier.id_demande}` : ''}
         size="lg"
       >
         {selectedContratDossier && (

@@ -18,6 +18,8 @@
     "axios": "^1.19.0",
     "date-fns": "^4.4.0",
     "js-cookie": "^3.0.8",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.85.0",

@@ -1,9 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white p-4 text-center">
-      <p className="text-sm">
-        © SyLOCT-T 2026 VCN - Système de gestion des locaux | CROUS-T
-      </p>
-    </footer>
+    <div style={{ borderTop: '1px solid rgba(148, 163, 184, 0.2)', padding: '20px 24px', textAlign: 'center', fontSize: 12, color: 'var(--slate)', width: '100%', marginTop: 'auto' }}>
+      © 2026 CROUS de Thiès - SyLOC-T. Tous droits réservés. Plateforme sécurisée conformes aux normes gouvernementales.
+    </div>
   );
 }

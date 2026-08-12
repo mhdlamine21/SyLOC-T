@@ -26,7 +26,7 @@ export default function RapportPeriode() {
   };
 
   const handleExportPDF = () => {
-    exportToPDF(`Rapport Mensuel d'Activité Locative — ${periode}`, 'Bilan des demandes et attributions domaniales', evolutionDemandesMock, columnsExport);
+    exportToPDF(`Rapport Mensuel d'Activité Locative - ${periode}`, 'Bilan des demandes et attributions domaniales', evolutionDemandesMock, columnsExport);
   };
 
   return (
@@ -65,7 +65,7 @@ export default function RapportPeriode() {
 
       <Card>
         <div className="flex justify-between items-center mb-5">
-          <p className="font-display font-semibold text-base text-ink">Évolution des demandes — 6 derniers mois</p>
+          <p className="font-display font-semibold text-base text-ink">Évolution des demandes - 6 derniers mois</p>
           <span className="font-mono text-xs text-teal font-semibold">Bilan consolidé</span>
         </div>
         <ResponsiveContainer width="100%" height={240}>

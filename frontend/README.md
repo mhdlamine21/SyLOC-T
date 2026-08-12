@@ -1,4 +1,4 @@
-# 🏛️ SyLOC-T — Système de Gestion du Domaine & des Locaux Commerciaux (CROUS-T)
+# 🏛️ SyLOC-T - Système de Gestion du Domaine & des Locaux Commerciaux (CROUS-T)
 
 Plateforme web moderne, ultra-responsive et sécurisée dédiée à la dématérialisation complète du processus de gestion domaniale, des candidatures, des baux domaniaux et du recouvrement des redevances du **Centre Régional des Œuvres Universitaires de Thiès (CROUS-T)**.
 
@@ -64,4 +64,4 @@ L'application sera accessible sur `http://localhost:5173`.
 ---
 
 ## 📄 Licence
-Projet réalisé dans le cadre du module Développement Web Avancé — UFR Sciences & Technologies / CROUS de Thiès.
+Projet réalisé dans le cadre du module Développement Web Avancé - UFR Sciences & Technologies / CROUS de Thiès.

@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
-   SYSLOC-T — Design System Navy / Or
+   SYSLOC-T - Design System Navy / Or
    Inspiré du fichier de référence Objetif/index.html
    ═══════════════════════════════════════════════════════════ */
 
@@ -30,6 +30,7 @@
   /* ── Surfaces / backgrounds ── */
   --bg:          #f5f6fb;
   --surface:     #ffffff;
+  --surface-card:#ffffff;
   --surface-2:   #f8fafc;
   --border:      #e2e8f0;
   --shadow:      0 10px 30px rgba(15,27,61,.07);
@@ -66,31 +67,50 @@
 /* ═══════════════════════════════════════════════════════════
    MODE SOMBRE
    ═══════════════════════════════════════════════════════════ */
-[data-theme="dark"] {
-  --navy:        #93c5fd;
-  --navy-2:      #0f172a;
-  --gold:        #fbbf24;
-  --gold-deep:   #f59e0b;
-  --gold-soft:   #1c1408;
+[data-theme="dark"], .dark {
+  --navy:        #60a5fa;
+  --navy-2:      #0b132b;
+  --navy-3:      #1c2541;
+  --gold:        #38bdf8;
+  --gold-deep:   #60a5fa;
+  --gold-soft:   #0f2847;
   --slate:       #94a3b8;
-  --slate-soft:  #1e293b;
-  --green:       #4ade80;
-  --green-soft:  #052e16;
+  --slate-soft:  #1c2541;
+  --green:       #34d399;
+  --green-soft:  #064e3b;
   --red:         #f87171;
-  --red-soft:    #450a0a;
+  --red-soft:    #7f1d1d;
 
-  --bg:          #0f172a;
-  --surface:     #1e293b;
-  --surface-2:   #0f172a;
-  --border:      #334155;
-  --shadow:      0 10px 30px rgba(0,0,0,.4);
+  --bg:          #0b132b;
+  --surface:     #1c2541;
+  --surface-card:#1c2541;
+  --surface-2:   #0b132b;
+  --border:      #3a506b;
+  --shadow:      0 10px 30px rgba(0,0,0,.6);
 
-  --text:        #e2e8f0;
-  --muted:       #94a3b8;
-  --ink:         #e2e8f0;
-  --paper:       #0f172a;
-  --paper2:      #1e293b;
-  --paper3:      #1a2540;
+  --text:        #f8fafc;
+  --muted:       #cbd5e1;
+  --ink:         #f8fafc;
+  --paper:       #0b132b;
+  --paper2:      #1c2541;
+  --paper3:      #1c2541;
+}
+
+/* Dark Mode Input & Form Controls visibility override */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+.dark input,
+.dark select,
+.dark textarea {
+  color: #f8fafc !important;
+  background-color: #1c2541 !important;
+  border-color: #3a506b !important;
+}
+
+[data-theme="dark"] input::placeholder,
+.dark input::placeholder {
+  color: #94a3b8 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -318,7 +338,7 @@ h1, h2, h3, h4, h5, .font-display {
 [data-theme="dark"] .stat-num { color: var(--gold); }
 
 /* ═══════════════════════════════════════════════════════════
-   APPELS À CANDIDATURE — Cartes "Tableau accroché"
+   APPELS À CANDIDATURE - Cartes "Tableau accroché"
    ═══════════════════════════════════════════════════════════ */
 .appel-section { background: var(--surface-2); }
 .appel-grid {
@@ -418,7 +438,7 @@ h1, h2, h3, h4, h5, .font-display {
 .notice-card.pin-slate::before { background: var(--slate); }
 
 /* ═══════════════════════════════════════════════════════════
-   APP SHELL — Sidebar
+   APP SHELL - Sidebar
    ═══════════════════════════════════════════════════════════ */
 .app-sidebar {
   background: var(--navy-2); color: #cbd5e1;
@@ -460,7 +480,7 @@ h1, h2, h3, h4, h5, .font-display {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TOP HEADER — Barre du haut
+   TOP HEADER - Barre du haut
    ═══════════════════════════════════════════════════════════ */
 .top-header {
   position: sticky; top: 0; z-index: 40;
@@ -645,10 +665,27 @@ tr:hover td { background: var(--surface-2); }
   .hero-tiles { grid-template-columns: repeat(3,1fr); }
   .app-sidebar { width: 200px; }
   .modal-box { padding: 24px; }
+  
+  /* Home Header Responsive */
+  .home-header { flex-direction: column !important; gap: 16px; padding: 16px !important; text-align: center; }
+  .home-header nav { flex-wrap: wrap; justify-content: center; gap: 10px !important; }
+  .home-header > div { flex-wrap: wrap; justify-content: center; }
+  
+  /* Home Login Popup Responsive */
+  .login-modal-popup { 
+    top: 50% !important; 
+    right: 50% !important; 
+    transform: translate(50%, -50%) !important; 
+    width: 90% !important; 
+    max-width: 360px !important; 
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 }
 @media (max-width: 480px) {
   .hero-tiles { grid-template-columns: repeat(2,1fr); }
   .modal-box { border-radius: 12px; }
+  .login-modal-popup { width: 95% !important; padding: 16px !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════

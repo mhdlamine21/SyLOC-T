@@ -162,7 +162,7 @@ export default function GestionComptes() {
         {v}
       </span>
     ) },
-    { key: 'service', label: 'Service / Département', render: (v) => <span className="text-xs font-mono text-muted">{v || '—'}</span> },
+    { key: 'service', label: 'Service / Département', render: (v) => <span className="text-xs font-mono text-muted">{v || '-'}</span> },
     {
       key: 'statut', label: 'Statut',
       render: (v) => (
@@ -187,7 +187,7 @@ export default function GestionComptes() {
         <SectionHeader
           eyebrow={isAdminSI ? "Supervision SI" : "Direction Générale CROUS-T"}
           title="Gestion des comptes utilisateurs du système"
-          subtitle={`${users.length} comptes — ${users.filter((u) => u.est_membre_commission).length} membres de la commission d'évaluation.`}
+          subtitle={`${users.length} comptes - ${users.filter((u) => u.est_membre_commission).length} membres de la commission d'évaluation.`}
         />
         <div className="flex gap-2">
           <Button variant="amber" size="sm" onClick={() => {
@@ -261,7 +261,7 @@ export default function GestionComptes() {
       </Card>
 
       {/* Modal Fiche Utilisateur */}
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Fiche Utilisateur — ${selected.nom_complet}` : ''} size="lg">
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Fiche Utilisateur - ${selected.nom_complet}` : ''} size="lg">
         {selected && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 text-sm bg-paper2 p-4 rounded border border-ink/10">
@@ -282,7 +282,7 @@ export default function GestionComptes() {
               ))}
             </div>
 
-            {/* Attribution / Révision du titre de Commission — Seule la Direction peut cliquer */}
+            {/* Attribution / Révision du titre de Commission - Seule la Direction peut cliquer */}
             {isDirector ? (
               <div className="p-4 bg-teal-pale border border-teal/20 rounded flex items-center justify-between">
                 <div>

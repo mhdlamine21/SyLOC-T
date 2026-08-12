@@ -68,7 +68,7 @@ export function exportToPDF(title, subtitle, data = [], columns = []) {
   const rowsHtml = data.map((row) => {
     const cells = columns.map((col) => {
       const val = row[col.key];
-      return `<td style="border: 1px solid #ddd; padding: 8px; font-size: 12px; font-family: sans-serif;">${val !== undefined && val !== null ? val : '—'}</td>`;
+      return `<td style="border: 1px solid #ddd; padding: 8px; font-size: 12px; font-family: sans-serif;">${val !== undefined && val !== null ? val : '-'}</td>`;
     }).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
@@ -77,7 +77,7 @@ export function exportToPDF(title, subtitle, data = [], columns = []) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${title} — SyLOC-T PDF</title>
+        <title>${title} - SyLOC-T PDF</title>
         <style>
           body { font-family: 'Inter', Helvetica, Arial, sans-serif; padding: 30px; color: #201c14; }
           .header { text-align: center; border-bottom: 2px solid #1f4b3f; padding-bottom: 15px; margin-bottom: 20px; }
@@ -89,7 +89,7 @@ export function exportToPDF(title, subtitle, data = [], columns = []) {
       </head>
       <body>
         <div class="header">
-          <h1>CROUS DE THIÈS — SITE VCN</h1>
+          <h1>CROUS DE THIÈS - SITE VCN</h1>
           <p>${title} | ${subtitle}</p>
           <p>Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
         </div>

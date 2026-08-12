@@ -6,6 +6,18 @@ import {
   demandesMock, kpisMock, signalementsMock, cartesEtudiantsMock, utilisateursMock, contratMock, appelsMock,
 } from '../mocks/data';
 import toast from 'react-hot-toast';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const EVOLUTION_SCORE = [
+  { mois: 'Jan', score: 2.5 }, { mois: 'Fév', score: 3.0 }, { mois: 'Mar', score: 3.8 },
+  { mois: 'Avr', score: 4.2 }, { mois: 'Mai', score: 4.5 }
+];
+
+const ANOMALIES_DATA = [
+  { name: 'Insanité', value: 4, color: '#f59e0b' },
+  { name: 'Sous-location', value: 2, color: '#dc2626' },
+  { name: 'Dette', value: 3, color: '#2563eb' }
+];
 
 // ─── Modal partagé "Dépêcher une mission terrain" ────────────────────────────
 function DepecherMissionModal({ open, onClose, defaultOccupant = 'Mamadou Lô (Cantine A)' }) {
@@ -37,10 +49,10 @@ function DepecherMissionModal({ open, onClose, defaultOccupant = 'Mamadou Lô (C
 
         <Field label="Occupant / Local visé *" required>
           <Select value={occupant} onChange={(e) => setOccupant(e.target.value)}>
-            <option value="Mamadou Lô (Cantine A — LOC-004)">Mamadou Lô (Cantine A — LOC-004)</option>
-            <option value="Aïssatou Ndiaye (Bloc A — LOC-001)">Aïssatou Ndiaye (Bloc A — LOC-001)</option>
-            <option value="Ousmane Traoré (Multiservices — LOC-002)">Ousmane Traoré (Multiservices — LOC-002)</option>
-            <option value="Occupant Non Identifié (Bloc C — LOC-003)">Occupant Non Identifié (Bloc C — LOC-003)</option>
+            <option value="Mamadou Lô (Cantine A - LOC-004)">Mamadou Lô (Cantine A - LOC-004)</option>
+            <option value="Aïssatou Ndiaye (Bloc A - LOC-001)">Aïssatou Ndiaye (Bloc A - LOC-001)</option>
+            <option value="Ousmane Traoré (Multiservices - LOC-002)">Ousmane Traoré (Multiservices - LOC-002)</option>
+            <option value="Occupant Non Identifié (Bloc C - LOC-003)">Occupant Non Identifié (Bloc C - LOC-003)</option>
           </Select>
         </Field>
 
@@ -81,7 +93,7 @@ function DashboardUsager({ user }) {
       <SectionHeader
         eyebrow="Portail Usager / Candidat"
         title={`Bonjour, ${user?.prenom || user?.nom_complet?.split(' ')[0] || 'Usager'} 👋`}
-        subtitle="Votre espace candidat & usager du campus — soumission de projets et suivi des démarches."
+        subtitle="Votre espace candidat & usager du campus - soumission de projets et suivi des démarches."
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Mes dossiers déposés" value={mesDemandes.length} color="teal" icon="📋" />
@@ -137,6 +149,27 @@ function DashboardOccupant({ user }) {
         <StatCard label="Score Inspection QHSE" value="★ 4.2 / 5" color="ok" icon="🔬" />
         <StatCard label="Score Avis Étudiants" value="★ 4.5 / 5" color="amber" icon="⭐" />
       </div>
+
+      <Card className="mb-6">
+        <h3 className="font-display font-semibold text-navy mb-4">📈 Évolution de votre Score Global (Fidélité & Avis)</h3>
+        <div style={{ width: '100%', height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={EVOLUTION_SCORE}>
+              <defs>
+                <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--amber)" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="var(--amber)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="mois" axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 5]} axisLine={false} tickLine={false} />
+              <Tooltip />
+              <Area type="monotone" dataKey="score" stroke="var(--amber)" fillOpacity={1} fill="url(#colorScore)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
 
       <div className="grid md:grid-cols-3 gap-4">
         <Link to="/espace-occupant">
@@ -361,27 +394,34 @@ function DashboardQHSE({ user }) {
 }
 
 function DashboardBureauCourrier({ user }) {
+  const nouvelles = demandesMock.filter((d) => d.statut === 'NOUVELLE' || d.statut === 'CONTROLE_RECEVABILITE').length;
   return (
     <PageWrapper>
       <SectionHeader
-        eyebrow="Bureau du Courrier"
-        title={`Bureau du Courrier : ${user?.nom_complet}`}
-        subtitle="Réception et contrôle de recevabilité administrative des dossiers reçus."
+        eyebrow="Bureau du Courrier & Réception"
+        title={`Espace Courrier : ${user?.nom_complet}`}
+        subtitle="Réception des dossiers d'occupation, enregistrement des récepissés physiques et orientation vers la DCUVE."
       />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Dossiers reçus" value="8" color="teal" icon="📬" />
-        <StatCard label="En attente contrôle" value="3" color="amber" icon="⏳" />
-        <StatCard label="Transmis à la DCUVE" value="5" color="ok" icon="✅" />
+        <StatCard label="Courriers Récepissés" value={demandesMock.length} color="navy" icon="📬" />
+        <StatCard label="En Attente Orientation" value={nouvelles} color="amber" icon="⏳" />
+        <StatCard label="Transmis à la DCUVE" value="8 dossiers" color="ok" icon="✅" />
       </div>
-      <Link to="/instruction">
-        <Card className="flex items-center gap-4 hover:border-teal transition-colors border bg-teal-pale/30">
-          <span className="text-4xl">📬</span>
-          <div>
-            <p className="font-display font-bold text-lg text-teal">File de Recevabilité du Courrier</p>
-            <p className="text-sm text-muted">Vérifier la présence des pièces obligatoires avant enregistrement</p>
-          </div>
-        </Card>
-      </Link>
+
+      <div className="flex gap-4 mb-6">
+        <Link to="/courrier">
+          <Button variant="navy">
+            📬 Gérer le Courrier d'Arrivée & Transmettre
+          </Button>
+        </Link>
+      </div>
+
+      <Card>
+        <h3 className="font-display font-bold text-navy mb-2">Instructions Bureau du Courrier (UC13 & UC25)</h3>
+        <p className="text-sm text-muted">
+          Vous êtes chargé de la réception des candidatures physiques et électroniques. Enregistrez la date de récepissé des pièces puis orientez le dossier vers le Directeur DCUVE pour instruction ou formulez une demande de complément à l'usager.
+        </p>
+      </Card>
     </PageWrapper>
   );
 }
@@ -542,7 +582,7 @@ function DashboardAdmin({ user }) {
       </div>
 
       {/* Modal Changement de Directeur Général */}
-      <Modal open={showChangeDirectorModal} onClose={() => setShowChangeDirectorModal(false)} title="Supervision SI — Nommer le Directeur Général">
+      <Modal open={showChangeDirectorModal} onClose={() => setShowChangeDirectorModal(false)} title="Supervision SI - Nommer le Directeur Général">
         <div className="space-y-4">
           <p className="text-xs text-muted">
             En tant que Superviseur Admin SI, vous pouvez réaffecter le rôle de Directeur Général CROUS-T à un membre du personnel.
@@ -551,7 +591,7 @@ function DashboardAdmin({ user }) {
           <Field label="Sélectionner l'utilisateur à nommer Directeur Général *" required>
             <Select value={newDirectorUser} onChange={(e) => setNewDirectorUser(e.target.value)}>
               {utilisateursMock.filter((u) => u.role !== 'USAGER').map((u) => (
-                <option key={u.id} value={u.id}>{u.nom_complet} — {u.service} ({u.role})</option>
+                <option key={u.id} value={u.id}>{u.nom_complet} - {u.service} ({u.role})</option>
               ))}
             </Select>
           </Field>
@@ -586,6 +626,34 @@ function DashboardTerrain({ user }) {
         <StatCard label="Missions urgentes reçues" value="1 active" color="amber" icon="⚡" />
       </div>
 
+      <Card className="mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <h3 className="font-display font-semibold text-navy mb-2">📊 Typologie des Anomalies sur le Terrain</h3>
+          <p className="text-sm text-muted mb-4">Répartition des signalements et infractions constatées lors des rondes et inspections.</p>
+          <Button variant="navy" size="sm">📥 Exporter le rapport des signalements (CSV)</Button>
+        </div>
+        <div style={{ width: 300, height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={ANOMALIES_DATA}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {ANOMALIES_DATA.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
       <div className="flex gap-4 mb-6">
         <Button variant="stamp" onClick={() => setShowDepecherModal(true)}>
           ⚡ Rédiger un Ordre de Mission Terrain
@@ -607,6 +675,46 @@ function DashboardTerrain({ user }) {
   );
 }
 
+function DashboardAmicale({ user }) {
+  return (
+    <PageWrapper>
+      <SectionHeader
+        eyebrow="Espace Amicale Étudiante"
+        title={`Bienvenue, ${user?.nom_complet} 👋`}
+        subtitle="Gestion de votre espace alloué, attribution de vos sous-occupants et recouvrement."
+      />
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Local attribué" value="Kiosques Bloc A" color="teal" icon="🏢" sub="5 sous-espaces" />
+        <StatCard label="Étudiants Gérés" value="5" color="navy" icon="👥" sub="sous-occupants" />
+        <StatCard label="Redevance CROUS" value="150k" color="amber" icon="💰" sub="FCFA à reverser" />
+        <StatCard label="Fonds Collectés" value="250k" color="ok" icon="📈" sub="FCFA ce mois" />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Link to="/amicale/occupants">
+          <Card className="flex items-center gap-4 hover:border-teal transition-colors border">
+            <span className="text-3xl">👥</span>
+            <div>
+              <p className="font-display font-semibold">Gérer mes Étudiants (Sous-occupants)</p>
+              <p className="text-xs text-muted">Attribuer un espace et définir le tarif étudiant</p>
+            </div>
+          </Card>
+        </Link>
+        <Link to="/amicale/recouvrement">
+          <Card className="flex items-center gap-4 hover:border-teal transition-colors border">
+            <span className="text-3xl">💳</span>
+            <div>
+              <p className="font-display font-semibold">Collecte des Redevances</p>
+              <p className="text-xs text-muted">Encaisser les paiements des étudiants et suivre les retards</p>
+            </div>
+          </Card>
+        </Link>
+      </div>
+    </PageWrapper>
+  );
+}
+
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -623,8 +731,9 @@ export default function Dashboard() {
   if (role === 'BUREAU_COURRIER')      return <DashboardBureauCourrier user={user} />;
   if (role === 'DIRECTEUR_CROUS_T')    return <DashboardDirection user={user} />;
   if (role === 'ADMINISTRATEUR_SI')    return <DashboardAdmin user={user} />;
-  if (role === 'AGENT_DCUVE' || role === 'DIRECTEUR_DCUVE') return <DashboardDCUVE user={user} />;
+  if (role === 'DIRECTEUR_DCUVE') return <DashboardDCUVE user={user} />;
   if (role === 'AGENT_TERRAIN')        return <DashboardTerrain user={user} />;
+  if (role === 'AMICALE')              return <DashboardAmicale user={user} />;
 
   if (role === 'USAGER')               return <DashboardUsager user={user} />;
 
@@ -633,7 +742,7 @@ export default function Dashboard() {
       <SectionHeader
         eyebrow="Espace Personnel"
         title={`Bienvenue, ${user?.nom_complet}`}
-        subtitle={`Rôle : ${role?.replace(/_/g, ' ')} — Service : ${user?.service || 'non défini'}`}
+        subtitle={`Rôle : ${role?.replace(/_/g, ' ')} - Service : ${user?.service || 'non défini'}`}
       />
       <Card>
         <p className="text-sm text-muted">Votre espace est configuré par l'administration. Utilisez la navigation latérale pour accéder à vos fonctions.</p>

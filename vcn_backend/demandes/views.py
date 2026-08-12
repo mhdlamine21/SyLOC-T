@@ -1,7 +1,9 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from comptes.models import RoleUtilisateur, Demandeur
+from comptes.models import RoleUtilisateur, Demandeur, Notification
+from core.audit import journaliser
+from core.permissions import roles_requis
 from .models import AppelCandidature, Demande, Dossier, VoteCommission, MembreCommission, StatutDemande
 from .serializers import (
     AppelCandidatureSerializer, DemandeSerializer, DemandeAnonymeSerializer, DossierSerializer, VoteCommissionSerializer, MembreCommissionSerializer
@@ -24,13 +26,17 @@ class DemandeViewSet(viewsets.ModelViewSet):
         if self.request.user.role == RoleUtilisateur.USAGER:
             return DemandeSerializer
             
+        # Le Service Juridique et le DCUVE ont toujours accès à l'identité complète
+        if self.request.user.role in [RoleUtilisateur.SERVICE_JURIDIQUE, RoleUtilisateur.DIRECTEUR_DCUVE]:
+            return DemandeSerializer
+
         # Si c'est le directeur ou la commission, on vérifie si la demande est clôturée
         if self.action in ['retrieve', 'update', 'partial_update']:
             demande = self.get_object()
-            if demande.statut in [StatutDemande.FAVORABLE, StatutDemande.DEFAVORABLE]:
+            if getattr(demande, 'statut', None) in [StatutDemande.FAVORABLE, StatutDemande.DEFAVORABLE]:
                 return DemandeSerializer # Identité révélée car le vote est fini
         
-        # Par défaut (ex: GET /demandes/), identité toujours masquée (Blind Review)
+        # Par défaut (ex: GET /demandes/ pour la Commission), identité masquée (Blind Review)
         return DemandeAnonymeSerializer
 
 
@@ -40,14 +46,58 @@ class DemandeViewSet(viewsets.ModelViewSet):
             return Demande.objects.filter(demandeur__utilisateur=user)
         return Demande.objects.all()
 
+    @staticmethod
+    def _notifier(demande, message):
+        try:
+            Notification.objects.create(destinataire=demande.demandeur.utilisateur, contenu=message)
+        except Exception:
+            pass
+
     def perform_create(self, serializer):
         try:
             demandeur = Demandeur.objects.get(utilisateur=self.request.user)
         except Demandeur.DoesNotExist:
             demandeur = Demandeur.objects.create(utilisateur=self.request.user, contact="")
-        serializer.save(demandeur=demandeur)
+        demande = serializer.save(demandeur=demandeur)
+        # Un dossier est toujours ouvert avec la demande (pieces jointes).
+        Dossier.objects.get_or_create(demande=demande)
+        journaliser(self.request.user, "DEPOT_DEMANDE", f"Demande {demande.reference_anonyme}",
+                    f"type={demande.type_demande}")
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=False, methods=['get'], url_path='mes-demandes')
+    def mes_demandes(self, request):
+        demandes = Demande.objects.filter(demandeur__utilisateur=request.user).order_by('-date_depot')
+        return Response(DemandeSerializer(demandes, many=True).data)
+
+    @action(detail=True, methods=['get'])
+    def historique(self, request, pk=None):
+        from .serializers import HistoriqueStatutDemandeSerializer
+        demande = self.get_object()
+        historique = demande.historique.all().order_by('date_creation')
+        return Response(HistoriqueStatutDemandeSerializer(historique, many=True).data)
+
+    @action(detail=True, methods=['post'], url_path='documents',
+            permission_classes=[permissions.IsAuthenticated])
+    def ajouter_document(self, request, pk=None):
+        """Depot d'une piece justificative sur le dossier de la demande."""
+        from .serializers import DocumentSerializer
+        demande = self.get_object()
+        dossier, _ = Dossier.objects.get_or_create(demande=demande)
+        fichier = request.FILES.get('fichier')
+        if not fichier:
+            return Response({'fichier': ["Fichier manquant."]}, status=status.HTTP_400_BAD_REQUEST)
+        document = dossier.documents.create(
+            type_document=request.data.get('type_document', 'AUTRE'),
+            nom_fichier=request.data.get('nom_fichier') or fichier.name,
+            fichier=fichier,
+        )
+        journaliser(request.user, "DEPOT_DOCUMENT", f"Demande {demande.reference_anonyme}",
+                    document.type_document)
+        return Response(DocumentSerializer(document).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], permission_classes=[roles_requis(
+        'BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE',
+        'AGENT_QHSE', 'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
     def changer_statut(self, request, pk=None):
         demande = self.get_object()
         nouveau_statut = request.data.get('statut')
@@ -57,9 +107,13 @@ class DemandeViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Statut manquant."}, status=status.HTTP_400_BAD_REQUEST)
             
         demande_maj = DemandeService.changer_statut(demande, nouveau_statut, request.user, commentaire)
+        self._notifier(demande_maj, f"Votre dossier {demande_maj.reference_anonyme} est desormais au statut : {demande_maj.statut}.")
+        journaliser(request.user, "CHANGEMENT_STATUT_DEMANDE", f"Demande {demande_maj.reference_anonyme}",
+                    f"-> {nouveau_statut} ({commentaire})")
         return Response(DemandeSerializer(demande_maj).data)
 
-    @action(detail=True, methods=['post'], url_path='avis-sanitaire', permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], url_path='avis-sanitaire', permission_classes=[roles_requis(
+        'AGENT_QHSE', 'DIRECTEUR_DCUVE', 'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
     def enregistrer_avis_sanitaire(self, request, pk=None):
         demande = self.get_object()
         demande.avis_sanitaire_externe = request.data.get('avis', '')
@@ -67,6 +121,18 @@ class DemandeViewSet(viewsets.ModelViewSet):
         demande.save(update_fields=['avis_sanitaire_externe', 'reference_avis_sanitaire'])
         
         return Response({'avis_sanitaire_externe': demande.avis_sanitaire_externe})
+
+    @action(detail=True, methods=['post'], url_path='avis-technique', permission_classes=[roles_requis(
+        'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
+    def enregistrer_avis_technique(self, request, pk=None):
+        demande = self.get_object()
+        avis = request.data.get('avis', '')
+        
+        demande.avis_technique_interne = avis
+        demande.statut = StatutDemande.EN_ATTENTE_DECISION
+        demande.save(update_fields=['avis_technique_interne', 'statut'])
+        
+        return Response(DemandeSerializer(demande).data)
 
     @action(detail=False, methods=['get'], url_path='triees')
     def demandes_triees(self, request):
@@ -82,7 +148,8 @@ class DemandeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(demandes, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[roles_requis(
+        'DIRECTEUR_CROUS_T', 'DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI')])
     def decider(self, request, pk=None):
         demande = self.get_object()
         decision = request.data.get('decision')
@@ -91,16 +158,50 @@ class DemandeViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Décision invalide."}, status=status.HTTP_400_BAD_REQUEST)
             
         demande_maj = DemandeService.changer_statut(demande, decision, request.user, commentaire)
+        self._notifier(demande_maj, f"Decision sur votre dossier {demande_maj.reference_anonyme} : {decision}.")
+        journaliser(request.user, "DECISION_DEMANDE", f"Demande {demande_maj.reference_anonyme}",
+                    f"decision={decision} ({commentaire})")
         return Response(DemandeSerializer(demande_maj).data)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[roles_requis(
+        'BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE',
+        'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
     def valider(self, request, pk=None):
         demande = self.get_object()
         commentaire = request.data.get('commentaire', 'Validation par le service')
         demande_maj = DemandeService.valider_demande(demande, request.user, commentaire)
+        journaliser(request.user, "VALIDATION_DEMANDE", f"Demande {demande_maj.reference_anonyme}", commentaire)
         return Response(DemandeSerializer(demande_maj).data)
 
-    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=True, methods=['post'], url_path='accepter-contrat', permission_classes=[permissions.IsAuthenticated])
+    def accepter_contrat(self, request, pk=None):
+        demande = self.get_object()
+        date_rdv = request.data.get('date_rdv')
+        
+        if not date_rdv:
+            return Response({"detail": "La date de rendez-vous est requise."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        demande.rdv_signature_date = date_rdv
+        demande.statut = StatutDemande.CONTRAT_ACCEPTE_RDV_FIXE
+        demande.save(update_fields=['rdv_signature_date', 'statut'])
+        
+        return Response(DemandeSerializer(demande).data)
+
+    @action(detail=True, methods=['post'], url_path='refuser-contrat',
+            permission_classes=[permissions.IsAuthenticated])
+    def refuser_contrat(self, request, pk=None):
+        """Le candidat (USAGER) refuse la proposition de contrat qui lui est faite."""
+        demande = self.get_object()
+        motif = request.data.get('motif') or request.data.get('commentaire', '')
+        demande_maj = DemandeService.changer_statut(
+            demande, StatutDemande.CONTRAT_REFUSE, request.user, motif
+        )
+        journaliser(request.user, "REFUS_CONTRAT", f"Demande {demande_maj.reference_anonyme}", motif)
+        return Response(DemandeSerializer(demande_maj).data)
+
+    @action(detail=True, methods=['get'], permission_classes=[roles_requis(
+        'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_TECHNIQUE', 'DIRECTEUR_CROUS_T',
+        'ADMINISTRATEUR_SI')])
     def analyse_equidistance(self, request, pk=None):
         demande = self.get_object()
         if not demande.local or demande.local.latitude is None or demande.local.longitude is None:

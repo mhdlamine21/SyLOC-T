@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-*8gtjt1j6y4aw&8vp1+a&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']  # a restreindre en prod
+ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='*').split(',') if h.strip()]
 
 
 # Application definition
@@ -85,8 +85,10 @@ SPECTACULAR_SETTINGS = {
 
 # A ouvrir a l'URL de votre app React en developpement.
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5173',
+    o.strip() for o in config(
+        'CORS_ALLOWED_ORIGINS',
+        default='http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173',
+    ).split(',') if o.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -125,23 +127,43 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 import sys
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME', default='syloc_t'),
-        'USER': config('DB_USER', default='root'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='127.0.0.1'),
-        'PORT': config('DB_PORT', default='3306'),
-    }
-}
 
+# DB_ENGINE : 'mysql' (defaut, ce que l'equipe utilise) ou 'sqlite'
+# (pratique pour lancer le projet sans installer MySQL).
+DB_ENGINE = config('DB_ENGINE', default='mysql')
+
+if DB_ENGINE == 'sqlite':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': config('DB_NAME', default=str(BASE_DIR / 'db.sqlite3')),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': config('DB_NAME', default='syloc_t'),
+            'USER': config('DB_USER', default='root'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='127.0.0.1'),
+            'PORT': config('DB_PORT', default='3306'),
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                # Mode strict : MySQL refuse les donnees tronquees/invalides
+                # au lieu de les accepter silencieusement.
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
+
+# Les tests tournent toujours sur SQLite (aucune dependance a MySQL).
 if 'test' in sys.argv:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db_test.sqlite3',
     }
-
 
 
 # Password validation
@@ -180,12 +202,16 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Fichiers uploades (cartes etudiant, pieces des dossiers...)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend',
+)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='no-reply@crous-t.sn')

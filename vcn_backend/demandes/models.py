@@ -30,14 +30,16 @@ class TypeDocument(models.TextChoices):
 class StatutDemande(models.TextChoices):
     NOUVELLE = "NOUVELLE", "Nouvelle demande"
     CONTROLE_RECEVABILITE = "CONTROLE_RECEVABILITE", "Contrôle de recevabilité"
-    EN_ATTENTE_COMPLEMENT = "EN_ATTENTE_COMPLEMENT", "En attente de compléments"
-    ETUDE_FAISABILITE = "ETUDE_FAISABILITE", "Étude de faisabilité"
+    MITIGEE_COMPLEMENT = "MITIGEE_COMPLEMENT", "En attente de compléments"
+    EN_EXPERTISE_TECHNIQUE = "EN_EXPERTISE_TECHNIQUE", "Expertise technique"
     CONTROLE_HYGIENE = "CONTROLE_HYGIENE", "Contrôle sanitaire et hygiène"
     EN_ATTENTE_DECISION = "EN_ATTENTE_DECISION", "En attente de décision finale"
     FAVORABLE = "FAVORABLE", "Favorable"
     DEFAVORABLE = "DEFAVORABLE", "Défavorable"
     MITIGEE_ARCHIVEE = "MITIGEE_ARCHIVEE", "Mitigée (Archivée)"
     EN_ATTENTE_SIGNATURE = "EN_ATTENTE_SIGNATURE", "En attente de signature"
+    CONTRAT_ACCEPTE_RDV_FIXE = "CONTRAT_ACCEPTE_RDV_FIXE", "Contrat accepté (RDV fixé)"
+    CONTRAT_REFUSE = "CONTRAT_REFUSE", "Contrat refusé"
 
 class TypeCritere(models.TextChoices):
     GENRE = "GENRE", "Genre"
@@ -73,10 +75,13 @@ class Demande(BaseModel):
     type_demande = models.CharField(max_length=32, choices=TypeDemande.choices)
     statut = models.CharField(max_length=32, choices=StatutDemande.choices, default=StatutDemande.NOUVELLE)
     date_depot = models.DateTimeField(auto_now_add=True)
+    description_projet = models.TextField(blank=True)
     notes_admin = models.TextField(blank=True)
     reference_anonyme = models.CharField(max_length=50, unique=True, blank=True)
     avis_sanitaire_externe = models.CharField(max_length=50, blank=True)
     reference_avis_sanitaire = models.CharField(max_length=255, blank=True)
+    avis_technique_interne = models.TextField(blank=True)
+    rdv_signature_date = models.CharField(max_length=100, blank=True)
     
     demandeur = models.ForeignKey(Demandeur, on_delete=models.CASCADE, related_name="demandes")
     appel_candidature = models.ForeignKey(AppelCandidature, on_delete=models.SET_NULL, null=True, blank=True, related_name="candidatures")
@@ -140,4 +145,11 @@ class VoteCommission(BaseModel):
     demande = models.ForeignKey(Demande, on_delete=models.CASCADE, related_name="votes")
     membre = models.ForeignKey(MembreCommission, on_delete=models.CASCADE, related_name="votes_emis")
     avis = models.CharField(max_length=32, choices=AvisCommission.choices)
+    note_formelle = models.FloatField(null=True, blank=True)
+    note_technique = models.FloatField(null=True, blank=True)
     commentaire = models.TextField(blank=True)
+
+    @property
+    def note_moyenne(self):
+        notes = [n for n in (self.note_formelle, self.note_technique) if n is not None]
+        return round(sum(notes) / len(notes), 2) if notes else None

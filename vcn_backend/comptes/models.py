@@ -9,6 +9,7 @@ from core.models import BaseModel
 class RoleUtilisateur(models.TextChoices):
     USAGER = "USAGER", "Usager"
     BUREAU_COURRIER = "BUREAU_COURRIER", "Bureau du Courrier"
+    AGENT_DCUVE = "AGENT_DCUVE", "Agent DCUVE"
     DIRECTEUR_DCUVE = "DIRECTEUR_DCUVE", "Directeur DCUVE"
     DIRECTEUR_CROUS_T = "DIRECTEUR_CROUS_T", "Directeur CROUS-T"
     SERVICE_JURIDIQUE = "SERVICE_JURIDIQUE", "Service Juridique"

@@ -40,8 +40,14 @@ class Paiement(BaseModel):
         return f"Quitus pour le paiement {self.id}"
 
     def valider_paiement(self):
+        # Numero de quitus officiel : c'est la reference imprimee sur la
+        # quittance PDF remise a l'occupant, elle doit donc etre persistee.
+        if not self.reference_quitus:
+            self.reference_quitus = f"QUITUS-{self.date_paiement:%Y%m%d}-{str(self.id)[:8].upper()}"
+            self.save(update_fields=["reference_quitus"])
+
         # Logique de solde de l'échéance
-        total_paye = sum(p.montant_regle for p in self.echeance.paiements.all()) + self.montant_regle
+        total_paye = sum(p.montant_regle for p in self.echeance.paiements.all())
         total_du = self.echeance.montant_du + self.echeance.montant_penalite
 
         if total_paye >= total_du:

@@ -9,8 +9,8 @@ class Contrat(BaseModel):
     demandeur = models.ForeignKey(Demandeur, on_delete=models.PROTECT, related_name="contrats_titulaire")
     signataire_crous_t = models.ForeignKey(Utilisateur, on_delete=models.PROTECT, related_name="contrats_signes")
     
-    # Optional relation to Demande for now, using string ref
-    # demande = models.OneToOneField('demandes.Demande', null=True, blank=True, on_delete=models.SET_NULL)
+    # Relation optionnelle vers Demande
+    demande = models.OneToOneField('demandes.Demande', null=True, blank=True, on_delete=models.SET_NULL)
 
     date_signature = models.DateField(default=timezone.now)
     date_debut = models.DateField()

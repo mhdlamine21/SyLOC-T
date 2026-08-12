@@ -34,3 +34,24 @@ class EstProprietaire(BasePermission):
             return True
         owner = getattr(obj, "demandeur", None) or getattr(obj, "utilisateur", None)
         return owner is not None and getattr(owner, "id", None) == user.id
+
+
+def roles_requis(*roles):
+    """Fabrique une permission DRF limitee a une liste de roles.
+
+    Remplace `IsAdminUser` sur les actions metier : un Directeur DCUVE ou le
+    Service Juridique n'est pas un superuser Django, il doit pourtant pouvoir
+    agir sur les dossiers.
+    """
+    class _RolesRequis(BasePermission):
+        message = "Votre role ne permet pas cette action."
+
+        def has_permission(self, request, view):
+            user = request.user
+            if not user or not user.is_authenticated:
+                return False
+            if user.is_superuser or getattr(user, "role", None) == "DIRECTEUR_CROUS_T":
+                return True
+            return getattr(user, "role", None) in roles
+
+    return _RolesRequis

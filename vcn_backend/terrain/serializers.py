@@ -26,6 +26,9 @@ class SanctionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_creation', 'date_modification', 'date_application']
 
 class AvisCantineSerializer(serializers.ModelSerializer):
+    local_reference = serializers.CharField(source='local.reference', read_only=True)
+    auteur_nom = serializers.CharField(source='auteur.utilisateur.nom_complet', read_only=True)
+
     class Meta:
         model = AvisCantine
         fields = '__all__'

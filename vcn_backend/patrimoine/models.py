@@ -30,6 +30,7 @@ class Local(BaseModel):
     gestionnaire = models.CharField(max_length=20, choices=Gestionnaire.choices, default=Gestionnaire.CROUS_T)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    photo_url = models.URLField(max_length=500, blank=True)
     est_libre = models.BooleanField(default=True)
 
     def __str__(self):

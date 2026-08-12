@@ -162,9 +162,7 @@ classDiagram
   class ModePaiement {
     <<enumeration>>
     MOBILE_MONEY
-    VIREMENT
     ESPECES
-    CHEQUE
   }
 
   class TypeControleQHSE {

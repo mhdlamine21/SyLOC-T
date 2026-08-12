@@ -38,18 +38,18 @@ class DemandesTests(APITestCase):
         self.client.force_authenticate(user=self.admin)
         url = f'/api/demandes/demandes/{demande.id}/changer_statut/'
         data = {
-            "statut": StatutDemande.EN_ATTENTE_COMPLEMENT,
+            "statut": StatutDemande.MITIGEE_COMPLEMENT,
             "commentaire": "Il manque une pièce."
         }
         
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['statut'], StatutDemande.EN_ATTENTE_COMPLEMENT)
+        self.assertEqual(response.data['statut'], StatutDemande.MITIGEE_COMPLEMENT)
         
         # Vérifier que l'historique a été créé
         historique = HistoriqueStatutDemande.objects.filter(demande=demande).first()
         self.assertIsNotNone(historique)
-        self.assertEqual(historique.nouveau_statut, StatutDemande.EN_ATTENTE_COMPLEMENT)
+        self.assertEqual(historique.nouveau_statut, StatutDemande.MITIGEE_COMPLEMENT)
         self.assertEqual(historique.commentaire_acteur, "Il manque une pièce.")
 
     def test_analyse_equidistance(self):

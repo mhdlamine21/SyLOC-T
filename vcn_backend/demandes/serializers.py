@@ -19,6 +19,9 @@ class AppelCandidatureSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_creation', 'date_modification', 'publie_par']
 
 class DemandeSerializer(serializers.ModelSerializer):
+    demandeur_nom = serializers.CharField(source='demandeur.utilisateur.nom_complet', read_only=True)
+    local_reference = serializers.CharField(source='local.reference', read_only=True)
+    
     class Meta:
         model = Demande
         fields = '__all__'

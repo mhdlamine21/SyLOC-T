@@ -80,6 +80,7 @@ class InspectionQHse(BaseModel):
     type_controle = models.CharField(max_length=50, choices=TypeControleQHSE.choices)
     date_visite = models.DateTimeField()
     est_conforme = models.BooleanField()
+    note_sanitaire = models.IntegerField(null=True, blank=True)
     observations = models.TextField()
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)

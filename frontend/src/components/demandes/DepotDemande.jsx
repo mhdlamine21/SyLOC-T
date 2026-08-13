@@ -12,39 +12,32 @@ import { Link, useLocation } from 'react-router-dom';
 
 const EXIGENCES_DOCUMENTS = {
   VENTE_PRODUIT: [
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI du demandeur', obligatoire: true },
-    { code: 'QUITUS_FISCAL', label: 'Quitus fiscal à jour', obligatoire: true },
-    { code: 'CASIER', label: 'Extrait du casier judiciaire (< 3 mois)', obligatoire: true },
-    { code: 'CATALOGUE', label: 'Liste et grille tarifaire des produits proposés', obligatoire: true },
+    { code: 'CV', label: 'Curriculum Vitae (CV)', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'AUTORISATION_VENTE', label: 'Autorisation de vente', obligatoire: true },
+    { code: 'FICHE_SANTE', label: 'Fiche santé alimentaire', obligatoire: true },
   ],
   PRESTATION_SERVICE: [
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI du responsable', obligatoire: true },
-    { code: 'DESCRIPTIF', label: 'Note de présentation des services & équipements', obligatoire: true },
-    { code: 'CASIER', label: 'Extrait de casier judiciaire', obligatoire: true },
+    { code: 'CV', label: 'Curriculum Vitae (CV)', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'DESCRIPTION_SERVICE', label: 'Description du service', obligatoire: true },
   ],
   LOCAL_ARTISANAL: [
-    { code: 'CARTE_ETUDIANT', label: 'Carte d\'étudiant UIDT validée (Obligatoire pour Régime Gratuité)', obligatoire: true },
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
-    { code: 'ATTESTATION_ART', label: 'Attestation de compétence / Brevet artisanal', obligatoire: true },
+    { code: 'LETTRE_DEMANDE', label: 'Lettre de demande d\'autorisation (Préciser l\'emplacement souhaité)', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Pièce d\'identité', obligatoire: true },
   ],
   RENOVATION: [
-    { code: 'DOSSIER_TECH', label: 'Dossier technique de rénovation (Descriptif des aménagement)', obligatoire: true },
-    { code: 'DEVIS_TRAVAUX', label: 'Devis estimatif des travaux de réfection', obligatoire: true },
-    { code: 'PLAN_INTERIEUR', label: 'Plan de réaménagement intérieur', obligatoire: true },
-    { code: 'SOLVABILITE', label: 'Justificatif de capacité financière / Relevé bancaire', obligatoire: true },
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'MAQUETTE', label: 'Maquette de rénovation', obligatoire: true },
+    { code: 'BUSINESS_PLAN', label: 'Business plan', obligatoire: true },
+    { code: 'CONTRAT_OCCUPATION', label: 'Preuve occupant déjà titulaire d\'un contrat', obligatoire: true },
   ],
   CONSTRUCTION_CANDIDAT: [
-    { code: 'MAQUETTE_3D', label: 'Maquette architecturale 3D & Plan d\'architecte homologué (*)', obligatoire: true },
-    { code: 'DEVIS_DESCRIPTIF', label: 'Devis descriptif complet des matériaux de construction', obligatoire: true },
-    { code: 'CV_ENTREPRENEUR', label: 'CV & Références du maître d\'œuvre / Entrepreneur', obligatoire: true },
-    { code: 'GARANTIE_FIN', label: 'Attestation de garantie financière bancaire', obligatoire: true },
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'MAQUETTE_3D', label: 'Maquette 3D', obligatoire: true },
+    { code: 'BUSINESS_PLAN', label: 'Business plan', obligatoire: true },
   ],
   CONSTRUCTION_CROUST: [
-    { code: 'NOTE_BESOIN', label: 'Note de besoin détaillée & opportunité commerciale', obligatoire: true },
-    { code: 'PLAN_SOUHAITE', label: 'Plan de masse / Implantation souhaitée', obligatoire: true },
-    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'MAQUETTE_3D', label: 'Maquette 3D', obligatoire: true },
+    { code: 'BUSINESS_PLAN', label: 'Business plan', obligatoire: true },
   ],
 };
 

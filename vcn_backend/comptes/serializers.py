@@ -44,18 +44,23 @@ class UtilisateurSerializer(serializers.ModelSerializer):
     """Lecture / mise a jour d'un compte (back-office Administrateur SI)."""
     role_effectif = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    est_etudiant = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
         fields = (
             'id', 'username', 'email', 'nom_complet', 'role', 'role_effectif',
             'is_active', 'is_staff', 'date_joined', 'last_login',
-            'delegation_active', 'delegation_expiration', 'password',
+            'delegation_active', 'delegation_expiration', 'password', 'est_etudiant'
         )
         read_only_fields = ('id', 'date_joined', 'last_login', 'is_staff')
 
     def get_role_effectif(self, obj):
         return role_effectif(obj)
+        
+    def get_est_etudiant(self, obj):
+        profil = getattr(obj, 'profil_demandeur', None)
+        return profil.est_etudiant if profil else False
 
     def create(self, validated_data):
         password = validated_data.pop('password', None) or generer_mot_de_passe()

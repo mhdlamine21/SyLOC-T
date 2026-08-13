@@ -89,9 +89,8 @@ export default function Dashboard() {
       const favorables = mesDemandes.filter((d) => d.statut === 'FAVORABLE' || d.statut === 'CONTRAT_ACCEPTE_RDV_FIXE').length;
       return [
         { icon: '📁', label: 'Mes candidatures', value: mesDemandes.length, sub: `${enCours} en cours`, tone: 'navy' },
-        { icon: '✅', label: 'Avis favorables', value: favorables, sub: 'Dossiers retenus', tone: 'green' },
+        { icon: '✅', label: 'Dossiers acceptés', value: favorables, sub: 'Candidatures retenues', tone: 'green' },
         { icon: '🔔', label: 'Notifications', value: nonLues, sub: 'Non lues', tone: 'gold' },
-        { icon: '🏢', label: 'Locaux disponibles', value: num(s.locaux_libres), sub: `${num(s.locaux_total)} au patrimoine`, tone: 'slate' },
       ];
     }
     if (role === 'SERVICE_COMPTABLE') {
@@ -147,20 +146,22 @@ export default function Dashboard() {
 
       <SplitLayout ratio="1.6fr 1fr">
         <div style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
-          <Panel
-            icon="📊"
-            title="Activite des 6 derniers mois"
-            subtitle="Demandes soumises, avis favorables et defavorables"
-            action={(
-              <div style={{ display: 'flex', gap: 10, fontSize: 10.5, color: 'var(--muted)', fontWeight: 700 }}>
-                <span>■ Soumises</span>
-                <span style={{ color: 'var(--green, #16a34a)' }}>■ Favorables</span>
-                <span style={{ color: 'var(--red, #dc2626)' }}>■ Defavorables</span>
-              </div>
-            )}
-          >
-            {loading ? <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>Chargement…</p> : <BarChart data={s.evolution_mensuelle || []} />}
-          </Panel>
+          {!estUsager && (
+            <Panel
+              icon="📊"
+              title="Activite des 6 derniers mois"
+              subtitle="Demandes soumises, avis favorables et defavorables"
+              action={(
+                <div style={{ display: 'flex', gap: 10, fontSize: 10.5, color: 'var(--muted)', fontWeight: 700 }}>
+                  <span>■ Soumises</span>
+                  <span style={{ color: 'var(--green, #16a34a)' }}>■ Favorables</span>
+                  <span style={{ color: 'var(--red, #dc2626)' }}>■ Defavorables</span>
+                </div>
+              )}
+            >
+              {loading ? <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>Chargement…</p> : <BarChart data={s.evolution_mensuelle || []} />}
+            </Panel>
+          )}
 
           {estUsager ? (
             <Panel icon="📁" title="Mes dernieres candidatures" action={<Link to="/suivi"><Button variant="ghost" size="sm">Tout voir</Button></Link>}>

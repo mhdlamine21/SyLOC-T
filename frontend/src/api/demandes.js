@@ -28,6 +28,9 @@ export const uploadDocumentDemande = async (id, { fichier, type_document, libell
 export const changerStatutDemande = async (id, statut, commentaire = '') =>
   (await api.post(`${BASE}${id}/changer_statut/`, { statut, commentaire })).data;
 
+export const confirmerReceptionPhysique = async (id) =>
+  (await api.post(`${BASE}${id}/reception-physique/`)).data;
+
 export const enregistrerAvisSanitaire = async (id, avis, reference = '') =>
   (await api.post(`${BASE}${id}/avis-sanitaire/`, { avis, reference })).data;
 
@@ -51,3 +54,9 @@ export const refuserContratDemande = async (id, motif = '') =>
   (await api.post(`${BASE}${id}/refuser-contrat/`, { motif })).data;
 
 export const createAppel = async (data) => (await api.post('/demandes/appels/', data)).data;
+
+export const getPalmaresCommission = async () =>
+  toArray((await api.get(`${BASE}palmares-commission/`)).data);
+
+export const cloturerLocal = async (local_id, gagnant_id) =>
+  (await api.post(`${BASE}cloturer-local/`, { local_id, gagnant_id })).data;

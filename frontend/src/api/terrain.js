@@ -39,3 +39,8 @@ export const updateSanction = async (id, data) => {
   const response = await api.patch(`/terrain/sanctions/${id}/`, data);
   return response.data;
 };
+
+export const createAvis = async (data) => {
+  const response = await api.post('/terrain/avis/', data);
+  return response.data;
+};

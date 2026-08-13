@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getPlaintes, updatePlainte } from '../../api/terrain';
 import { messageErreur } from '../../api/utils';
@@ -79,7 +79,7 @@ export default function AgentTerrainView() {
         <IdentityCell
           title={(r.type || '').replace(/_/g, ' ')}
           subtitle={`SIG-${String(r.id).slice(0, 8).toUpperCase()}`}
-          initials="🚨"
+          initials="ðŸš¨"
           tone={r.type === 'DENONCIATION_ILLEGALE' ? 'red' : 'navy'}
         />
       ),
@@ -87,14 +87,14 @@ export default function AgentTerrainView() {
     {
       key: 'localisation',
       label: 'Localisation',
-      render: (r) => r.localisation_libre || r.local_reference || '—',
+      render: (r) => r.localisation_libre || r.local_reference || 'â€”',
     },
     { key: 'urgence', label: 'Urgence', render: (r) => <Pill tone={URGENCE_TONE[r.urgence] || 'slate'}>{r.urgence}</Pill> },
     { key: 'statut', label: 'Statut', render: (r) => <Pill tone={STATUT_TONE[r.statut] || 'slate'}>{(r.statut || '').replace(/_/g, ' ')}</Pill> },
     {
       key: 'date',
       label: 'Depose le',
-      render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '—'),
+      render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : 'â€”'),
     },
     {
       key: 'actions',
@@ -102,14 +102,14 @@ export default function AgentTerrainView() {
       align: 'right',
       render: (r) => (
         <RowActions>
-          <IconButton title="Consulter" onClick={() => setDetail(r)}>👁️</IconButton>
+          <IconButton title="Consulter" onClick={() => setDetail(r)}>ðŸ‘ï¸</IconButton>
           <IconButton
             title="Transmettre au QHSE"
             tone="gold"
             disabled={r.statut !== 'OUVERTE'}
             onClick={() => majStatut(r.id, { statut: 'EN_COURS_TRAITEMENT', urgence: 'ELEVEE' }, 'Rapport de constat transmis au Bureau QHSE.')}
           >
-            🚨
+            ðŸš¨
           </IconButton>
           <IconButton
             title="Marquer resolu"
@@ -117,7 +117,7 @@ export default function AgentTerrainView() {
             disabled={r.statut === 'RESOLUE'}
             onClick={() => majStatut(r.id, { statut: 'RESOLUE' }, 'Constat cloture.')}
           >
-            ✓
+            âœ“
           </IconButton>
         </RowActions>
       ),
@@ -127,24 +127,24 @@ export default function AgentTerrainView() {
   return (
     <div>
       <PageHeader
-        icon="🚨"
+        icon="ðŸš¨"
         title="Constats & missions de terrain"
         subtitle="Verification sur le terrain de l'occupation effective des locaux domaniaux et suivi des signalements."
-        actions={<Button variant="secondary" onClick={charger}>↻ Actualiser</Button>}
+        actions={<Button variant="secondary" onClick={charger}>â†» Actualiser</Button>}
       />
 
       <StatGrid cols={4}>
-        <KpiCard icon="📋" label="Constats enregistres" value={stats.total} sub={`${stats.ouvertes} ouverts`} tone="navy" />
-        <KpiCard icon="🔥" label="Urgence elevee" value={stats.urgentes} sub="A traiter en priorite" tone="red" />
-        <KpiCard icon="🏴" label="Occupations illegales" value={stats.illegales} sub="Denonciations actives" tone="gold" />
-        <KpiCard icon="✅" label="Constats resolus" value={stats.resolues} sub={`${stats.encours} en cours`} tone="green" />
+        <KpiCard icon="ðŸ“‹" label="Constats enregistres" value={stats.total} sub={`${stats.ouvertes} ouverts`} tone="navy" />
+        <KpiCard icon="ðŸ”¥" label="Urgence elevee" value={stats.urgentes} sub="A traiter en priorite" tone="red" />
+        <KpiCard icon="ðŸ´" label="Occupations illegales" value={stats.illegales} sub="Denonciations actives" tone="gold" />
+        <KpiCard icon="âœ…" label="Constats resolus" value={stats.resolues} sub={`${stats.encours} en cours`} tone="green" />
       </StatGrid>
 
-      <Panel icon="🗂️" title="Registre des constats" subtitle="Tri par date de depot" padded={false}>
+      <Panel icon="ðŸ-‚ï¸" title="Registre des constats" subtitle="Tri par date de depot" padded={false}>
         <div style={{ padding: '14px 16px 0' }}>
           <FilterBar onReset={() => { setQ(''); setType(''); setStatut(''); setUrgence(''); }}>
             <FilterField label="Recherche">
-              <Input placeholder="Description, local, localisation…" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Input placeholder="Description, local, localisationâ€¦" value={q} onChange={(e) => setQ(e.target.value)} />
             </FilterField>
             <FilterField label="Type">
               <Select value={type} onChange={(e) => setType(e.target.value)}>
@@ -187,13 +187,13 @@ export default function AgentTerrainView() {
               <Textarea value={detail.description || ''} readOnly rows={4} />
             </Field>
             <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>
-              Localisation : {detail.localisation_libre || detail.local_reference || '—'}<br />
+              Localisation : {detail.localisation_libre || detail.local_reference || 'â€”'}<br />
               {detail.latitude && detail.longitude ? `GPS : ${detail.latitude}, ${detail.longitude}` : 'GPS non renseigne'}<br />
               {detail.date_limite_sla ? `Echeance SLA : ${new Date(detail.date_limite_sla).toLocaleString('fr-FR')}` : ''}
             </div>
             {detail.photo_preuve && (
               <a href={detail.photo_preuve} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--gold-deep)' }}>
-                📎 Consulter la photo de preuve
+                ðŸ“Ž Consulter la photo de preuve
               </a>
             )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -206,3 +206,4 @@ export default function AgentTerrainView() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { createPlainte, getPlaintes } from '../../api/terrain';
 import { getLocaux } from '../../api/patrimoine';
@@ -87,39 +87,39 @@ export default function DenoncerOccupation() {
   }), [historique]);
 
   const columns = [
-    { key: 'localisation_libre', label: 'Localisation', render: (r) => r.localisation_libre || r.local_reference || '—' },
-    { key: 'description', label: 'Faits', render: (r) => (r.description || '—').slice(0, 60) },
+    { key: 'localisation_libre', label: 'Localisation', render: (r) => r.localisation_libre || r.local_reference || 'â€”' },
+    { key: 'description', label: 'Faits', render: (r) => (r.description || 'â€”').slice(0, 60) },
     { key: 'urgence', label: 'Urgence', render: (r) => <Pill tone={r.urgence === 'ELEVEE' ? 'red' : r.urgence === 'MOYENNE' ? 'gold' : 'slate'}>{r.urgence}</Pill> },
     { key: 'statut', label: 'Statut', render: (r) => <Pill tone={r.statut === 'RESOLUE' ? 'green' : r.statut === 'REJETEE' ? 'slate' : 'red'}>{(r.statut || '').replace(/_/g, ' ')}</Pill> },
-    { key: 'date_creation', label: 'Transmis le', render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '—') },
+    { key: 'date_creation', label: 'Transmis le', render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : 'â€”') },
   ];
 
   return (
     <div>
       <PageHeader
-        icon="🏴"
+        icon="ðŸ´"
         title="Denoncer une occupation sans titre"
         subtitle="Signalement d'une occupation illegale d'un local ou d'un espace commercial domanial."
       />
 
       <StatGrid cols={4}>
-        <KpiCard icon="🏴" label="Denonciations" value={stats.total} sub="Total enregistre" tone="navy" />
-        <KpiCard icon="🔴" label="Ouvertes" value={stats.ouvertes} sub="Non prises en charge" tone="red" />
-        <KpiCard icon="🕑" label="En traitement" value={stats.encours} sub="Brigade mobilisee" tone="gold" />
-        <KpiCard icon="✅" label="Resolues" value={stats.resolues} sub="Dossiers clotures" tone="green" />
+        <KpiCard icon="ðŸ´" label="Denonciations" value={stats.total} sub="Total enregistre" tone="navy" />
+        <KpiCard icon="ðŸ”´" label="Ouvertes" value={stats.ouvertes} sub="Non prises en charge" tone="red" />
+        <KpiCard icon="ðŸ•‘" label="En traitement" value={stats.encours} sub="Brigade mobilisee" tone="gold" />
+        <KpiCard icon="âœ…" label="Resolues" value={stats.resolues} sub="Dossiers clotures" tone="green" />
       </StatGrid>
 
       <SplitLayout ratio="1fr 1.2fr">
-        <Panel icon="📝" title="Nouvelle denonciation">
+        <Panel icon="ðŸ“" title="Nouvelle denonciation">
           <form onSubmit={soumettre}>
             <AlertBanner type="warn">
-              🔒 <strong>Denonciation confidentielle :</strong> vous pouvez soumettre ce signalement sans reveler votre identite.
+              ðŸ”’ <strong>Denonciation confidentielle :</strong> vous pouvez soumettre ce signalement sans reveler votre identite.
             </AlertBanner>
 
             <Field label="Local concerne (si identifie)">
               <Select value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })}>
-                <option value="">— Local non repertorie —</option>
-                {locaux.map((l) => <option key={l.id} value={l.id}>{l.reference} — {l.localisation}</option>)}
+                <option value="">â€” Local non repertorie â€”</option>
+                {locaux.map((l) => <option key={l.id} value={l.id}>{l.reference} â€” {l.localisation}</option>)}
               </Select>
             </Field>
 
@@ -127,7 +127,7 @@ export default function DenoncerOccupation() {
               <Input
                 value={form.localisation_libre}
                 onChange={(e) => setForm({ ...form, localisation_libre: e.target.value })}
-                placeholder="Kiosque non autorise pres du Bloc C…"
+                placeholder="Kiosque non autorise pres du Bloc Câ€¦"
                 required
               />
             </Field>
@@ -137,7 +137,7 @@ export default function DenoncerOccupation() {
                 rows={4}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Activite commerciale non autorisee, horaires, personnes concernees…"
+                placeholder="Activite commerciale non autorisee, horaires, personnes concerneesâ€¦"
                 required
               />
             </Field>
@@ -158,10 +158,10 @@ export default function DenoncerOccupation() {
               </Field>
             </div>
 
-            <Button type="button" variant="secondary" size="sm" onClick={geolocaliser}>📍 Capturer ma position GPS</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={geolocaliser}>ðŸ“ Capturer ma position GPS</Button>
 
             <Field label="Photo de preuve (URL)">
-              <Input value={form.photo_preuve} onChange={(e) => setForm({ ...form, photo_preuve: e.target.value })} placeholder="https://…" />
+              <Input value={form.photo_preuve} onChange={(e) => setForm({ ...form, photo_preuve: e.target.value })} placeholder="https://â€¦" />
             </Field>
 
             <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.8, fontWeight: 700, margin: '4px 0 14px' }}>
@@ -170,15 +170,16 @@ export default function DenoncerOccupation() {
             </label>
 
             <Button type="submit" disabled={envoi} style={{ width: '100%', justifyContent: 'center' }}>
-              {envoi ? 'Transmission…' : '🚨 Transmettre a la Brigade Terrain'}
+              {envoi ? 'Transmissionâ€¦' : 'ðŸš¨ Transmettre a la Brigade Terrain'}
             </Button>
           </form>
         </Panel>
 
-        <Panel icon="🗂️" title="Denonciations transmises" subtitle="Suivi du traitement par la brigade" padded={false}>
+        <Panel icon="ðŸ-‚ï¸" title="Denonciations transmises" subtitle="Suivi du traitement par la brigade" padded={false}>
           <DataTable columns={columns} rows={historique} loading={loading} empty="Aucune denonciation enregistree." pageSize={10} dense />
         </Panel>
       </SplitLayout>
     </div>
   );
 }
+

@@ -246,6 +246,11 @@ export default function GestionComptes() {
       <div>
         <div className="flex items-center gap-1.5">
           <p className="font-semibold text-sm">{v}</p>
+          {row.est_etudiant && (
+            <span className="bg-teal text-white text-[10px] font-mono font-bold px-1.5 py-0.2 rounded" title="Étudiant">
+              🎓 Étudiant
+            </span>
+          )}
           {row.est_membre_commission && (
             <span className="bg-amber text-ink text-[10px] font-mono font-bold px-1.5 py-0.2 rounded" title="Membre de la Commission d'évaluation">
               ⚖ Commission
@@ -387,6 +392,7 @@ export default function GestionComptes() {
                 ['Dernière connexion', selected.last_login ? new Date(selected.last_login).toLocaleString('fr-SN') : 'Jamais'],
                 ['Service / Affectation', selected.service || 'Non spécifié'],
                 ['Rôle principal', selected.role],
+                ['Statut étudiant', selected.est_etudiant ? '🎓 OUI' : 'NON'],
                 ['Statut de la commission', selected.est_membre_commission ? '⚖ MEMBRE ACTIF COMMISSION' : 'Non membre'],
               ].map(([k, v]) => (
                 <div key={k}>
@@ -397,19 +403,37 @@ export default function GestionComptes() {
             </div>
 
             {isDirector ? (
-              <div className="p-4 bg-teal-pale border border-teal/20 rounded flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-sm text-teal">⚖ Titre de Membre de la Commission d'Évaluation</p>
-                  <p className="text-xs text-muted">Accorde le droit d'évaluer les projets et voter en commission consultative.</p>
+              <div className="p-4 bg-teal-pale border border-teal/20 rounded flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-sm text-teal">⚖ Titre de Membre de la Commission d'Évaluation</p>
+                    <p className="text-xs text-muted">Accorde le droit d'évaluer les projets et voter en commission consultative.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={selected.est_membre_commission ? 'stamp' : 'amber'}
+                    onClick={() => toggleCommissionMembership(selected)}
+                    disabled={loading}
+                  >
+                    {selected.est_membre_commission ? 'Retirer de la Commission' : '★ Nommer Membre Commission'}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant={selected.est_membre_commission ? 'stamp' : 'amber'}
-                  onClick={() => toggleCommissionMembership(selected)}
-                  disabled={loading}
-                >
-                  {selected.est_membre_commission ? 'Retirer de la Commission' : '★ Nommer Membre Commission'}
-                </Button>
+                {selected.est_etudiant && selected.role !== 'AMICALE' && (
+                  <div className="flex items-center justify-between border-t border-teal/20 pt-3">
+                    <div>
+                      <p className="font-semibold text-sm text-teal">👑 Titre de Membre de l'Amicale</p>
+                      <p className="text-xs text-muted">Permet à cet étudiant de gérer un local amicale et ses demandes.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => modifierRole(selected, 'AMICALE')}
+                      disabled={loading}
+                    >
+                      Promouvoir Amicale
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-3 bg-paper2 border border-ink/10 rounded text-xs text-muted font-mono">

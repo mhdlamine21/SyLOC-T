@@ -39,6 +39,18 @@ export default function Layout() {
         <main id="main" style={{ flex: 1, minWidth: 0, padding: 'clamp(14px,2.2vw,24px)' }}>
           <Outlet />
         </main>
+        
+        {/* ── Footer ── */}
+        <footer style={{ 
+          padding: '16px 24px', 
+          borderTop: '1px solid var(--border)', 
+          textAlign: 'center', 
+          fontSize: '12px', 
+          color: 'var(--muted)',
+          backgroundColor: 'var(--surface)' 
+        }}>
+          &copy; {new Date().getFullYear()} CROUS-T SyLOC-T. Tous droits réservés.
+        </footer>
       </div>
 
       <style>{`

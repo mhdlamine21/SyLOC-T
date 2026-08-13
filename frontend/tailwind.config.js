@@ -5,51 +5,59 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette principale Navy/Or (Objetif/index.html)
+        // Palette principale Navy/Or
         navy: {
-          DEFAULT: '#172554',
-          2: '#0f1b3d',
-          3: '#1e3a5f',
+          DEFAULT: 'var(--navy)',
+          2: 'var(--navy-2)',
+          3: 'var(--navy-3)',
         },
         gold: {
-          DEFAULT: '#c9a15c',
-          deep: '#a97c33',
-          soft: '#faf1e1',
+          DEFAULT: 'var(--gold)',
+          deep: 'var(--gold-deep)',
+          soft: 'var(--gold-soft)',
         },
         slate: {
-          DEFAULT: '#5f7f9c',
-          soft: '#eaf1f7',
+          DEFAULT: 'var(--slate)',
+          soft: 'var(--slate-soft)',
         },
-        // Alias legacy (compatibilité composants existants)
+        // Surfaces
+        surface: {
+          DEFAULT: 'var(--surface)',
+          2: 'var(--surface-2)',
+          card: 'var(--surface-card)',
+        },
+        // Alias legacy (compatibilité)
         paper: {
-          DEFAULT: '#f5f6fb',
-          2: '#f8fafc',
-          3: '#eef1f4',
+          DEFAULT: 'var(--paper)',
+          2: 'var(--paper2)',
+          3: 'var(--paper3)',
         },
         teal: {
-          DEFAULT: '#172554',   // aliasé vers navy
-          deep: '#0f1b3d',
-          mid: '#5f7f9c',
-          light: '#7f9fba',
-          pale: '#eaf1f7',
+          DEFAULT: 'var(--teal)',
+          deep: 'var(--teal-deep)',
+          mid: 'var(--teal-mid)',
+          light: 'var(--slate)',
+          pale: 'var(--slate-soft)',
         },
         amber: {
-          DEFAULT: '#c9a15c',
-          deep: '#a97c33',
-          pale: '#faf1e1',
+          DEFAULT: 'var(--amber)',
+          deep: 'var(--amber-deep)',
+          pale: 'var(--amber-pale)',
         },
         stamp: {
-          DEFAULT: '#b91c1c',
-          light: '#dc2626',
-          pale: '#fef2f2',
+          DEFAULT: 'var(--stamp)',
+          light: 'var(--red)',
+          pale: 'var(--red-soft)',
         },
-        ok: { DEFAULT: '#15803d', soft: '#f0fdf4' },
-        warn: { DEFAULT: '#a97c33', soft: '#faf1e1' },
-        danger: { DEFAULT: '#b91c1c', soft: '#fef2f2' },
-        info: { DEFAULT: '#5f7f9c', soft: '#eaf1f7' },
-        ink: '#172033',
-        muted: '#64748b',
-        soft: '#eef1f4',
+        ok: { DEFAULT: 'var(--ok)', soft: 'var(--ok-soft)' },
+        warn: { DEFAULT: 'var(--amber-deep)', soft: 'var(--amber-pale)' },
+        danger: { DEFAULT: 'var(--red)', soft: 'var(--red-soft)' },
+        info: { DEFAULT: 'var(--slate)', soft: 'var(--slate-soft)' },
+        ink: 'var(--ink)',
+        text: 'var(--text)',
+        muted: 'var(--muted)',
+        soft: 'var(--soft)',
+        border: 'var(--border)',
       },
       fontFamily: {
         display: ['Sora', 'Inter', 'sans-serif'],

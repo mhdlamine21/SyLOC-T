@@ -57,7 +57,7 @@ import DenoncerOccupation from './components/terrain/DenoncerOccupation';
 import InspectionQHSE from './components/terrain/InspectionQHSE';
 
 // Avis
-import LaisserAvis from './components/avis/LaisserAvis';
+import AvisCantines from './components/terrain/AvisCantines';
 import ModerationAvis from './components/avis/ModerationAvis';
 
 // Direction & Rapports
@@ -93,8 +93,8 @@ const AppRoutes = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/locaux-catalogue" element={<CatalogLocaux />} />
 
-          {/* Demandes Usagers / Candidats (Strictement réservé au rôle USAGER) */}
-          <Route element={<RoleRoute allowedRoles={['USAGER']} />}>
+          {/* Demandes Usagers / Candidats (Strictement réservé au rôle USAGER et AMICALE) */}
+          <Route element={<RoleRoute allowedRoles={['USAGER', 'AMICALE']} />}>
             <Route path="/depot" element={<DepotDemande />} />
             <Route path="/suivi" element={<SuiviDemande />} />
           </Route>
@@ -110,7 +110,7 @@ const AppRoutes = () => {
           </Route>
 
           {/* Avis cantines (Vérification étudiante dans le composant) */}
-          <Route path="/avis" element={<LaisserAvis />} />
+          <Route path="/avis" element={<AvisCantines />} />
 
           {/* Score de fidelite (usagers & occupants) */}
           <Route path="/fidelite" element={<MonScoreFidelite />} />
@@ -166,7 +166,7 @@ const AppRoutes = () => {
           </Route>
 
           {/* Commission Consultative */}
-          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
+          <Route element={<RoleRoute allowedRoles={['AMICALE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE', 'SERVICE_TECHNIQUE', 'ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T']} />}>
             <Route path="/commission" element={<CommissionVote />} />
           </Route>
 

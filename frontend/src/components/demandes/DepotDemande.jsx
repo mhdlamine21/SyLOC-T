@@ -5,28 +5,26 @@ import {
 } from '../common/ui';
 import { TYPE_DEMANDE_OPTIONS } from '../../utils/constants';
 import { getLocaux } from '../../api/patrimoine';
-import { createDemande } from '../../api/demandes';
+import { createDemande, uploadDocumentDemande } from '../../api/demandes';
 import { messageErreur } from '../../api/utils';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 
 const EXIGENCES_DOCUMENTS = {
   VENTE_PRODUIT: [
-    { code: 'NINEA', label: 'Copie NINEA / Registre de Commerce', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI du demandeur', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI du demandeur', obligatoire: true },
     { code: 'QUITUS_FISCAL', label: 'Quitus fiscal à jour', obligatoire: true },
     { code: 'CASIER', label: 'Extrait du casier judiciaire (< 3 mois)', obligatoire: true },
     { code: 'CATALOGUE', label: 'Liste et grille tarifaire des produits proposés', obligatoire: true },
   ],
   PRESTATION_SERVICE: [
-    { code: 'NINEA', label: 'Registre de commerce ou agrément professionnel', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI du responsable', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI du responsable', obligatoire: true },
     { code: 'DESCRIPTIF', label: 'Note de présentation des services & équipements', obligatoire: true },
     { code: 'CASIER', label: 'Extrait de casier judiciaire', obligatoire: true },
   ],
   LOCAL_ARTISANAL: [
     { code: 'CARTE_ETUDIANT', label: 'Carte d\'étudiant UIDT validée (Obligatoire pour Régime Gratuité)', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
     { code: 'ATTESTATION_ART', label: 'Attestation de compétence / Brevet artisanal', obligatoire: true },
   ],
   RENOVATION: [
@@ -34,20 +32,19 @@ const EXIGENCES_DOCUMENTS = {
     { code: 'DEVIS_TRAVAUX', label: 'Devis estimatif des travaux de réfection', obligatoire: true },
     { code: 'PLAN_INTERIEUR', label: 'Plan de réaménagement intérieur', obligatoire: true },
     { code: 'SOLVABILITE', label: 'Justificatif de capacité financière / Relevé bancaire', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
   ],
   CONSTRUCTION_CANDIDAT: [
     { code: 'MAQUETTE_3D', label: 'Maquette architecturale 3D & Plan d\'architecte homologué (*)', obligatoire: true },
     { code: 'DEVIS_DESCRIPTIF', label: 'Devis descriptif complet des matériaux de construction', obligatoire: true },
     { code: 'CV_ENTREPRENEUR', label: 'CV & Références du maître d\'œuvre / Entrepreneur', obligatoire: true },
-    { code: 'NINEA', label: 'Immatriculation NINEA / RCCM', obligatoire: true },
     { code: 'GARANTIE_FIN', label: 'Attestation de garantie financière bancaire', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
   ],
   CONSTRUCTION_CROUST: [
     { code: 'NOTE_BESOIN', label: 'Note de besoin détaillée & opportunité commerciale', obligatoire: true },
     { code: 'PLAN_SOUHAITE', label: 'Plan de masse / Implantation souhaitée', obligatoire: true },
-    { code: 'CNI', label: 'Photocopie CNI / NINEA', obligatoire: true },
+    { code: 'PIECE_IDENTITE', label: 'Photocopie CNI', obligatoire: true },
   ],
 };
 
@@ -80,12 +77,12 @@ export default function DepotDemande() {
 
   const docsRequis = EXIGENCES_DOCUMENTS[form.type] || EXIGENCES_DOCUMENTS.VENTE_PRODUIT;
 
-  const toggleDocument = (code) => {
+  const handleFileChange = (code, file) => {
     setForm((f) => ({
       ...f,
       documents_fournis: {
         ...f.documents_fournis,
-        [code]: !f.documents_fournis[code],
+        [code]: file,
       },
     }));
   };
@@ -115,6 +112,26 @@ export default function DepotDemande() {
         local: form.local_id,
         description_projet: form.description
       });
+      
+      const demandeId = resp.id;
+      
+      // Uploader chaque fichier fourni
+      for (const doc of docsRequis) {
+        const file = form.documents_fournis[doc.code];
+        if (file) {
+          try {
+            await uploadDocumentDemande(demandeId, {
+              fichier: file,
+              type_document: doc.code,
+              libelle: doc.label
+            });
+          } catch (fileErr) {
+            toast.error(`Erreur lors de l'upload du document : ${doc.label}`);
+            console.error(fileErr);
+          }
+        }
+      }
+
       setDemandeCreee(resp.reference_anonyme || `DOSSIER-${resp.id}`);
       toast.success("Dossier soumis avec succès !");
     } catch (err) {
@@ -211,22 +228,19 @@ export default function DepotDemande() {
               )}
 
               <div className="space-y-3">
-                {docsRequis.map((doc) => (
-                  <label
-                    key={doc.code}
-                    className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition-colors ${
-                      form.documents_fournis[doc.code] ? 'bg-teal-pale border-teal text-teal' : 'bg-paper2 border-ink/15 hover:border-teal/50'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!form.documents_fournis[doc.code]}
-                      onChange={() => toggleDocument(doc.code)}
-                      className="mt-0.5 w-4 h-4 accent-teal flex-none"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold font-mono">{doc.label}</span>
+                {docsRequis.map((doc) => {
+                  const isFourni = !!form.documents_fournis[doc.code];
+                  return (
+                    <div
+                      key={doc.code}
+                      className={`flex flex-col p-3 border rounded transition-colors ${
+                        isFourni ? 'bg-teal-pale border-teal' : 'bg-paper2 border-ink/15 hover:border-teal/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs font-bold font-mono ${isFourni ? 'text-teal' : 'text-ink'}`}>
+                          {doc.label}
+                        </span>
                         {doc.obligatoire && (
                           <span className="text-[10px] font-mono font-bold bg-stamp text-paper px-1.5 py-0.2 rounded">
                             EXIGÉ
@@ -235,11 +249,12 @@ export default function DepotDemande() {
                       </div>
                       <input
                         type="file"
-                        className="mt-2 text-xs text-muted file:mr-3 file:py-1 file:px-3 file:border file:border-teal file:text-teal file:bg-paper"
+                        onChange={(e) => handleFileChange(doc.code, e.target.files[0])}
+                        className="text-xs text-muted file:mr-3 file:py-1 file:px-3 file:border file:border-teal file:text-teal file:bg-paper file:rounded file:cursor-pointer hover:file:bg-teal-pale"
                       />
                     </div>
-                  </label>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

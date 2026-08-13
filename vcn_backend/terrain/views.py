@@ -73,9 +73,21 @@ class AvisCantineViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        # On suppose que l'auteur est un demandeur lié à l'utilisateur
+        from rest_framework import serializers
         try:
             demandeur = Demandeur.objects.get(utilisateur=self.request.user)
         except Demandeur.DoesNotExist:
             demandeur = Demandeur.objects.create(utilisateur=self.request.user, contact="")
+            
+        local = serializer.validated_data.get('local')
+        if local:
+            il_y_a_17_jours = timezone.now() - timezone.timedelta(days=17)
+            dernier_avis = AvisCantine.objects.filter(
+                auteur=demandeur,
+                local=local,
+                date_creation__gte=il_y_a_17_jours
+            ).first()
+            if dernier_avis:
+                raise serializers.ValidationError({"detail": "Vous ne pouvez donner qu'un seul avis par local tous les 17 jours. Veuillez patienter."})
+                
         serializer.save(auteur=demandeur)

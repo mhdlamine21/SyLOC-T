@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from comptes.models import Utilisateur
 from contrats.models import Contrat
 from demandes.models import Demande, StatutDemande
-from paiements.models import Echeance, Paiement, StatutEcheance
+from paiements.models import Echeance, Paiement, StatutEcheance, ReversementAmicale
 from patrimoine.models import Local
 from terrain.models import (
     AvisCantine,
@@ -121,6 +121,7 @@ class DashboardStatsView(APIView):
             "recettes_mois": Paiement.objects.filter(
                 date_paiement__date__gte=debut_mois
             ).aggregate(t=Sum('montant_regle'))['t'] or 0,
+            "fonds_reverses_amicale": ReversementAmicale.objects.aggregate(t=Sum('montant_reverse'))['t'] or 0,
             "signalements_ouverts": Plainte.objects.exclude(
                 statut__in=[StatutPlainte.RESOLUE, StatutPlainte.REJETEE]
             ).count(),

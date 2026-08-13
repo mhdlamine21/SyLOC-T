@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import NotificationBell from './NotificationBell';
@@ -12,6 +13,18 @@ export default function TopHeader({ onToggleMobileSidebar }) {
   const { dark, toggle } = useTheme();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const initials =
     user?.nom_complet?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
@@ -64,49 +77,79 @@ export default function TopHeader({ onToggleMobileSidebar }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button className="theme-toggle" onClick={toggle} title={dark ? 'Mode clair' : 'Mode sombre'} aria-label="Basculer le mode sombre">
-          {dark ? '☀️' : '🌙'}
-        </button>
-
         <NotificationBell position="header" />
 
         {user && (
-          <div
-            className="user-header-chip"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 9,
-              background: 'var(--surface-2)', padding: '5px 11px',
-              borderRadius: 10, border: '1px solid var(--border)',
-            }}
-          >
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9.5, fontWeight: 900 }}>
-              {initials}
-            </div>
-            <div style={{ lineHeight: 1.2 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--navy)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user.nom_complet}
+          <div style={{ position: 'relative' }} ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="user-header-chip"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                background: 'var(--surface-2)', padding: '5px 11px',
+                borderRadius: 10, border: '1px solid var(--border)',
+                cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9.5, fontWeight: 900 }}>
+                {initials}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--gold-deep)', fontWeight: 800, textTransform: 'uppercase' }}>
-                {ROLES_LABELS?.[role] || role?.replace(/_/g, ' ')}
+              <div style={{ lineHeight: 1.2 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--navy)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.nom_complet}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.5, color: 'var(--gold-deep)', fontWeight: 800, textTransform: 'uppercase' }}>
+                  {ROLES_LABELS?.[role] || role?.replace(/_/g, ' ')}
+                </div>
               </div>
-            </div>
+              <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 4 }}>▼</span>
+            </button>
+
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', top: '110%', right: 0,
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: 8, minWidth: 220,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+                zIndex: 100
+              }}>
+                <button onClick={() => { setMenuOpen(false); navigate('/profile'); }} className="dropdown-item">
+                  👤 Mon profil
+                </button>
+                <button onClick={() => { toggle(); setMenuOpen(false); }} className="dropdown-item">
+                  {dark ? '☀️ Activer le mode clair' : '🌙 Activer le mode sombre'}
+                </button>
+                <button onClick={() => { setMenuOpen(false); toast('Contacts: crous-t@univ-thies.sn / 33 951 00 00', { icon: '📞' }); }} className="dropdown-item">
+                  📞 Contacts des services
+                </button>
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                <button onClick={handleLogout} className="dropdown-item dropdown-logout">
+                  🚪 Déconnexion
+                </button>
+              </div>
+            )}
           </div>
         )}
-
-        <button
-          onClick={handleLogout}
-          className="desktop-logout-btn"
-          title="Deconnexion"
-          style={{
-            background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10,
-            padding: '8px 11px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--red)',
-          }}
-        >
-          🚪
-        </button>
       </div>
 
       <style>{`
+        .dropdown-item {
+          display: flex; align-items: center; gap: 10px;
+          padding: 8px 12px; font-size: 13px; font-weight: 600;
+          color: var(--ink); background: none; border: none;
+          border-radius: 6px; cursor: pointer; text-align: left;
+          transition: background 0.2s;
+        }
+        .dropdown-item:hover {
+          background: var(--surface-2);
+        }
+        .dropdown-logout {
+          color: var(--red);
+        }
+        .dropdown-logout:hover {
+          background: var(--red-pale);
+        }
         @media (max-width: 1023px) {
           .shell-hamburger { display: flex !important; }
           .user-header-chip { display: none !important; }

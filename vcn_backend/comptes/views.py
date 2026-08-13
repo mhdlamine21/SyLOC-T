@@ -304,10 +304,30 @@ class DemandeurViewSet(viewsets.ModelViewSet):
         demandeur.valide_par = request.user
         demandeur.save()
 
+        motif = request.data.get('motif', '')
+        
+        contenu_notif = f"Votre carte etudiant a ete traitee : {decision}."
+        if decision == StatutVerificationEtudiant.REJETE and motif:
+            contenu_notif += f"\nMotif du refus : {motif}"
+
         Notification.objects.create(
             destinataire=demandeur.utilisateur,
-            contenu=f"Votre carte etudiant a ete traitee : {decision}.",
+            contenu=contenu_notif,
         )
+        
+        if demandeur.utilisateur.email:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            try:
+                send_mail(
+                    "Mise à jour du statut de votre carte étudiant",
+                    contenu_notif,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [demandeur.utilisateur.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print("Erreur email carte:", e)
         journaliser(request.user, "VALIDATION_CARTE_ETUDIANT", f"Demandeur {demandeur.id}",
                     f"decision={decision}")
         return Response(DemandeurSerializer(demandeur, context={'request': request}).data)

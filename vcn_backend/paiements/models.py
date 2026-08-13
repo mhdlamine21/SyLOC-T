@@ -53,9 +53,26 @@ class Paiement(BaseModel):
         if total_paye >= total_du:
             self.echeance.statut = StatutEcheance.PAYEE
             self.echeance.save()
+            
+        # Logique d'automatisation des reversements Amicale (100% des revenus)
+        if hasattr(self.echeance, 'contrat') and self.echeance.contrat.local.gestionnaire == 'AMICALE':
+            # Verifier s'il n'existe pas deja pour eviter les doublons en cas de re-validation
+            if not hasattr(self, 'reversement'):
+                ReversementAmicale.objects.create(
+                    paiement=self,
+                    montant_reverse=self.montant_regle
+                )
 
     def __str__(self):
         return f"Paiement {self.id} - Echeance {self.echeance.id}"
+
+class ReversementAmicale(BaseModel):
+    paiement = models.OneToOneField(Paiement, on_delete=models.CASCADE, related_name="reversement")
+    montant_reverse = models.FloatField()
+    date_reversement = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reversement {self.id} - Amicale (Paiement {self.paiement.id})"
 
 class TransactionLog(BaseModel):
     paiement = models.ForeignKey(Paiement, on_delete=models.SET_NULL, null=True, blank=True, related_name="logs")

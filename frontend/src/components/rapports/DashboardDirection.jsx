@@ -67,10 +67,13 @@ export default function DashboardDirection() {
             <StatCard label="Signalements ouverts" value={stats.signalements_ouverts} color="stamp" icon="🚩" sub={`${stats.signalements_total} au total`} />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <StatCard label="Contrats actifs" value={stats.contrats_actifs} color="teal" icon="📜" sub={`${stats.contrats_a_echeance} à échéance < 90j`} />
             <StatCard label="Taux d'occupation" value={`${stats.locaux_total ? Math.round((stats.locaux_occupes / stats.locaux_total) * 100) : 0}%`} color="ok" icon="🏢" sub={`${stats.locaux_libres} locaux libres`} />
             <StatCard label="Recettes du mois" value={fcfa(stats.recettes_mois)} color="amber" icon="💰" sub="FCFA encaissés" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-8">
+            <StatCard label="Fonds reversés (Amicale)" value={fcfa(stats.fonds_reverses_amicale)} color="teal" icon="🤝" sub="100% (Reversement automatique)" />
             <StatCard label="Inspections du mois" value={stats.inspections_mois} color="slate" icon="🔬" sub={`${stats.avis_publies} avis publiés`} />
           </div>
 

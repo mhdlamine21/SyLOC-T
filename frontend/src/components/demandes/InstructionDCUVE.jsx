@@ -17,6 +17,7 @@ export default function InstructionDCUVE() {
       const data = await getDemandes();
       setDemandes(data);
     } catch (err) {
+      console.error(err);
       toast.error("Erreur lors de la récupération des dossiers.");
     } finally {
       setLoadingData(false);
@@ -47,6 +48,7 @@ export default function InstructionDCUVE() {
       setSelectedDemande(null);
       fetchDemandes();
     } catch (err) {
+      console.error(err);
       toast.error("Erreur lors de l'enregistrement de l'instruction.");
     }
   };
@@ -97,8 +99,9 @@ export default function InstructionDCUVE() {
               </p>
 
               <div style={{ background: 'var(--surface-2)', padding: 10, borderRadius: 8, fontSize: 12, marginBottom: 14 }}>
-                <div>📍 Local préféré : <strong>{d.local || 'Non spécifié'}</strong></div>
-                <div>📄 Pièces récepissées : <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓ En cours</span></div>
+                <div>📍 Local préféré : <strong>{d.local_reference || d.local || 'Non spécifié'}</strong></div>
+                <div>📄 Pièces réceptionnées : <strong style={{ color: d.dossier?.pieces_receptionnees ? 'var(--green)' : 'var(--amber-deep)' }}>{d.dossier?.pieces_receptionnees ? 'Oui (Physique)' : 'Non spécifié'}</strong></div>
+                <div>📎 Documents joints : <strong>{d.dossier?.documents?.length || 0} document(s)</strong></div>
                 {(d.type_demande === 'VENTE_PRODUIT' || d.type_demande === 'VENTE_ALIMENTAIRE') && (
                   <div style={{ marginTop: 4 }}>
                     🧪 Avis Sanitaire Hygiène : <strong style={{ color: d.avis_sanitaire_externe === 'FAVORABLE' ? 'var(--green)' : 'var(--amber-deep)' }}>{d.avis_sanitaire_externe || 'EN_ATTENTE'}</strong>
@@ -121,6 +124,23 @@ export default function InstructionDCUVE() {
             <Field label="Dossier (Anonyme)">
               <input type="text" readOnly value={selectedDemande.reference_anonyme || selectedDemande.id} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', fontWeight: 700 }} />
             </Field>
+
+            {/* AFFICHE LES DOCUMENTS DU DOSSIER */}
+            {selectedDemande.dossier?.documents && selectedDemande.dossier.documents.length > 0 && (
+              <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface)' }}>
+                <h4 style={{ margin: '0 0 10px', fontSize: 14, color: 'var(--navy)' }}>Pièces jointes ({selectedDemande.dossier.documents.length})</h4>
+                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
+                  {selectedDemande.dossier.documents.map(doc => (
+                    <li key={doc.id} style={{ marginBottom: 4 }}>
+                      <strong>{doc.type_document} :</strong>{' '}
+                      <a href={doc.fichier} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', textDecoration: 'underline' }}>
+                        {doc.nom_fichier}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {(selectedDemande.type_demande === 'VENTE_PRODUIT' || selectedDemande.type_demande === 'VENTE_ALIMENTAIRE') && (
               <Field label="Avis Sanitaire Externe (Service d'Hygiène de Thiès)">

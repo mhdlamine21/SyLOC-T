@@ -1,28 +1,19 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AppLogo from './AppLogo';
 import { getNavigationItems } from '../../utils/navigation';
 import { ROLES_LABELS } from '../../utils/constants';
-import toast from 'react-hot-toast';
 
 /**
  * Sidebar back-office : bloc marque, navigation groupee par domaine metier,
  * bloc utilisateur en pied.
  */
 export default function Sidebar({ onCloseMobile }) {
-  const { user, role, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, role } = useAuth();
 
   const initials =
     user?.nom_complet?.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   const groups = getNavigationItems(user, role);
-
-  const handleLogout = () => {
-    logout();
-    toast.success('Deconnexion reussie.');
-    onCloseMobile?.();
-    navigate('/');
-  };
 
   return (
     <aside
@@ -36,7 +27,7 @@ export default function Sidebar({ onCloseMobile }) {
           padding: '14px 14px', borderBottom: '1px solid rgba(255,255,255,.1)', gap: 8,
         }}
       >
-        <AppLogo height={30} showText={true} />
+        <AppLogo height={30} showText={true} variant="dark" />
         {onCloseMobile && (
           <button
             onClick={onCloseMobile}
@@ -102,14 +93,6 @@ export default function Sidebar({ onCloseMobile }) {
               {ROLES_LABELS?.[role] || role?.replace(/_/g, ' ')}
             </span>
           </div>
-          <button
-            onClick={handleLogout}
-            title="Deconnexion"
-            aria-label="Deconnexion"
-            style={{ background: 'rgba(239,68,68,.15)', border: 'none', borderRadius: 8, color: '#f87171', width: 30, height: 30, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}
-          >
-            🚪
-          </button>
         </div>
       )}
 

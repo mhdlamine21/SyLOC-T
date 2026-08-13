@@ -1,11 +1,11 @@
-/**
- * SyLOC-T — Bibliothèque de composants UI réutilisables
- * Thème Navy / Or (Objetif/index.html reference)
+﻿/**
+ * SyLOC-T â€” BibliothÃ¨que de composants UI rÃ©utilisables
+ * ThÃ¨me Navy / Or (Objetif/index.html reference)
  */
 
 import { STATUT_STYLES } from '../../utils/statutStyles';
 
-// ─── BUTTON ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
   const base = 'inline-flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -37,7 +37,7 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   );
 }
 
-// ─── CARD ──────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Card({ className = '', children, onClick, style = {} }) {
   return (
     <div
@@ -60,7 +60,7 @@ export function Card({ className = '', children, onClick, style = {} }) {
   );
 }
 
-// ─── FIELD ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ FIELD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Field({ label, hint, error, required, children, className = '' }) {
   return (
     <div className={`mb-4 ${className}`}>
@@ -74,14 +74,14 @@ export function Field({ label, hint, error, required, children, className = '' }
       {children}
       {error && (
         <p style={{ fontSize: 11, color: 'var(--red)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span>⚠</span> {error}
+          <span>âš </span> {error}
         </p>
       )}
     </div>
   );
 }
 
-// ─── INPUT ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Input({ className = '', style: extraStyle = {}, ...props }) {
   return (
     <input
@@ -140,7 +140,7 @@ export function Select({ className = '', style: extraStyle = {}, children, ...pr
   );
 }
 
-// ─── STATUS BADGE ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ STATUS BADGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function StatusBadge({ statut, className = '' }) {
   const style = STATUT_STYLES[statut] ?? { label: statut, bg: 'bg-soft', fg: 'text-muted', dot: 'bg-muted' };
   return (
@@ -154,7 +154,7 @@ export function StatusBadge({ statut, className = '' }) {
   );
 }
 
-// ─── SECTION HEADER ────────────────────────────────────────────────────────────
+// â”€â”€â”€ SECTION HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function SectionHeader({ eyebrow, title, subtitle }) {
   return (
     <div style={{ marginBottom: 24 }}>
@@ -174,7 +174,7 @@ export function SectionHeader({ eyebrow, title, subtitle }) {
   );
 }
 
-// ─── PAGE WRAPPER ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ PAGE WRAPPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function PageWrapper({ children, className = '' }) {
   return (
     <div className={`fade-in ${className}`} style={{ padding: 'clamp(16px,3vw,28px)', maxWidth: 1240, margin: '0 auto' }}>
@@ -183,8 +183,8 @@ export function PageWrapper({ children, className = '' }) {
   );
 }
 
-// ─── EMPTY STATE ───────────────────────────────────────────────────────────────
-export function EmptyState({ icon = '📭', title, description, action }) {
+// â”€â”€â”€ EMPTY STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export function EmptyState({ icon = 'ðŸ“­', title, description, action }) {
   return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
@@ -195,8 +195,8 @@ export function EmptyState({ icon = '📭', title, description, action }) {
   );
 }
 
-// ─── LOADING STATE ─────────────────────────────────────────────────────────────
-export function LoadingState({ label = 'Chargement…' }) {
+// â”€â”€â”€ LOADING STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export function LoadingState({ label = 'Chargementâ€¦' }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--muted)', gap: 12 }}>
       <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--navy)', animation: 'spin .7s linear infinite', display: 'inline-block' }} />
@@ -205,14 +205,14 @@ export function LoadingState({ label = 'Chargement…' }) {
   );
 }
 
-// ─── MODAL ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Modal({ open, onClose, title, children, size = 'md' }) {
   if (!open) return null;
   const maxWidths = { sm: 400, md: 540, lg: 760, xl: 960 };
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 200,
+        position: 'fixed', inset: 0, zIndex: 9999,
         background: 'rgba(15,27,61,.60)',
         backdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -240,7 +240,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--muted)', lineHeight: 1, padding: '2px 6px' }}
             aria-label="Fermer"
           >
-            ×
+            Ã-
           </button>
         </div>
         <div style={{ padding: '20px 24px 24px' }}>{children}</div>
@@ -249,9 +249,9 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
   );
 }
 
-// ─── TABLE ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Table({ columns, data, onRow, emptyState }) {
-  if (!data?.length) return emptyState ?? <EmptyState title="Aucune donnée" />;
+  if (!data?.length) return emptyState ?? <EmptyState title="Aucune donnÃ©e" />;
   return (
     <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--border)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
@@ -301,7 +301,7 @@ export function Table({ columns, data, onRow, emptyState }) {
   );
 }
 
-// ─── TIMELINE ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ TIMELINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Timeline({ items }) {
   return (
     <ol style={{ position: 'relative', borderLeft: '2px solid var(--border)', paddingLeft: 24, margin: 0, listStyle: 'none' }}>
@@ -317,14 +317,14 @@ export function Timeline({ items }) {
             {item.statut ? <StatusBadge statut={item.statut} /> : item.titre}
           </p>
           {item.commentaire && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{item.commentaire}</p>}
-          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>— {item.auteur}</p>}
+          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>â€” {item.auteur}</p>}
         </li>
       ))}
     </ol>
   );
 }
 
-// ─── STAT CARD ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ STAT CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function StatCard({ label, value, sub, color = 'navy', icon }) {
   const accentColors = {
     navy: 'var(--navy)',
@@ -354,7 +354,7 @@ export function StatCard({ label, value, sub, color = 'navy', icon }) {
   );
 }
 
-// ─── STAR RATING ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ STAR RATING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function StarRating({ value, onChange, max = 5, readOnly = false }) {
   return (
     <div style={{ display: 'flex', gap: 4 }}>
@@ -372,14 +372,14 @@ export function StarRating({ value, onChange, max = 5, readOnly = false }) {
           onMouseEnter={(e) => { if (!readOnly) e.target.style.transform = 'scale(1.1)'; }}
           onMouseLeave={(e) => { e.target.style.transform = ''; }}
         >
-          ★
+          â˜…
         </button>
       ))}
     </div>
   );
 }
 
-// ─── ALERT BANNER ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ ALERT BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function AlertBanner({ type = 'info', children, className = '' }) {
   const styles = {
     info:    { borderColor: 'var(--slate)', background: 'var(--slate-soft)', color: 'var(--slate)' },
@@ -388,7 +388,7 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
     success: { borderColor: 'var(--green)', background: 'var(--green-soft)', color: 'var(--green)' },
     demo:    { borderColor: 'var(--gold)',  background: 'var(--gold-soft)',  color: 'var(--gold-deep)' },
   };
-  const icons = { info: 'ℹ️', warn: '⚠️', danger: '🚫', success: '✅', demo: '🔧' };
+  const icons = { info: 'â„¹ï¸', warn: 'âš ï¸', danger: 'ðŸš«', success: 'âœ…', demo: 'ðŸ”§' };
   const s = styles[type] || styles.info;
 
   return (
@@ -405,3 +405,4 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
     </div>
   );
 }
+

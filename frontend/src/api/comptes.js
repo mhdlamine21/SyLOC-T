@@ -50,8 +50,8 @@ export const soumettreCarteEtudiant = async ({ fichier, matricule_etudiant, cont
   return data;
 };
 
-export const validerCarteEtudiant = async (id, decision) =>
-  (await api.post(`/comptes/demandeurs/${id}/valider-carte-etudiant/`, { decision })).data;
+export const validerCarteEtudiant = async (id, decision, motif = '') =>
+  (await api.post(`/comptes/demandeurs/${id}/valider-carte-etudiant/`, { decision, motif })).data;
 
 // ---- Membres de la commission ---------------------------------------------
 export const getMembresCommission = async () => (await api.get('/demandes/membres/')).data;

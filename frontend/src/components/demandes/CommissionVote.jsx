@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, SectionHeader, StatusBadge, Button, Modal, Field, Select, Textarea, PageWrapper } from '../common/ui';
-import { getDemandes, createVoteCommission } from '../../api/demandes';
+import { getDemandes, createVoteCommission, getPalmaresCommission, cloturerLocal } from '../../api/demandes';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 export default function CommissionVote() {
   const [demandes, setDemandes] = useState([]);
@@ -11,13 +12,18 @@ export default function CommissionVote() {
   const [noteFormelle, setNoteFormelle] = useState(4.5);
   const [noteTechnique, setNoteTechnique] = useState(4.0);
   const [remarque, setRemarque] = useState('');
+  
+  const [palmares, setPalmares] = useState([]);
+  const { role } = useAuth();
 
   const fetchDemandes = async () => {
     try {
       const data = await getDemandes();
-      // On ne veut afficher que celles arrivées à l'étape commission ou votées
-      // Par simplification, on affiche tout ou filtre sur un statut
       setDemandes(data);
+      if (role === 'DIRECTEUR_CROUS_T' || role === 'ADMINISTRATEUR_SI') {
+        const pData = await getPalmaresCommission();
+        setPalmares(pData);
+      }
     } catch (err) {
       toast.error("Erreur lors du chargement des demandes.");
     } finally {
@@ -51,6 +57,17 @@ export default function CommissionVote() {
       fetchDemandes();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement du vote. Êtes-vous bien membre ?");
+    }
+  };
+
+  const handleCloturerLocal = async (local_id, gagnant_id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir attribuer ce local à ce candidat ?")) return;
+    try {
+      await cloturerLocal(local_id, gagnant_id);
+      toast.success("Le local a été attribué avec succès.");
+      fetchDemandes();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Erreur lors de la clôture.");
     }
   };
 
@@ -107,6 +124,39 @@ export default function CommissionVote() {
           </Card>
         ))}
       </div>
+
+      {(role === 'DIRECTEUR_CROUS_T' || role === 'ADMINISTRATEUR_SI') && palmares.length > 0 && (
+        <div style={{ marginTop: 40 }}>
+          <SectionHeader
+            eyebrow="Délibération Finale"
+            title="Palmarès & Attribution des Locaux"
+            subtitle="Décision finale du Directeur CROUS-T suite aux votes de la commission."
+          />
+          <div style={{ display: 'grid', gap: 20 }}>
+            {palmares.map(p => (
+              <Card key={p.local_id}>
+                <h3 style={{ margin: '0 0 15px', color: 'var(--navy)' }}>📍 Local : {p.local_reference}</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {p.candidats.map((c, index) => (
+                    <div key={c.demande_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: index === 0 ? 'var(--green-soft)' : 'var(--surface-2)', padding: 15, borderRadius: 8 }}>
+                      <div>
+                        <strong>{c.reference_anonyme}</strong> ({c.type_demande.replace(/_/g, ' ')})
+                        <div style={{ fontSize: 13, color: index === 0 ? 'var(--green)' : 'var(--muted)', marginTop: 4 }}>
+                          Moyenne : <strong>{c.score_moyen ? `${c.score_moyen}/5` : 'En attente'}</strong> ({c.nb_votes} votes)
+                          {index === 0 && ' 🏆 Recommandé'}
+                        </div>
+                      </div>
+                      <Button size="sm" variant={index === 0 ? 'primary' : 'outline'} onClick={() => handleCloturerLocal(p.local_id, c.demande_id)}>
+                        Attribuer ce local
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {activeDemande && (
         <Modal open={!!activeDemande} onClose={() => setActiveDemande(null)} title={`Délibération Commission : ${activeDemande.id}`}>

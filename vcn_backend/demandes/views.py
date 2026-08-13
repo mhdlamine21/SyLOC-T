@@ -44,14 +44,30 @@ class DemandeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.role == RoleUtilisateur.USAGER:
             return Demande.objects.filter(demandeur__utilisateur=user)
+        if user.role == RoleUtilisateur.AMICALE:
+            # L'Amicale voit ses propres demandes ET les demandes pour ses locaux
+            from django.db.models import Q
+            return Demande.objects.filter(
+                Q(demandeur__utilisateur=user) | Q(local__gestionnaire='AMICALE')
+            )
         return Demande.objects.all()
 
     @staticmethod
-    def _notifier(demande, message):
+    def _notifier(demande, message, envoyer_email=False, sujet=""):
         try:
             Notification.objects.create(destinataire=demande.demandeur.utilisateur, contenu=message)
-        except Exception:
-            pass
+            if envoyer_email and demande.demandeur.utilisateur.email:
+                from django.core.mail import send_mail
+                from django.conf import settings
+                send_mail(
+                    sujet or "Mise à jour de votre dossier VCN",
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [demande.demandeur.utilisateur.email],
+                    fail_silently=True,
+                )
+        except Exception as e:
+            print("Erreur notification:", e)
 
     def perform_create(self, serializer):
         try:
@@ -95,6 +111,14 @@ class DemandeViewSet(viewsets.ModelViewSet):
                     document.type_document)
         return Response(DocumentSerializer(document).data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], url_path='reception-physique', permission_classes=[roles_requis('BUREAU_COURRIER', 'ADMINISTRATEUR_SI')])
+    def reception_physique(self, request, pk=None):
+        demande = self.get_object()
+        dossier, _ = Dossier.objects.get_or_create(demande=demande)
+        dossier.enregistrer_dossier_physique()
+        journaliser(request.user, "RECEPTION_PHYSIQUE", f"Dossier {demande.reference_anonyme}")
+        return Response({'status': 'Pièces physiques réceptionnées avec succès.'})
+
     @action(detail=True, methods=['post'], permission_classes=[roles_requis(
         'BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE',
         'AGENT_QHSE', 'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
@@ -107,7 +131,14 @@ class DemandeViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Statut manquant."}, status=status.HTTP_400_BAD_REQUEST)
             
         demande_maj = DemandeService.changer_statut(demande, nouveau_statut, request.user, commentaire)
-        self._notifier(demande_maj, f"Votre dossier {demande_maj.reference_anonyme} est desormais au statut : {demande_maj.statut}.")
+        
+        message = f"Votre dossier {demande_maj.reference_anonyme} est desormais au statut : {demande_maj.statut}."
+        if nouveau_statut == StatutDemande.MITIGEE_COMPLEMENT:
+            message += f"\n\nMotif de la demande de complément :\n{commentaire}\n\nVeuillez vous connecter à l'application pour compléter votre dossier et le renvoyer."
+            self._notifier(demande_maj, message, envoyer_email=True, sujet="Action requise : Complément de dossier demandé (VCN)")
+        else:
+            self._notifier(demande_maj, message)
+            
         journaliser(request.user, "CHANGEMENT_STATUT_DEMANDE", f"Demande {demande_maj.reference_anonyme}",
                     f"-> {nouveau_statut} ({commentaire})")
         return Response(DemandeSerializer(demande_maj).data)
@@ -239,6 +270,66 @@ class DemandeViewSet(viewsets.ModelViewSet):
             "message": f"{len(conflits)} locaux de type {type_cible} détectés à moins de {distance_limite_metres}m."
         })
 
+    @action(detail=False, methods=['get'], url_path='palmares-commission', permission_classes=[permissions.IsAuthenticated])
+    def palmares_commission(self, request):
+        """Retourne les demandes en attente de décision, groupées par local avec leurs scores."""
+        demandes = Demande.objects.filter(statut=StatutDemande.EN_ATTENTE_DECISION, local__isnull=False)
+        if request.user.role == 'AMICALE':
+            demandes = demandes.filter(local__gestionnaire='AMICALE')
+        
+        locaux_dict = {}
+        for d in demandes:
+            local_id = str(d.local.id)
+            if local_id not in locaux_dict:
+                locaux_dict[local_id] = {
+                    "local_id": local_id,
+                    "local_reference": d.local.reference,
+                    "candidats": []
+                }
+            
+            votes = d.votes.all()
+            nb_votes = votes.count()
+            score_moyen = None
+            if nb_votes > 0:
+                notes = []
+                for v in votes:
+                    if v.note_formelle is not None: notes.append(v.note_formelle)
+                    if v.note_technique is not None: notes.append(v.note_technique)
+                if notes:
+                    score_moyen = round(sum(notes) / len(notes), 2)
+                    
+            locaux_dict[local_id]["candidats"].append({
+                "demande_id": str(d.id),
+                "reference_anonyme": d.reference_anonyme,
+                "type_demande": d.type_demande,
+                "score_moyen": score_moyen,
+                "nb_votes": nb_votes
+            })
+            
+        for l in locaux_dict.values():
+            l["candidats"].sort(key=lambda c: (c["score_moyen"] is not None, c["score_moyen"] or 0), reverse=True)
+            
+        return Response(list(locaux_dict.values()))
+
+    @action(detail=False, methods=['post'], url_path='cloturer-local', permission_classes=[roles_requis('DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI')])
+    def cloturer_local(self, request):
+        local_id = request.data.get('local_id')
+        gagnant_id = request.data.get('gagnant_id')
+        
+        if not local_id or not gagnant_id:
+            return Response({"detail": "local_id et gagnant_id sont requis."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        demandes_loc = Demande.objects.filter(local_id=local_id, statut=StatutDemande.EN_ATTENTE_DECISION)
+        
+        if not demandes_loc.filter(id=gagnant_id).exists():
+            return Response({"detail": "Le candidat specifié n'est pas valide ou n'est plus en attente."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        gagnant = demandes_loc.get(id=gagnant_id)
+        demande_maj = DemandeService.changer_statut(gagnant, StatutDemande.FAVORABLE, request.user, "Attribution suite à la délibération de la commission.")
+        self._notifier(demande_maj, f"Félicitations ! Votre dossier {demande_maj.reference_anonyme} a été retenu pour le local {demande_maj.local.reference}.", envoyer_email=True, sujet="Décision Favorable (VCN)")
+            
+        return Response({"status": "Clôture effectuée avec succès."})
+
 class DossierViewSet(viewsets.ModelViewSet):
     queryset = Dossier.objects.all()
     serializer_class = DossierSerializer
@@ -258,8 +349,9 @@ class VoteCommissionViewSet(viewsets.ModelViewSet):
         try:
             membre = MembreCommission.objects.get(utilisateur=self.request.user)
         except MembreCommission.DoesNotExist:
-            # Pour la démo, si l'utilisateur n'est pas membre, on bloque
-            # ou on pourrait lever une ValidationError
-            from rest_framework.exceptions import ValidationError
-            raise ValidationError("Vous n'êtes pas membre de la commission.")
+            if self.request.user.role == 'AMICALE':
+                membre, _ = MembreCommission.objects.get_or_create(utilisateur=self.request.user, defaults={'actif': True})
+            else:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Vous n'êtes pas membre de la commission.")
         serializer.save(membre=membre)

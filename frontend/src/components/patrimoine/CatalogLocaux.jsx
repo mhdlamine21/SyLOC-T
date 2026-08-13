@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getLocaux } from '../../api/patrimoine';
 import { messageErreur } from '../../api/utils';
@@ -42,7 +42,7 @@ export default function CatalogLocaux() {
     if (role === 'USAGER') {
       navigate('/depot', { state: { localId: local.id, localReference: local.reference } });
     } else {
-      toast('Seuls les usagers candidats peuvent déposer un dossier de candidature.');
+      toast('Seuls les usagers candidats peuvent dÃ©poser un dossier de candidature.');
     }
   };
 
@@ -50,8 +50,8 @@ export default function CatalogLocaux() {
     <PageWrapper>
       <SectionHeader
         eyebrow="Patrimoine & Locaux Domaniaux"
-        title="Catalogue des locaux commercialisés"
-        subtitle="Carte interactive et fiches détaillées des emplacements commerciaux du campus VCN — CROUS de Thiès."
+        title="Catalogue des locaux commercialisÃ©s"
+        subtitle="Carte interactive et fiches dÃ©taillÃ©es des emplacements commerciaux du campus VCN â€” CROUS de ThiÃ¨s."
       />
 
       <div style={{ marginBottom: 24 }}>
@@ -59,12 +59,12 @@ export default function CatalogLocaux() {
       </div>
 
       {loading ? (
-        <LoadingState label="Chargement des locaux…" />
+        <LoadingState label="Chargement des locauxâ€¦" />
       ) : locaux.length === 0 ? (
         <EmptyState
-          icon="🏚️"
-          title="Aucun local au référentiel"
-          description="Le référentiel patrimoine est vide pour le moment."
+          icon="ðŸšï¸"
+          title="Aucun local au rÃ©fÃ©rentiel"
+          description="Le rÃ©fÃ©rentiel patrimoine est vide pour le moment."
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -83,13 +83,13 @@ export default function CatalogLocaux() {
                   <StatusBadge statut={loc.est_libre ? 'FAVORABLE' : 'EN_ATTENTE_DECISION'} />
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, margin: '0 0 6px', color: 'var(--navy)' }}>
-                  {TYPES_LOCAL_LABELS[loc.type_local] || loc.type_local} — {loc.surface_m2} m²
+                  {TYPES_LOCAL_LABELS[loc.type_local] || loc.type_local} â€” {loc.surface_m2} mÂ²
                 </h3>
-                <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 10px' }}>📍 {loc.localisation}</p>
+                <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 10px' }}>ðŸ“ {loc.localisation}</p>
               </div>
 
               <Button variant="primary" size="sm" onClick={() => setSelectedLocal(loc)}>
-                🔍 Découvrir les détails →
+                ðŸ” DÃ©couvrir les dÃ©tails â†’
               </Button>
             </Card>
           ))}
@@ -104,21 +104,23 @@ export default function CatalogLocaux() {
             )}
             <div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: '0 0 6px' }}>
-                {TYPES_LOCAL_LABELS[selectedLocal.type_local] || selectedLocal.type_local} ({selectedLocal.surface_m2} m²)
+                {TYPES_LOCAL_LABELS[selectedLocal.type_local] || selectedLocal.type_local} ({selectedLocal.surface_m2} mÂ²)
               </h3>
               <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 2 }}>
-                <div>📍 {selectedLocal.localisation}</div>
-                <div>👥 Capacité d'accueil : {selectedLocal.capacite_accueil ?? '—'}</div>
-                <div>🏗️ État : {LIBELLES_ETAT[selectedLocal.etat_physique] || selectedLocal.etat_physique}</div>
-                <div>🏛️ Gestionnaire : {selectedLocal.gestionnaire === 'AMICALE' ? 'Amicale' : 'CROUS-T'}</div>
-                <div>{selectedLocal.est_libre ? '✅ Disponible à la candidature' : '👤 Actuellement occupé'}</div>
+                <div>ðŸ“ {selectedLocal.localisation}</div>
+                <div>ðŸ‘¥ CapacitÃ© d'accueil : {selectedLocal.capacite_accueil ?? 'â€”'}</div>
+                <div>ðŸ-ï¸ Ã‰tat : {LIBELLES_ETAT[selectedLocal.etat_physique] || selectedLocal.etat_physique}</div>
+                {role !== 'USAGER' && role !== 'AMICALE' && (
+                  <div>ðŸ›ï¸ Gestionnaire : {selectedLocal.gestionnaire === 'AMICALE' ? 'Amicale' : 'CROUS-T'}</div>
+                )}
+                <div>{selectedLocal.est_libre ? 'âœ… Disponible Ã  la candidature' : 'ðŸ‘¤ Actuellement occupÃ©'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
               <Button variant="ghost" onClick={() => setSelectedLocal(null)}>Fermer</Button>
               {selectedLocal.est_libre && (
                 <Button variant="amber" onClick={() => postuler(selectedLocal)}>
-                  ✈ Postuler pour ce local
+                  âœˆ Postuler pour ce local
                 </Button>
               )}
             </div>
@@ -128,3 +130,4 @@ export default function CatalogLocaux() {
     </PageWrapper>
   );
 }
+

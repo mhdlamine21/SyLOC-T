@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+﻿import { createContext, useContext, useEffect, useState } from 'react';
 import { loginApi, verifierSession } from '../api/auth';
 import { clearSession, getToken, setSession } from '../api/axios';
 
@@ -97,3 +97,4 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth doit être dans <AuthProvider>');
   return ctx;
 }
+

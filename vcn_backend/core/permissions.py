@@ -1,4 +1,23 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
+
+# Le Directeur CROUS-T est l'admin METIER : il supervise tout (lecture) mais
+# n'herite plus automatiquement des droits d'ECRITURE operationnels des autres
+# services (instruire une inspection, cloturer une mission...). Il doit etre
+# explicitement liste dans la vue pour agir.
+ROLE_DIRECTION = "DIRECTEUR_CROUS_T"
+
+# L'Administrateur SI est un compte TECHNIQUE : comptes, roles, parametres,
+# journal d'audit. Il n'a aucun privilege metier implicite.
+ROLE_ADMIN_SI = "ADMINISTRATEUR_SI"
+
+
+def _role(user):
+    return getattr(user, "role", None)
+
+
+def est_supervision_lecture(request):
+    """Vrai si la requete est une simple lecture faite par la Direction."""
+    return _role(request.user) == ROLE_DIRECTION and request.method in SAFE_METHODS
 
 
 class HasRole(BasePermission):
@@ -8,8 +27,9 @@ class HasRole(BasePermission):
         permission_classes = [HasRole]
         roles_autorises = ["DIRECTEUR_CROUS_T", "DIRECTEUR_DCUVE"]
 
-    Le role du Directeur CROUS-T debloque toujours (voir matrice de
-    responsabilite : il est le seul a pouvoir agir a tous les niveaux).
+    Le Directeur CROUS-T conserve un droit de LECTURE transverse (supervision),
+    mais pas un droit d'ecriture implicite : pour agir il doit figurer dans
+    `roles_autorises`.
     """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
@@ -17,9 +37,9 @@ class HasRole(BasePermission):
         roles_autorises = getattr(view, "roles_autorises", None)
         if not roles_autorises:
             return True
-        if request.user.role == "DIRECTEUR_CROUS_T":
+        if est_supervision_lecture(request):
             return True
-        return request.user.role in roles_autorises
+        return _role(request.user) in roles_autorises
 
 
 class EstProprietaire(BasePermission):
@@ -27,10 +47,12 @@ class EstProprietaire(BasePermission):
     Permission objet : un Demandeur/Occupant ne peut agir que sur ses
     propres objets (sa demande, son contrat, son signalement...).
     L'objet cible doit exposer un champ `demandeur` ou `utilisateur`.
+
+    La Direction peut consulter (lecture seule) tout objet.
     """
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if getattr(user, "role", None) == "DIRECTEUR_CROUS_T":
+        if est_supervision_lecture(request):
             return True
         owner = getattr(obj, "demandeur", None) or getattr(obj, "utilisateur", None)
         return owner is not None and getattr(owner, "id", None) == user.id
@@ -42,6 +64,9 @@ def roles_requis(*roles):
     Remplace `IsAdminUser` sur les actions metier : un Directeur DCUVE ou le
     Service Juridique n'est pas un superuser Django, il doit pourtant pouvoir
     agir sur les dossiers.
+
+    Le superuser Django reste debloque (compte de maintenance) et la Direction
+    garde la lecture transverse ; toute ECRITURE exige un role explicite.
     """
     class _RolesRequis(BasePermission):
         message = "Votre role ne permet pas cette action."
@@ -50,8 +75,10 @@ def roles_requis(*roles):
             user = request.user
             if not user or not user.is_authenticated:
                 return False
-            if user.is_superuser or getattr(user, "role", None) == "DIRECTEUR_CROUS_T":
+            if user.is_superuser:
                 return True
-            return getattr(user, "role", None) in roles
+            if est_supervision_lecture(request):
+                return True
+            return _role(user) in roles
 
     return _RolesRequis

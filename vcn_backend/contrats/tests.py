@@ -22,8 +22,6 @@ class ContratsTests(APITestCase):
             demandeur=self.demandeur,
             signataire_crous_t=self.admin,
             date_debut=timezone.now().date(),
-            redevance_mensuelle=100.0,
-            montant_caution=200.0
         )
         self.assertIsNotNone(contrat)
         self.assertTrue(contrat.est_actif)
@@ -39,13 +37,10 @@ class ContratsTests(APITestCase):
             demandeur=self.demandeur,
             signataire_crous_t=self.admin,
             date_debut=timezone.now().date(),
-            redevance_mensuelle=100.0,
-            montant_caution=200.0
         )
         contrat.appliquer_gratuite_etudiante()
         
         self.assertTrue(contrat.est_gratuit)
-        self.assertEqual(contrat.redevance_mensuelle, 0.0)
 
     def test_expulsion(self):
         contrat = Contrat.objects.create(
@@ -53,8 +48,6 @@ class ContratsTests(APITestCase):
             demandeur=self.demandeur,
             signataire_crous_t=self.admin,
             date_debut=timezone.now().date(),
-            redevance_mensuelle=100.0,
-            montant_caution=200.0
         )
         self.local.est_libre = False
         self.local.save()

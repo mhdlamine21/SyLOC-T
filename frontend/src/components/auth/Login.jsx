@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -33,7 +33,7 @@ export default function Login() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", fontFamily: "Inter, sans-serif" }}>
       {/* Colonne gauche — Illustration & Identité */}
-      <div style={{ flex: "0 0 420px", background: "var(--teal-deep)", color: "var(--paper)", padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }} className="hidden md:flex">
+      <div style={{ flex: "0 0 420px", background: "var(--navy-2)", color: "var(--text-on-navy)", padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }} className="hidden md:flex">
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
             <div style={{ background: "#fff", padding: 6, borderRadius: 12, display: "flex", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
@@ -109,7 +109,7 @@ export default function Login() {
               type="submit"
               disabled={loading}
               style={{
-                width: "100%", background: "var(--teal)", color: "var(--paper)",
+                width: "100%", background: "var(--navy)", color: "var(--text-on-navy)",
                 border: "none", cursor: loading ? "not-allowed" : "pointer",
                 fontWeight: 600, fontSize: 15, padding: "15px 22px", minHeight: 48,
                 opacity: loading ? 0.6 : 1, fontFamily: "inherit", marginTop: 8,
@@ -133,3 +133,5 @@ export default function Login() {
     </div>
   );
 }
+
+

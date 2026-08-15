@@ -150,10 +150,10 @@ export const STATUTS_ECHEANCE = {
 
 // terrain.models
 export const TYPES_SIGNALEMENT_TERRAIN = [
-  { value: "TECHNIQUE", label: "🔧 Problème technique / panne" },
-  { value: "NON_CONFORMITE_QHSE", label: "⚠️ Manquement hygiène / insalubrité" },
-  { value: "ENVIRONNEMENT", label: "🌍 Nuisance environnementale" },
-  { value: "DENONCIATION_ILLEGALE", label: "🏴 Occupation sans titre / illégale" },
+  { value: "TECHNIQUE", label: "Problème technique / panne" },
+  { value: "NON_CONFORMITE_QHSE", label: "Manquement hygiène / insalubrité" },
+  { value: "ENVIRONNEMENT", label: "Nuisance environnementale" },
+  { value: "DENONCIATION_ILLEGALE", label: "Occupation sans titre / illégale" },
 ];
 
 export const STATUTS_PLAINTE = {
@@ -225,3 +225,38 @@ ARTICLE 2 — NORMES SANITAIRES ET PRIX : L'occupant s'engage à respecter la gr
 ARTICLE 3 — PAIEMENT DES REDEVANCES : La redevance est payable d'avance selon l'échéancier généré par la plateforme. Tout retard entraîne des pénalités et un rappel à l'ordre.
 
 ARTICLE 4 — SANCTIONS & EXPULSION : En cas de non-conformités QHSE répétées ou d'impayé persistant, le contrat peut être résilié de plein droit après notification.`;
+
+// terrain.models — Phase 5 (ordres de mission & maintenance technique)
+export const STATUTS_ORDRE_MISSION = {
+  EMIS: "EMIS",
+  EN_COURS: "EN_COURS",
+  EXECUTE: "EXECUTE",
+  ANNULE: "ANNULE",
+};
+
+export const STATUTS_ORDRE_MISSION_LABELS = {
+  EMIS: "Émis",
+  EN_COURS: "En cours",
+  EXECUTE: "Exécuté",
+  ANNULE: "Annulé",
+};
+
+export const TYPES_INTERVENTION = [
+  { value: "PREVENTIVE", label: "Préventive" },
+  { value: "CURATIVE", label: "Curative" },
+  { value: "URGENCE", label: "Urgence" },
+];
+
+export const STATUTS_INTERVENTION = {
+  PLANIFIEE: "PLANIFIEE",
+  EN_COURS: "EN_COURS",
+  TERMINEE: "TERMINEE",
+  ANNULEE: "ANNULEE",
+};
+
+export const STATUTS_INTERVENTION_LABELS = {
+  PLANIFIEE: "Planifiée",
+  EN_COURS: "En cours",
+  TERMINEE: "Terminée",
+  ANNULEE: "Annulée",
+};

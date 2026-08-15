@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Card, SectionHeader, Button, Field, Select, Textarea, PageWrapper, AlertBanner } from '../common/ui';
 import { getLocaux } from '../../api/patrimoine';
 import { createInspection } from '../../api/terrain';
@@ -31,11 +31,11 @@ export default function InspectionQHSE() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setCoords({ lat: pos.coords.latitude.toFixed(5), lng: pos.coords.longitude.toFixed(5) });
-          toast.success('📍 Position GPS capturée avec succès !');
+          toast.success('Position GPS capturée avec succès !');
         },
         () => {
           setCoords({ lat: '14.7912', lng: '-16.9254' });
-          toast('📍 Position GPS par défaut appliquée (Campus VCN).');
+          toast('Position GPS par défaut appliquée (Campus VCN).');
         }
       );
     }
@@ -57,7 +57,7 @@ export default function InspectionQHSE() {
         longitude: coords ? coords.lng : null,
         observations
       });
-      toast.success(`🔬 Inspection QHSE enregistrée avec succès.`);
+      toast.success(`Inspection QHSE enregistrée avec succès.`);
       setObservations('');
     } catch (error) {
       toast.error('Erreur lors de l\'enregistrement de l\'inspection.');
@@ -104,9 +104,9 @@ export default function InspectionQHSE() {
 
           <AlertBanner type="info">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>📍 Coordonnées GPS : {coords ? `${coords.lat}, ${coords.lng}` : 'Non encore capturées'}</span>
+              <span>Coordonnées GPS : {coords ? `${coords.lat}, ${coords.lng}` : 'Non encore capturées'}</span>
               <Button variant="outline" size="sm" type="button" onClick={handleCaptureGPS}>
-                📍 Capturer Position GPS
+                Capturer Position GPS
               </Button>
             </div>
           </AlertBanner>
@@ -121,10 +121,11 @@ export default function InspectionQHSE() {
           </Field>
 
           <Button variant="navy" type="submit" style={{ justifyContent: 'center' }}>
-            🔬 Enregistrer l'Inspection QHSE
+            Enregistrer l'Inspection QHSE
           </Button>
         </form>
       </Card>
     </PageWrapper>
   );
 }
+

@@ -6,6 +6,8 @@ import NotificationBell from './NotificationBell';
 import { getNavigationItems } from '../../utils/navigation';
 import { ROLES_LABELS } from '../../utils/constants';
 import toast from 'react-hot-toast';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 /** Barre superieure fine : titre de page a gauche, actions/profil a droite. */
 export default function TopHeader({ onToggleMobileSidebar }) {
@@ -91,7 +93,7 @@ export default function TopHeader({ onToggleMobileSidebar }) {
                 cursor: 'pointer', textAlign: 'left',
               }}
             >
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9.5, fontWeight: 900 }}>
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--navy)', color: 'var(--text-on-navy)', display: 'grid', placeItems: 'center', fontSize: 9.5, fontWeight: 900 }}>
                 {initials}
               </div>
               <div style={{ lineHeight: 1.2 }}>
@@ -118,7 +120,7 @@ export default function TopHeader({ onToggleMobileSidebar }) {
                   👤 Mon profil
                 </button>
                 <button onClick={() => { toggle(); setMenuOpen(false); }} className="dropdown-item">
-                  {dark ? '☀️ Activer le mode clair' : '🌙 Activer le mode sombre'}
+                  {dark ? <><LightModeIcon style={{ fontSize: 18, color: 'var(--gold)' }} /> Activer le mode clair</> : <><DarkModeIcon style={{ fontSize: 18 }} /> Activer le mode sombre</>}
                 </button>
                 <button onClick={() => { setMenuOpen(false); toast('Contacts: crous-t@univ-thies.sn / 33 951 00 00', { icon: '📞' }); }} className="dropdown-item">
                   📞 Contacts des services
@@ -161,3 +163,5 @@ export default function TopHeader({ onToggleMobileSidebar }) {
     </header>
   );
 }
+
+

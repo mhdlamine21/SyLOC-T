@@ -52,6 +52,19 @@ class AvisCommission(models.TextChoices):
     DEFAVORABLE = "DEFAVORABLE", "Défavorable"
     ABSTENTION = "ABSTENTION", "Abstention"
 
+
+class MotifArchivage(models.TextChoices):
+    AVIS_DEFAVORABLE = "AVIS_DEFAVORABLE", "Avis défavorable"
+    DOSSIER_INCOMPLET = "DOSSIER_INCOMPLET", "Dossier incomplet"
+    AUTRE = "AUTRE", "Autre"
+
+
+class MotifActivationCommission(models.TextChoices):
+    ABSENCE = "ABSENCE", "Absence du Directeur CROUS-T"
+    VOYAGE = "VOYAGE", "Voyage / mission du Directeur"
+    ARBITRAGE = "ARBITRAGE", "Arbitrage collégial requis"
+    AUTRE = "AUTRE", "Autre"
+
 class AppelCandidature(BaseModel):
     titre = models.CharField(max_length=255)
     description = models.TextField()
@@ -60,6 +73,21 @@ class AppelCandidature(BaseModel):
     est_actif = models.BooleanField(default=True)
     local = models.ForeignKey(Local, on_delete=models.CASCADE, related_name="appels_candidature")
     publie_par = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, related_name="appels_publies")
+
+    class Meta:
+        ordering = ['-date_lancement']
+
+    @property
+    def est_ouvert(self):
+        from django.utils import timezone
+        maintenant = timezone.now()
+        return bool(self.est_actif and self.date_lancement <= maintenant <= self.date_cloture)
+
+    def cloturer(self):
+        """Ferme l'appel : plus aucune candidature ne peut y etre rattachee."""
+        self.est_actif = False
+        self.save(update_fields=['est_actif'])
+        return self
 
     def __str__(self):
         return self.titre
@@ -87,11 +115,71 @@ class Demande(BaseModel):
     appel_candidature = models.ForeignKey(AppelCandidature, on_delete=models.SET_NULL, null=True, blank=True, related_name="candidatures")
     local = models.ForeignKey(Local, on_delete=models.SET_NULL, null=True, blank=True, related_name="demandes_directes")
 
+    # ---------------------------------------------------------- Archivage
+    archive = models.BooleanField(default=False)
+    date_archivage = models.DateTimeField(null=True, blank=True)
+    archive_par = models.ForeignKey(
+        Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="dossiers_archives"
+    )
+    motif_archivage = models.CharField(max_length=32, choices=MotifArchivage.choices, blank=True)
+    commentaire_archivage = models.TextField(blank=True)
+    partage_avec = models.ManyToManyField(
+        Utilisateur, blank=True, related_name="demandes_partagees"
+    )
+
+    # ---------------------- Routage Renovation/Construction (Service Technique)
+    transmis_service_technique = models.BooleanField(default=False)
+    date_transmission_technique = models.DateTimeField(null=True, blank=True)
+    rapport_technique = models.TextField(blank=True)
+    rapport_technique_par = models.ForeignKey(
+        Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="rapports_techniques_rediges"
+    )
+    date_rapport_technique = models.DateTimeField(null=True, blank=True)
+    transfere_juridique = models.BooleanField(default=False)
+    date_transfert_juridique = models.DateTimeField(null=True, blank=True)
+
+    def archiver(self, utilisateur, motif, commentaire=""):
+        from django.utils import timezone
+        self.archive = True
+        self.date_archivage = timezone.now()
+        self.archive_par = utilisateur
+        self.motif_archivage = motif
+        self.commentaire_archivage = commentaire
+        self.save(update_fields=[
+            'archive', 'date_archivage', 'archive_par', 'motif_archivage',
+            'commentaire_archivage', 'date_modification',
+        ])
+        return self
+
+    @property
+    def necessite_expertise_technique(self):
+        return self.type_demande in (TypeDemande.RENOVATION, TypeDemande.CONSTRUCTION_CANDIDAT, TypeDemande.CONSTRUCTION_CROUST)
+
     def save(self, *args, **kwargs):
         if not self.reference_anonyme:
             import uuid
             self.reference_anonyme = f"DOSSIER-{str(uuid.uuid4())[:8].upper()}"
         super().save(*args, **kwargs)
+
+    ETAPES_CHRONOLOGIE = [
+        StatutDemande.NOUVELLE,
+        StatutDemande.CONTROLE_RECEVABILITE,
+        StatutDemande.EN_EXPERTISE_TECHNIQUE,
+        StatutDemande.CONTROLE_HYGIENE,
+        StatutDemande.EN_ATTENTE_DECISION,
+        StatutDemande.FAVORABLE,
+    ]
+
+    @property
+    def statut_label(self):
+        return self.get_statut_display()
+
+    @property
+    def est_cloturee(self):
+        return self.statut in (
+            StatutDemande.FAVORABLE, StatutDemande.DEFAVORABLE,
+            StatutDemande.MITIGEE_ARCHIVEE, StatutDemande.CONTRAT_REFUSE,
+        )
 
     def __str__(self):
         return f"Demande {self.id} - {self.reference_anonyme} ({self.statut})"
@@ -136,7 +224,56 @@ class HistoriqueStatutDemande(BaseModel):
     commentaire_acteur = models.TextField(blank=True)
     auteur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True)
 
+class Commission(BaseModel):
+    """Commission d'evaluation, creee et activee par le Directeur CROUS-T (UC commission).
+
+    Peut recevoir une delegation de decision du Directeur (`delegation_directeur`) :
+    dans ce cas, ses membres peuvent exercer les actions de decision reservees
+    au role DIRECTEUR_CROUS_T sur les demandes (cf. `demandes.services` / permissions).
+    """
+    nom = models.CharField(max_length=150, default="Commission d'évaluation")
+    active = models.BooleanField(default=False)
+    date_activation = models.DateTimeField(null=True, blank=True)
+    date_desactivation = models.DateTimeField(null=True, blank=True)
+    motif_activation = models.CharField(max_length=32, choices=MotifActivationCommission.choices, blank=True)
+    commentaire_activation = models.TextField(blank=True)
+    delegation_directeur = models.BooleanField(
+        default=False, help_text="Si actif, la commission peut prendre les decisions du Directeur CROUS-T."
+    )
+    creee_par = models.ForeignKey(
+        Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="commissions_creees"
+    )
+
+    class Meta:
+        verbose_name = "Commission d'évaluation"
+        verbose_name_plural = "Commissions d'évaluation"
+
+    def activer(self, utilisateur, motif, delegation=False, commentaire=""):
+        from django.utils import timezone
+        self.active = True
+        self.date_activation = timezone.now()
+        self.motif_activation = motif
+        self.commentaire_activation = commentaire
+        self.delegation_directeur = delegation
+        self.save()
+        return self
+
+    def desactiver(self):
+        from django.utils import timezone
+        self.active = False
+        self.date_desactivation = timezone.now()
+        self.delegation_directeur = False
+        self.save()
+        return self
+
+    def __str__(self):
+        return f"{self.nom} ({'active' if self.active else 'inactive'})"
+
+
 class MembreCommission(BaseModel):
+    commission = models.ForeignKey(
+        Commission, on_delete=models.CASCADE, null=True, blank=True, related_name="membres"
+    )
     utilisateur = models.OneToOneField(Utilisateur, on_delete=models.CASCADE, related_name="profil_commission")
     date_designation = models.DateTimeField(auto_now_add=True)
     actif = models.BooleanField(default=True)
@@ -148,6 +285,12 @@ class VoteCommission(BaseModel):
     note_formelle = models.FloatField(null=True, blank=True)
     note_technique = models.FloatField(null=True, blank=True)
     commentaire = models.TextField(blank=True)
+
+    class Meta:
+        # Un membre ne vote qu'une seule fois par dossier (le vote est
+        # revisable via PATCH, jamais duplique).
+        unique_together = ('demande', 'membre')
+        ordering = ['-date_creation']
 
     @property
     def note_moyenne(self):

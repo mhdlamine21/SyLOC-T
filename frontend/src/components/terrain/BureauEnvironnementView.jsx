@@ -1,3 +1,7 @@
+import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
+import ScienceOutlinedIcon from '@mui/icons-material/ScienceOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getSanctions, updateSanction, getInspections, getPlaintes } from '../../api/terrain';
@@ -30,7 +34,9 @@ export default function BureauEnvironnementView() {
     setLoading(true);
     try {
       const [s, i, p] = await Promise.all([getSanctions(), getInspections(), getPlaintes()]);
-      setSanctions(s); setInspections(i); setPlaintes(p);
+      setSanctions(s);
+      setInspections(i.filter(ins => ins.type_controle === 'SANITAIRE' || ins.type_controle === 'OCCUPATION'));
+      setPlaintes(p);
     } catch (e) {
       toast.error(messageErreur(e, 'Erreur de chargement du bureau QHSE.'));
     } finally {
@@ -119,7 +125,7 @@ export default function BureauEnvironnementView() {
             disabled={r.niveau === 'CONVOCATION' || r.niveau === 'EXPULSION' || r.statut_sanction === 'LEVEE'}
             onClick={() => agir(r.id, { niveau: 'CONVOCATION' }, 'Convocation emise aupres de la Direction.')}
           >
-            📢
+
           </IconButton>
           <IconButton
             title="Proposer une expulsion"
@@ -142,7 +148,7 @@ export default function BureauEnvironnementView() {
         <IdentityCell
           title={r.local_reference || r.local || 'Local'}
           subtitle={(r.type_controle || '').replace(/_/g, ' ')}
-          initials="🔬"
+          initials="BE"
           tone={r.est_conforme ? 'green' : 'red'}
         />
       ),
@@ -164,17 +170,17 @@ export default function BureauEnvironnementView() {
   return (
     <div>
       <PageHeader
-        icon="🔬"
+        icon={<BiotechOutlinedIcon style={{ fontSize: 20 }} />}
         title="Bureau environnement, hygiene & securite"
         subtitle="Suivi des non-conformites sanitaires, prononce et levee des sanctions disciplinaires."
         actions={<Button variant="secondary" onClick={charger}>↻ Actualiser</Button>}
       />
 
       <StatGrid cols={4}>
-        <KpiCard icon="⚠️" label="Sanctions actives" value={stats.actives} sub={`${stats.levees} levee(s)`} tone="red" />
-        <KpiCard icon="📢" label="Convocations" value={stats.convocations} sub={`${stats.expulsions} expulsion(s)`} tone="gold" />
-        <KpiCard icon="🔬" label="Inspections" value={stats.inspections} sub={`${stats.nonConformes} non conforme(s)`} tone="navy" />
-        <KpiCard icon="🧪" label="Note sanitaire moyenne" value={stats.noteMoy} sub={`${stats.qhse} non-conformites signalees`} tone="green" />
+        <KpiCard icon={<WarningAmberOutlinedIcon style={{ fontSize: 20 }} />} label="Sanctions actives" value={stats.actives} sub={`${stats.levees} levee(s)`} tone="red" />
+        <KpiCard icon={<CampaignOutlinedIcon style={{ fontSize: 20 }} />} label="Convocations" value={stats.convocations} sub={`${stats.expulsions} expulsion(s)`} tone="gold" />
+        <KpiCard icon={<BiotechOutlinedIcon style={{ fontSize: 20 }} />} label="Inspections" value={stats.inspections} sub={`${stats.nonConformes} non conforme(s)`} tone="navy" />
+        <KpiCard icon={<ScienceOutlinedIcon style={{ fontSize: 20 }} />} label="Note sanitaire moyenne" value={stats.noteMoy} sub={`${stats.qhse} non-conformites signalees`} tone="green" />
       </StatGrid>
 
       <Panel padded={false}>
@@ -184,8 +190,8 @@ export default function BureauEnvironnementView() {
             onChange={setTab}
             tabs={[
               { key: 'sanctions', label: `Sanctions (${rowsSanctions.length})`, icon: '⚠️' },
-              { key: 'inspections', label: `Inspections (${inspections.length})`, icon: '🔬' },
-              { key: 'plaintes', label: `Non-conformites (${plaintes.length})`, icon: '📣' },
+              { key: 'inspections', label: `Inspections (${inspections.length})`, icon: <BiotechOutlinedIcon style={{ fontSize: 18 }} /> },
+              { key: 'plaintes', label: `Non-conformites (${plaintes.length})`, icon: <CampaignOutlinedIcon style={{ fontSize: 18 }} /> },
             ]}
           />
 
@@ -227,3 +233,4 @@ export default function BureauEnvironnementView() {
     </div>
   );
 }
+

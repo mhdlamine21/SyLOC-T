@@ -1,4 +1,5 @@
 import api from './axios';
+import { toArray } from './utils';
 
 // ---- Profil connecté -------------------------------------------------------
 export const getMe = async () => (await api.get('/comptes/me/')).data;
@@ -36,8 +37,10 @@ export const getRoles = async () => (await api.get('/comptes/utilisateurs/roles/
 // ---- Demandeurs / cartes étudiant -----------------------------------------
 export const getMonProfilDemandeur = async () => (await api.get('/comptes/demandeurs/moi/')).data;
 
-export const getCartesAValider = async () =>
-  (await api.get('/comptes/demandeurs/cartes-a-valider/')).data;
+export const getCartesAValider = async (statut) =>
+  (await api.get('/comptes/demandeurs/cartes-a-valider/', {
+    params: statut ? { statut } : undefined,
+  })).data;
 
 export const soumettreCarteEtudiant = async ({ fichier, matricule_etudiant, contact }) => {
   const form = new FormData();
@@ -61,3 +64,15 @@ export const nommerMembreCommission = async (utilisateurId) =>
 
 export const majMembreCommission = async (id, actif) =>
   (await api.patch(`/demandes/membres/${id}/`, { actif })).data;
+
+/* Audit Phase 1 — completions CRUD. */
+export const getUtilisateurById = async (id) => (await api.get(`/comptes/utilisateurs/${id}/`)).data;
+export const supprimerUtilisateur = async (id) =>
+  (await api.delete(`/comptes/utilisateurs/${id}/`)).data;
+export const getDemandeurs = async (params = {}) =>
+  toArray((await api.get('/comptes/demandeurs/', { params })).data);
+export const getDemandeurById = async (id) => (await api.get(`/comptes/demandeurs/${id}/`)).data;
+export const updateDemandeur = async (id, data) =>
+  (await api.patch(`/comptes/demandeurs/${id}/`, data)).data;
+export const retirerMembreCommission = async (id) =>
+  (await api.delete(`/demandes/membres/${id}/`)).data;

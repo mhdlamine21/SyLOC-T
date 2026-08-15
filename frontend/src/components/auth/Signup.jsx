@@ -1,10 +1,36 @@
-import { useState } from "react";
+﻿import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { registerApi } from "../../api/auth";
 import { messageErreur } from "../../api/utils";
-import logo from "../../assets/syloct-logo-complet.svg";
+import AppLogo from "../common/AppLogo";
+
+/* ─── Petits blocs de presentation ─────────────────────────────────── */
+
+function Champ({ label, hint, children, required = true }) {
+  return (
+    <label className="su-field">
+      <span className="su-label">
+        {label} {required && <em className="su-req">*</em>}
+      </span>
+      {children}
+      {hint && <span className="su-hint">{hint}</span>}
+    </label>
+  );
+}
+
+const CRITERES_MDP = [
+  { cle: "longueur", texte: "8 caractères minimum", test: (v) => v.length >= 8 },
+  { cle: "majuscule", texte: "Une majuscule", test: (v) => /[A-Z]/.test(v) },
+  { cle: "chiffre", texte: "Un chiffre", test: (v) => /\d/.test(v) },
+];
 
 export default function Signup() {
   const [typeUsager, setTypeUsager] = useState("CANDIDAT");
@@ -20,6 +46,7 @@ export default function Signup() {
   const [carteFichier, setCarteFichier] = useState(null);
   const [matricule, setMatricule] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [conditions, setConditions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState(null);
   const { login } = useAuth();
@@ -35,12 +62,21 @@ export default function Signup() {
     email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 30) ||
     `usager${Date.now().toString().slice(-6)}`;
 
+  const forceMdp = useMemo(
+    () => CRITERES_MDP.filter((c) => c.test(formData.password)).length,
+    [formData.password],
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErreur(null);
     const estEtudiant = typeUsager === "ETUDIANT";
     if (estEtudiant && !matricule.trim()) {
       setErreur("Le matricule est obligatoire pour une inscription étudiante.");
+      return;
+    }
+    if (!conditions) {
+      setErreur("Vous devez accepter les conditions d'utilisation du service.");
       return;
     }
     setLoading(true);
@@ -71,224 +107,226 @@ export default function Signup() {
     }
   };
 
-
-  const inputStyle = {
-    width: "100%", padding: "12px 13px",
-    border: "1px solid rgba(32,28,20,0.14)", background: "var(--paper2)",
-    fontFamily: "Inter, sans-serif", fontSize: 14, color: "var(--ink)",
-    outline: "none", transition: "border-color 0.15s, background 0.15s",
-  };
-
-  const labelStyle = { display: "block", fontSize: 12.5, fontWeight: 600, marginBottom: 7, fontFamily: "inherit" };
-  const fieldStyle = { marginBottom: 18 };
-
   return (
-    <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", fontFamily: "Inter, sans-serif" }}>
-      {/* Colonne gauche — Illustration & Identité */}
-      <div style={{ flex: "0 0 420px", background: "var(--teal-deep)", color: "var(--paper)", padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }} className="hidden md:flex">
+    <div className="su-page">
+      {/* ── Colonne institutionnelle ─────────────────────────── */}
+      <aside className="su-aside">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
-            <div style={{ background: "#fff", padding: 6, borderRadius: 12, display: "flex", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-              <img src={logo} alt="CROUS-T" style={{ width: 42, height: 42, objectFit: "contain", borderRadius: 6 }} />
-            </div>
-            <div>
-              <div style={{ fontFamily: "Zilla Slab, serif", fontWeight: 600, fontSize: 16 }}>CROUS-T · Site VCN</div>
-              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "#8fbcae" }}>Gestion Locatif Officiel</div>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 11, color: "var(--amber)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>
-              Votre espace personnel
-            </div>
-            <h2 style={{ fontFamily: "Zilla Slab, serif", fontSize: "clamp(1.6rem, 2.5vw, 2rem)", fontWeight: 600, margin: "0 0 16px", lineHeight: 1.15 }}>
-              Gérez vos candidatures et suivez leur avancement en temps réel.
+          <AppLogo height={40} variant="dark" />
+          <div className="su-aside-body">
+            <span className="su-kicker">Votre espace personnel</span>
+            <h2 className="su-aside-title">
+              Déposez votre dossier et suivez son instruction, étape par étape.
             </h2>
-            <p style={{ fontSize: 14.5, color: "rgba(243,238,225,0.7)", lineHeight: 1.65, margin: 0 }}>
-              Un compte candidat vous permet de déposer votre dossier de demande d'occupation de local, de soumettre vos pièces jointes et de suivre chaque étape de l'instruction.
+            <p className="su-aside-text">
+              Un compte SyLOC-T vous donne accès au catalogue des locaux domaniaux du
+              CROUS de Thiès, au dépôt de vos pièces justificatives et au suivi officiel
+              de chaque décision.
             </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {["Dépôt de dossier en ligne", "Suivi en temps réel", "Notifications automatiques", "Espace sécurisé et confidentiel"].map((f) => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13.5, color: "rgba(243,238,225,0.8)" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(127,217,160,0.2)", border: "1px solid rgba(127,217,160,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#7fd9a0", flexShrink: 0 }}>✓</span>
-                {f}
-              </div>
+          <ul className="su-benefits">
+            {[
+              [<DescriptionOutlinedIcon key="a" style={{ fontSize: 20 }} />, "Dépôt de dossier 100 % en ligne"],
+              [<SearchOutlinedIcon key="b" style={{ fontSize: 20 }} />, "Suivi d'instruction en temps réel"],
+              [<NotificationsNoneOutlinedIcon key="c" style={{ fontSize: 20 }} />, "Notifications à chaque décision"],
+              [<LockOutlinedIcon key="d" style={{ fontSize: 20 }} />, "Données personnelles protégées"],
+            ].map(([icone, texte]) => (
+              <li key={texte}>
+                <span className="su-benefit-icon" aria-hidden="true">{icone}</span>
+                {texte}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
-        <p style={{ fontSize: 12, color: "rgba(243,238,225,0.35)", margin: 0, fontFamily: "IBM Plex Mono, monospace" }}>
-          © 2026 CROUS-T — Université Iba Der Thiam de Thiès
+        <p className="su-aside-legal">
+          © {new Date().getFullYear()} CROUS de Thiès — Université Iba Der Thiam
         </p>
-      </div>
+      </aside>
 
-      {/* Colonne droite — Formulaire */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 28px", overflowY: "auto" }}>
-        <div style={{ width: "100%", maxWidth: 520 }}>
-          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontFamily: "IBM Plex Mono, monospace", color: "var(--teal)", textDecoration: "none", fontWeight: 600, marginBottom: 32 }}>
-            ← Retour à l'accueil
-          </Link>
+      {/* ── Colonne formulaire ───────────────────────────────── */}
+      <main className="su-main">
+        <div className="su-card">
+          <Link to="/" className="su-back">← Retour à l'accueil</Link>
 
-          <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontFamily: "Zilla Slab, serif", fontSize: 26, fontWeight: 700, margin: "0 0 6px" }}>Créer votre compte</h1>
-            <p style={{ fontSize: 14, color: "#6b644c", margin: 0 }}>
-              Déjà inscrit ?{" "}
-              <Link to="/login" style={{ color: "var(--teal)", fontWeight: 600, textDecoration: "none" }}>Se connecter</Link>
+          <header className="su-head">
+            <h1 className="su-title">Créer votre compte</h1>
+            <p className="su-sub">
+              Déjà inscrit ? <Link to="/login" className="su-link">Se connecter</Link>
             </p>
+          </header>
+
+          <div className="su-note">
+            L'inscription publique est réservée aux <strong>candidats aux locaux</strong> et
+            aux <strong>étudiants du campus</strong>. Les comptes du personnel sont créés
+            par la Direction.
           </div>
 
-          {/* Note d'information */}
-          <div style={{ background: "rgba(31,75,63,0.07)", border: "1px solid rgba(31,75,63,0.15)", padding: "12px 14px", marginBottom: 28, fontSize: 12.5, color: "var(--teal)", lineHeight: 1.55 }}>
-            L'inscription publique est réservée aux <strong>Candidats aux locaux</strong> et aux <strong>Étudiants / Visiteurs</strong>. Les comptes du personnel sont créés par la Direction.
-          </div>
-
-          {/* Sélection du type de compte */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ ...labelStyle }}>Je souhaite m'inscrire en tant que</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {[
-                { key: "CANDIDAT", icon: "💼", title: "Candidat", desc: "Dossier de demande d'un local commercial" },
-                { key: "ETUDIANT", icon: "🎓", title: "Etudiant / Visiteur", desc: "Avis cantines, signalements, vie du campus" },
-              ].map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => { setTypeUsager(t.key); setFormData((f) => ({ ...f, est_etudiant: t.key === "ETUDIANT" })); }}
-                  style={{
-                    padding: "14px", border: `2px solid ${typeUsager === t.key ? "var(--teal)" : "rgba(32,28,20,0.14)"}`,
-                    background: typeUsager === t.key ? "rgba(31,75,63,0.07)" : "transparent",
-                    cursor: "pointer", textAlign: "left", transition: "all 0.15s", fontFamily: "inherit",
-                  }}
-                >
-                  <div style={{ fontSize: 16, marginBottom: 4 }}>{t.icon} <strong style={{ fontFamily: "Zilla Slab, serif", color: "var(--ink)" }}>{t.title}</strong></div>
-                  <div style={{ fontSize: 12, color: "#6b644c" }}>{t.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
-              <div>
-                <label style={labelStyle}>Prénom *</label>
-                <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Ex. Aïssatou" style={inputStyle} required
-                  onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-                />
+          <form onSubmit={handleSubmit} noValidate={false}>
+            {/* Etape 1 — profil */}
+            <section className="su-step">
+              <div className="su-step-head">
+                <span className="su-step-num">1</span>
+                <div>
+                  <h2 className="su-step-title">Type de compte</h2>
+                  <p className="su-step-text">Choisissez le profil correspondant à votre situation.</p>
+                </div>
               </div>
-              <div>
-                <label style={labelStyle}>Nom *</label>
-                <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Ex. Ndiaye" style={inputStyle} required
-                  onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-                />
-              </div>
-            </div>
 
-            <div style={{ ...fieldStyle }}>
-              <label style={labelStyle}>Adresse e-mail *</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="vous@exemple.com" style={inputStyle} required
-                onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
-              <div>
-                <label style={labelStyle}>Téléphone *</label>
-                <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="77 123 45 67" style={inputStyle} required
-                  onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-                />
+              <div className="su-choices">
+                {[
+                  { key: "CANDIDAT", icon: <WorkOutlineOutlinedIcon style={{ fontSize: 22 }} />, title: "Candidat", desc: "Demande d'un local commercial" },
+                  { key: "ETUDIANT", icon: <SchoolOutlinedIcon style={{ fontSize: 22 }} />, title: "Étudiant", desc: "Avis cantines, vie du campus" },
+                ].map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    aria-pressed={typeUsager === t.key}
+                    onClick={() => {
+                      setTypeUsager(t.key);
+                      setFormData((f) => ({ ...f, est_etudiant: t.key === "ETUDIANT" }));
+                    }}
+                    className={`su-choice ${typeUsager === t.key ? "is-active" : ""}`}
+                  >
+                    <span className="su-choice-icon" aria-hidden="true">{t.icon}</span>
+                    <span className="su-choice-title">{t.title}</span>
+                    <span className="su-choice-desc">{t.desc}</span>
+                  </button>
+                ))}
               </div>
-              <div>
-                <label style={labelStyle}>Adresse *</label>
-                <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Quartier, Thiès" style={inputStyle} required
-                  onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-                />
-              </div>
-            </div>
+            </section>
 
-            <div style={{ ...fieldStyle }}>
-              <label style={labelStyle}>Mot de passe *</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="8 caractères minimum"
-                  style={inputStyle}
-                  required
-                  minLength={8}
-                  onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.background = "var(--paper)"; }}
-                  onBlur={e => { e.target.style.borderColor = "rgba(32,28,20,0.14)"; e.target.style.background = "var(--paper2)"; }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#6b644c", fontSize: 11.5, fontFamily: "IBM Plex Mono, monospace" }}
-                >
-                  {showPassword ? "Masquer" : "Afficher"}
-                </button>
+            {/* Etape 2 — identite */}
+            <section className="su-step">
+              <div className="su-step-head">
+                <span className="su-step-num">2</span>
+                <div>
+                  <h2 className="su-step-title">Votre identité</h2>
+                  <p className="su-step-text">Ces informations figureront sur vos actes officiels.</p>
+                </div>
               </div>
-            </div>
 
+              <div className="su-grid-2">
+                <Champ label="Prénom">
+                  <input className="su-input" type="text" name="prenom" value={formData.prenom}
+                    onChange={handleChange} placeholder="Aïssatou" required autoComplete="given-name" />
+                </Champ>
+                <Champ label="Nom">
+                  <input className="su-input" type="text" name="nom" value={formData.nom}
+                    onChange={handleChange} placeholder="Ndiaye" required autoComplete="family-name" />
+                </Champ>
+              </div>
+
+              <Champ label="Adresse e-mail" hint="Elle servira d'identifiant de connexion.">
+                <input className="su-input" type="email" name="email" value={formData.email}
+                  onChange={handleChange} placeholder="vous@exemple.com" required autoComplete="email" />
+              </Champ>
+
+              <div className="su-grid-2">
+                <Champ label="Téléphone">
+                  <input className="su-input" type="tel" name="telephone" value={formData.telephone}
+                    onChange={handleChange} placeholder="77 123 45 67" required autoComplete="tel" />
+                </Champ>
+                <Champ label="Adresse">
+                  <input className="su-input" type="text" name="adresse" value={formData.adresse}
+                    onChange={handleChange} placeholder="Quartier, Thiès" required autoComplete="street-address" />
+                </Champ>
+              </div>
+            </section>
+
+            {/* Etape 3 — securite */}
+            <section className="su-step">
+              <div className="su-step-head">
+                <span className="su-step-num">3</span>
+                <div>
+                  <h2 className="su-step-title">Sécurité du compte</h2>
+                  <p className="su-step-text">Choisissez un mot de passe solide.</p>
+                </div>
+              </div>
+
+              <Champ label="Mot de passe">
+                <div className="su-password">
+                  <input
+                    className="su-input"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="8 caractères minimum"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                  />
+                  <button type="button" className="su-eye" onClick={() => setShowPassword((v) => !v)}>
+                    {showPassword ? "Masquer" : "Afficher"}
+                  </button>
+                </div>
+              </Champ>
+
+              <div className="su-strength" aria-live="polite">
+                <div className="su-strength-bar">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className={`su-strength-seg ${forceMdp > i ? `lvl-${forceMdp}` : ""}`} />
+                  ))}
+                </div>
+                <ul className="su-criteria">
+                  {CRITERES_MDP.map((c) => (
+                    <li key={c.cle} className={c.test(formData.password) ? "ok" : ""}>
+                      {c.test(formData.password) ? "✓" : "•"} {c.texte}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+
+            {/* Etape 4 — piece etudiante */}
             {typeUsager === "ETUDIANT" && (
-              <div style={{ background: "rgba(201,138,44,0.08)", border: "1px solid rgba(201,138,44,0.2)", padding: "14px 16px", marginBottom: 20 }}>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>Matricule étudiant *</label>
-                <input
-                  type="text"
-                  value={matricule}
-                  onChange={(e) => setMatricule(e.target.value)}
-                  placeholder="Ex. 2023UIDT0456"
-                  style={{ ...inputStyle, marginBottom: 14 }}
-                  required
-                />
-                <label style={{ ...labelStyle, marginBottom: 8 }}>
-                  Carte étudiante (photo ou PDF) — optionnel mais recommandé
-                </label>
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={(e) => setCarteFichier(e.target.files[0])}
-                  style={{ width: "100%", fontSize: 12.5, color: "#6b644c" }}
-                />
-                <p style={{ fontSize: 11.5, color: "#6b644c", marginTop: 8, marginBottom: 0 }}>
-                  Sera vérifiée par un agent DCUVE pour débloquer la gratuité et le droit de vote cantines.
-                </p>
-              </div>
+              <section className="su-step su-step-student">
+                <div className="su-step-head">
+                  <span className="su-step-num">4</span>
+                  <div>
+                    <h2 className="su-step-title">Justificatif étudiant</h2>
+                    <p className="su-step-text">
+                      Vérifié par un agent DCUVE pour débloquer la gratuité et le droit de vote cantines.
+                    </p>
+                  </div>
+                </div>
+
+                <Champ label="Matricule étudiant">
+                  <input className="su-input" type="text" value={matricule}
+                    onChange={(e) => setMatricule(e.target.value)} placeholder="2023UIDT0456" required />
+                </Champ>
+
+                <Champ label="Carte étudiante (photo ou PDF)" required={false}
+                  hint="Facultatif, mais accélère fortement la vérification.">
+                  <input className="su-file" type="file" accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => setCarteFichier(e.target.files[0])} />
+                </Champ>
+              </section>
             )}
 
-            {erreur && (
-              <div style={{ background: "rgba(176,58,46,0.08)", border: "1px solid rgba(176,58,46,0.25)", color: "#a13a30", padding: "12px 14px", marginBottom: 18, fontSize: 13 }}>
-                {erreur}
-              </div>
-            )}
+            <label className="su-terms">
+              <input type="checkbox" checked={conditions} onChange={(e) => setConditions(e.target.checked)} />
+              <span>
+                J'atteste l'exactitude des informations fournies et j'accepte les conditions
+                d'utilisation du service SyLOC-T.
+              </span>
+            </label>
 
+            {erreur && <div className="su-error" role="alert">{erreur}</div>}
 
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%", background: "var(--teal)", color: "var(--paper)",
-                border: "none", cursor: loading ? "not-allowed" : "pointer",
-                fontWeight: 600, fontSize: 15, padding: "15px 22px", minHeight: 48,
-                opacity: loading ? 0.6 : 1, fontFamily: "inherit", marginTop: 8,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={e => { if (!loading) e.target.style.background = "var(--teal-deep)"; }}
-              onMouseLeave={e => { e.target.style.background = "var(--teal)"; }}
-            >
-              {loading ? "Création en cours..." : "Créer mon compte"}
+            <button type="submit" className="su-submit" disabled={loading}>
+              {loading ? "Création en cours…" : "Créer mon compte"}
             </button>
+
+            <p className="su-footnote">
+              Un accusé de création vous sera envoyé à l'adresse renseignée.
+            </p>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
+

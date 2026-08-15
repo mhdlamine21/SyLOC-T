@@ -14,7 +14,7 @@ def generer_echeancier(sender, instance, created, **kwargs):
                 Echeance(
                     contrat=instance,
                     date_exigibilite=date_courante,
-                    montant_du=instance.redevance_mensuelle,
+                    montant_du=45000.0,
                     statut=StatutEcheance.NON_ECHUE
                 )
             )

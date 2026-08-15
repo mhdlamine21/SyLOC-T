@@ -1,2 +1,2 @@
-/* styles/theme.css — délégué entièrement à src/index.css (thème Navy/Or SyLOC-T) */
-/* Ce fichier est conservé pour éviter les erreurs d'import dans main.jsx */
+/* styles/theme.css — les tokens du theme Navy/Or sont definis dans src/index.css.
+   Ce fichier reste le point d'accroche pour d'eventuelles surcharges de thème. */

@@ -11,34 +11,15 @@ export const getLocalById = async (id) => {
 };
 
 export const createLocal = async (localData) => {
-  let data = localData;
-  let headers = {};
-  if (localData.photo instanceof File) {
-    data = new FormData();
-    Object.keys(localData).forEach(key => {
-      if (localData[key] !== null && localData[key] !== undefined) {
-        data.append(key, localData[key]);
-      }
-    });
-    headers = { 'Content-Type': 'multipart/form-data' };
-  }
-  const response = await api.post('/patrimoine/locaux/', data, { headers });
+  const response = await api.post('/patrimoine/locaux/', localData);
   return response.data;
 };
 
 
-export const updateLocal = async (id, localData) => {
-  let data = localData;
-  let headers = {};
-  if (localData.photo instanceof File) {
-    data = new FormData();
-    Object.keys(localData).forEach(key => {
-      if (localData[key] !== null && localData[key] !== undefined) {
-        data.append(key, localData[key]);
-      }
-    });
-    headers = { 'Content-Type': 'multipart/form-data' };
-  }
-  const response = await api.patch(`/patrimoine/locaux/${id}/`, data, { headers });
+export const updateLocal = async (id, data) => {
+  const response = await api.patch(`/patrimoine/locaux/${id}/`, data);
   return response.data;
 };
+
+// Audit Phase 1 : LocalViewSet est un ModelViewSet complet.
+export const deleteLocal = async (id) => (await api.delete(`/patrimoine/locaux/${id}/`)).data;

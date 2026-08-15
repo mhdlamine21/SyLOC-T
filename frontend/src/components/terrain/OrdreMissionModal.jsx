@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Modal, Field, Select, Textarea, Button, AlertBanner } from '../common/ui';
 import { getLocaux } from '../../api/patrimoine';
@@ -127,3 +127,4 @@ export default function OrdreMissionModal({ open, onClose, localInitial = '', on
     </Modal>
   );
 }
+

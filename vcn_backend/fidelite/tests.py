@@ -20,9 +20,7 @@ class FideliteTests(APITestCase):
             demandeur=self.demandeur,
             signataire_crous_t=self.usager, # Simulation
             date_debut=timezone.now().date(),
-            duree_mois=1,
-            redevance_mensuelle=10000.0,
-            montant_caution=0.0
+            duree_mois=1
         )
         self.echeance = self.contrat.echeances.first()
 

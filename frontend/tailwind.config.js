@@ -53,6 +53,10 @@ export default {
         warn: { DEFAULT: 'var(--amber-deep)', soft: 'var(--amber-pale)' },
         danger: { DEFAULT: 'var(--red)', soft: 'var(--red-soft)' },
         info: { DEFAULT: 'var(--slate)', soft: 'var(--slate-soft)' },
+        // Tokens de contraste dynamiques (inversion navy <-> beige)
+        'navy-text': 'var(--text-navy)',
+        'on-navy': 'var(--text-on-navy)',
+        'on-gold': 'var(--text-on-gold)',
         ink: 'var(--ink)',
         text: 'var(--text)',
         muted: 'var(--muted)',

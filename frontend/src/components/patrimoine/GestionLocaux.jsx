@@ -1,8 +1,16 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import TableRowsOutlinedIcon from '@mui/icons-material/TableRowsOutlined';
+import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined';
+import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
+import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getLocaux, createLocal, updateLocal } from '../../api/patrimoine';
 import { messageErreur } from '../../api/utils';
 import { Button, Field, Input, Select, Modal, Textarea } from '../common/ui';
+import { useAuth } from '../../context/AuthContext';
 import {
   PageHeader, StatGrid, KpiCard, Panel, FilterBar, FilterField, CardGrid, Pill, Tabs,
   DataTable, IdentityCell, RowActions, IconButton,
@@ -11,12 +19,12 @@ import {
 const TYPES = ['RESTAURATION', 'MULTISERVICES', 'PAPETERIE', 'ARTISANAT', 'AUTRE'];
 const ETATS = ['BON_ETAT', 'NECESSITE_RENOVATION', 'DEGRADE', 'EN_TRAVAUX'];
 const ETAT_TONE = { BON_ETAT: 'green', NECESSITE_RENOVATION: 'gold', DEGRADE: 'red', EN_TRAVAUX: 'navy' };
-const TYPE_ICON = { RESTAURATION: 'ðŸ½ï¸', MULTISERVICES: 'ðŸ›’', PAPETERIE: 'ðŸ“š', ARTISANAT: 'ðŸ§µ', AUTRE: 'ðŸ¢' };
+const TYPE_ICON = { RESTAURATION: 'RS', MULTISERVICES: 'MS', PAPETERIE: 'PA', ARTISANAT: 'AR', AUTRE: 'LC' };
 
 const VIDE = {
   reference: '', localisation: '', type_local: 'RESTAURATION', zone_cartographie: '',
   surface_m2: '25', capacite_accueil: '1', etat_physique: 'BON_ETAT', gestionnaire: 'CROUS_T',
-  latitude: '', longitude: '', photo_url: '', photo: null, est_libre: true,
+  latitude: '', longitude: '', photo_url: '', est_libre: true,
 };
 
 /**
@@ -34,6 +42,9 @@ export default function GestionLocaux() {
   const [modal, setModal] = useState(null); // { mode: 'create'|'edit', data }
   const [form, setForm] = useState(VIDE);
   const [envoi, setEnvoi] = useState(false);
+  const { role } = useAuth();
+  
+  const estDCUVE = role === 'DIRECTEUR_DCUVE' || role === 'AGENT_DCUVE' || role === 'ADMINISTRATEUR_SI';
 
   const charger = async () => {
     setLoading(true);
@@ -46,7 +57,22 @@ export default function GestionLocaux() {
     }
   };
 
-  useEffect(() => { charger(); }, []);
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const data = await getLocaux();
+        if (!ignore) setLocaux(data || []);
+      } catch (e) {
+        if (!ignore) toast.error(messageErreur(e, 'Erreur lors de la recuperation des locaux.'));
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const ouvrirCreation = () => { setForm(VIDE); setModal({ mode: 'create' }); };
   const ouvrirEdition = (loc) => {
@@ -56,7 +82,7 @@ export default function GestionLocaux() {
       surface_m2: String(loc.surface_m2 ?? ''), capacite_accueil: String(loc.capacite_accueil ?? '0'),
       etat_physique: loc.etat_physique || 'BON_ETAT', gestionnaire: loc.gestionnaire || 'CROUS_T',
       latitude: loc.latitude ?? '', longitude: loc.longitude ?? '',
-      photo_url: loc.photo_url || '', photo: null, est_libre: !!loc.est_libre,
+      photo_url: loc.photo_url || '', est_libre: !!loc.est_libre,
     });
     setModal({ mode: 'edit', data: loc });
   };
@@ -126,13 +152,13 @@ export default function GestionLocaux() {
       render: (r) => (
         <IdentityCell
           title={r.reference}
-          subtitle={`${(r.type_local || '').replace(/_/g, ' ')} Â· ${r.surface_m2 || 0} mÂ²`}
-          initials={TYPE_ICON[r.type_local] || 'ðŸ¢'}
+          subtitle={`${(r.type_local || '').replace(/_/g, ' ')} · ${r.surface_m2 || 0} m²`}
+          initials={TYPE_ICON[r.type_local] || 'LC'}
         />
       ),
     },
-    { key: 'localisation', label: 'Localisation', render: (r) => `${r.localisation || 'â€”'}${r.zone_cartographie ? ` (${r.zone_cartographie})` : ''}` },
-    { key: 'capacite_accueil', label: 'Capacite', align: 'right', render: (r) => r.capacite_accueil ?? 'â€”' },
+    { key: 'localisation', label: 'Localisation', render: (r) => `${r.localisation || '—'}${r.zone_cartographie ? ` (${r.zone_cartographie})` : ''}` },
+    { key: 'capacite_accueil', label: 'Capacite', align: 'right', render: (r) => r.capacite_accueil ?? '—' },
     { key: 'etat_physique', label: 'Etat', render: (r) => <Pill tone={ETAT_TONE[r.etat_physique] || 'slate'}>{(r.etat_physique || '').replace(/_/g, ' ')}</Pill> },
     { key: 'gestionnaire', label: 'Gestionnaire', render: (r) => <Pill tone="navy">{r.gestionnaire}</Pill> },
     { key: 'est_libre', label: 'Disponibilite', render: (r) => <Pill tone={r.est_libre ? 'green' : 'gold'}>{r.est_libre ? 'Libre' : 'Occupe'}</Pill> },
@@ -142,9 +168,9 @@ export default function GestionLocaux() {
       align: 'right',
       render: (r) => (
         <RowActions>
-          <IconButton title="Modifier" onClick={() => ouvrirEdition(r)}>âœï¸</IconButton>
+          <IconButton title="Modifier" onClick={() => ouvrirEdition(r)}>✏️</IconButton>
           <IconButton title={r.est_libre ? 'Marquer occupe' : 'Marquer libre'} tone={r.est_libre ? 'gold' : 'green'} onClick={() => basculerDisponibilite(r)}>
-            {r.est_libre ? 'ðŸ”’' : 'ðŸ”“'}
+            {r.est_libre ? <LockOutlinedIcon style={{ fontSize: 16 }} /> : <LockOpenOutlinedIcon style={{ fontSize: 16 }} />}
           </IconButton>
         </RowActions>
       ),
@@ -154,22 +180,21 @@ export default function GestionLocaux() {
   return (
     <div>
       <PageHeader
-        icon="ðŸ-ï¸"
+        icon={<EngineeringOutlinedIcon style={{ fontSize: 20 }} />}
         title="Referentiel du patrimoine"
         subtitle="Ajout, mise a jour et suivi de l'etat du portefeuille des locaux du CROUS-T."
         actions={(
           <>
-            <Button variant="secondary" onClick={charger}>â†» Actualiser</Button>
-            <Button onClick={ouvrirCreation}>âž• Nouveau local</Button>
+            <Button variant="secondary" onClick={charger}>↻ Actualiser</Button>
+            {estDCUVE && <Button onClick={ouvrirCreation}>➕ Nouveau local</Button>}
           </>
         )}
       />
 
-      <StatGrid cols={4}>
-        <KpiCard icon="ðŸ¢" label="Locaux au patrimoine" value={stats.total} sub={`${stats.types} type(s) d'usage`} tone="navy" />
-        <KpiCard icon="ðŸ”“" label="Locaux libres" value={stats.libres} sub={`${stats.occupes} occupe(s)`} tone="green" />
-        <KpiCard icon="ðŸ› ï¸" label="A renover / degrades" value={stats.aRenover} sub="Interventions techniques" tone="red" />
-        <KpiCard icon="ðŸ“" label="Surface totale" value={`${stats.surface.toLocaleString('fr-FR')} mÂ²`} sub="Ensemble du parc" tone="gold" />
+      <StatGrid cols={3}>
+        <KpiCard icon={<ApartmentOutlinedIcon style={{ fontSize: 20 }} />} label="Locaux au patrimoine" value={stats.total} sub={`${stats.types} type(s) d'usage`} tone="navy" />
+        <KpiCard icon={<LockOpenOutlinedIcon style={{ fontSize: 20 }} />} label="Locaux libres" value={stats.libres} sub={`${stats.occupes} occupe(s)`} tone="green" />
+        <KpiCard icon={<HandymanOutlinedIcon style={{ fontSize: 20 }} />} label="A renover / degrades" value={stats.aRenover} sub="Interventions techniques" tone="red" />
       </StatGrid>
 
       <Panel padded={false}>
@@ -177,11 +202,11 @@ export default function GestionLocaux() {
           <Tabs
             active={vue}
             onChange={setVue}
-            tabs={[{ key: 'cartes', label: 'Vitrine', icon: 'ðŸ–¼ï¸' }, { key: 'table', label: 'Registre', icon: 'ðŸ“‹' }]}
+            tabs={[{ key: 'cartes', label: 'Vitrine', icon: <ViewModuleOutlinedIcon style={{ fontSize: 18 }} /> }, { key: 'table', label: 'Registre', icon: <TableRowsOutlinedIcon style={{ fontSize: 18 }} /> }]}
           />
           <FilterBar onReset={() => { setQ(''); setType(''); setEtat(''); setDispo(''); }}>
             <FilterField label="Recherche">
-              <Input placeholder="Reference, localisation, zoneâ€¦" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Input placeholder="Reference, localisation, zone…" value={q} onChange={(e) => setQ(e.target.value)} />
             </FilterField>
             <FilterField label="Type d'usage">
               <Select value={type} onChange={(e) => setType(e.target.value)}>
@@ -210,7 +235,7 @@ export default function GestionLocaux() {
         ) : (
           <div style={{ padding: 16 }}>
             {loading ? (
-              <p style={{ color: 'var(--muted)' }}>Chargement des locauxâ€¦</p>
+              <p style={{ color: 'var(--muted)' }}>Chargement des locaux…</p>
             ) : rows.length === 0 ? (
               <p style={{ color: 'var(--muted)' }}>Aucun local ne correspond aux filtres.</p>
             ) : (
@@ -224,26 +249,26 @@ export default function GestionLocaux() {
                     }}
                   >
                     <div style={{ height: 118, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', position: 'relative' }}>
-                      {(loc.photo || loc.photo_url)
-                        ? <img src={loc.photo || loc.photo_url} alt={loc.reference} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={{ fontSize: 34, opacity: 0.45 }}>{TYPE_ICON[loc.type_local] || 'ðŸ¢'}</span>}
+                      {loc.photo_url
+                        ? <img src={loc.photo_url} alt={loc.reference} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ color: 'var(--gold-deep)', opacity: .6 }}><ApartmentOutlinedIcon style={{ fontSize: 40 }} /></span>}
                       <span style={{ position: 'absolute', top: 8, right: 8 }}>
                         <Pill tone={loc.est_libre ? 'green' : 'gold'}>{loc.est_libre ? 'Libre' : 'Occupe'}</Pill>
                       </span>
                     </div>
                     <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--muted)', fontWeight: 800 }}>{loc.reference}</div>
-                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14.5, color: 'var(--navy)' }}>
-                        {(loc.type_local || '').replace(/_/g, ' ')} Â· {loc.surface_m2} mÂ²
+                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14.5, color: 'var(--text-navy)' }}>
+                        {(loc.type_local || '').replace(/_/g, ' ')} · {loc.surface_m2} m²
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>ðŸ“ {loc.localisation}</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>{loc.localisation}</div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
                         <Pill tone={ETAT_TONE[loc.etat_physique] || 'slate'}>{(loc.etat_physique || '').replace(/_/g, ' ')}</Pill>
                         <Pill tone="navy">{loc.gestionnaire}</Pill>
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 10 }}>
                         <Button variant="secondary" size="sm" onClick={() => ouvrirEdition(loc)}>Modifier</Button>
-                        <Button variant="ghost" size="sm" onClick={() => basculerDisponibilite(loc)}>
+                        <Button variant="secondary" size="sm" onClick={() => basculerDisponibilite(loc)}>
                           {loc.est_libre ? 'Marquer occupe' : 'Liberer'}
                         </Button>
                       </div>
@@ -269,10 +294,10 @@ export default function GestionLocaux() {
             </Field>
             <Field label="Type d'usage" required>
               <Select value={form.type_local} onChange={(e) => setForm({ ...form, type_local: e.target.value })}>
-                {TYPES.map((t) => <option key={t} value={t}>{TYPE_ICON[t]} {t.replace(/_/g, ' ')}</option>)}
+                {TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
               </Select>
             </Field>
-            <Field label="Surface (mÂ²)" required>
+            <Field label="Surface (m²)" required>
               <Input type="number" min="1" value={form.surface_m2} onChange={(e) => setForm({ ...form, surface_m2: e.target.value })} required />
             </Field>
             <Field label="Capacite d'accueil">
@@ -300,27 +325,22 @@ export default function GestionLocaux() {
             </Field>
           </div>
           <Field label="Localisation" required>
-            <Textarea rows={2} value={form.localisation} onChange={(e) => setForm({ ...form, localisation: e.target.value })} placeholder="Campus social VCN, bloc Câ€¦" required />
+            <Textarea rows={2} value={form.localisation} onChange={(e) => setForm({ ...form, localisation: e.target.value })} placeholder="Campus social VCN, bloc C…" required />
           </Field>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
-            <Field label="Photo (Fichier)">
-              <Input type="file" accept="image/*" onChange={(e) => setForm({ ...form, photo: e.target.files[0] })} />
-            </Field>
-            <Field label="Ou Photo (URL externe)">
-              <Input value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} placeholder="https://â€¦" />
-            </Field>
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.8, fontWeight: 700, marginTop: 12 }}>
+          <Field label="Photo (URL)">
+            <Input value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} placeholder="https://…" />
+          </Field>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 12.8, fontWeight: 700, marginTop: 6 }}>
             <input type="checkbox" checked={form.est_libre} onChange={(e) => setForm({ ...form, est_libre: e.target.checked })} />
             Local disponible a l&apos;attribution
           </label>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
             <Button type="button" variant="ghost" onClick={() => setModal(null)}>Annuler</Button>
-            <Button type="submit" disabled={envoi}>{envoi ? 'Enregistrementâ€¦' : 'Enregistrer'}</Button>
+            <Button type="submit" disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</Button>
           </div>
         </form>
       </Modal>
     </div>
   );
 }
-
+

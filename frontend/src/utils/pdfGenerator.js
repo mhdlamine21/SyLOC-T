@@ -1,22 +1,130 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const fmtMontant = (n) => `${Number(n || 0).toLocaleString('fr-FR')} FCFA`;
+
 /**
- * Genere et telecharge le Quitus de paiement officiel (PDF).
- *
- * @param {Object} data
- * @param {string} data.quitusId      Numero de quitus renvoye par l'API
- * @param {string} data.date          Date d'emission (deja formatee)
- * @param {string} data.occupant      Nom de l'occupant / beneficiaire
- * @param {string} data.local         Reference du local concerne
- * @param {number} data.montant       Montant encaisse (FCFA)
- * @param {string} data.modePaiement  Mode de reglement
- * @param {string} data.echeance      Periode / echeance payee
+ * Normalise les deux formes possibles de payload quitus :
+ *  - le payload brut renvoye par le backend (`Paiement.editer_quitus`)
+ *  - l'ancienne forme aplatie {quitusId, date, occupant, local, montant, modePaiement, echeance}
+ *    encore utilisee par certains ecrans historiques.
  */
-export const genererQuitusPDF = (data) => {
+const normaliserQuitus = (data = {}) => {
+  // Deja au format backend (presence d'un champ caracteristique).
+  if (data.reference_quitus !== undefined || data.montant_regle !== undefined) {
+    return {
+      reference: data.reference_quitus || data.paiement_id || '—',
+      referenceTransaction: data.reference_transaction || '',
+      date: data.date_paiement ? new Date(data.date_paiement).toLocaleDateString('fr-FR') : '—',
+      dateHeure: data.date_paiement ? new Date(data.date_paiement).toLocaleString('fr-FR') : '—',
+      occupant: data.occupant_nom || '—',
+      occupantContact: data.occupant_contact || '',
+      local: data.local_reference || '—',
+      localLocalisation: data.local_localisation || '',
+      contratReference: data.contrat_reference || '',
+      echeance: data.date_exigibilite
+        ? `Échéance du ${new Date(data.date_exigibilite).toLocaleDateString('fr-FR')}`
+        : '—',
+      montantDu: Number(data.montant_du || 0),
+      montantPenalite: Number(data.montant_penalite || 0),
+      montantRegle: Number(data.montant_regle || 0),
+      resteAPayer: Number(data.reste_a_payer || 0),
+      statutEcheance: data.statut_echeance || '',
+      mode: data.mode_libelle || data.mode || '—',
+      organisme: data.organisme || 'CROUS DE THIES',
+      serviceEmetteur: data.service_emetteur || 'Service Comptable',
+    };
+  }
+
+  // Forme aplatie historique.
+  return {
+    reference: data.quitusId || '—',
+    referenceTransaction: '',
+    date: data.date || '—',
+    dateHeure: data.date || '—',
+    occupant: data.occupant || '—',
+    occupantContact: '',
+    local: data.local || '—',
+    localLocalisation: '',
+    contratReference: '',
+    echeance: data.echeance || '—',
+    montantDu: Number(data.montant || 0),
+    montantPenalite: 0,
+    montantRegle: Number(data.montant || 0),
+    resteAPayer: 0,
+    statutEcheance: '',
+    mode: data.modePaiement || '—',
+    organisme: 'CROUS DE THIES',
+    serviceEmetteur: 'Service Comptable',
+  };
+};
+
+/** Ticket de caisse thermique (80mm), compact. */
+const genererTicket = (q) => {
+  const lignes = [
+    ['Organisme', q.organisme],
+    ['Service', q.serviceEmetteur],
+    ['N° Quitus', q.reference],
+    ['Date', q.dateHeure],
+    ['Occupant', q.occupant],
+    ['Local', q.local],
+    ['Échéance', q.echeance],
+    ['Montant dû', fmtMontant(q.montantDu)],
+    ...(q.montantPenalite > 0 ? [['Pénalité', fmtMontant(q.montantPenalite)]] : []),
+    ['Montant réglé', fmtMontant(q.montantRegle)],
+    ['Reste à payer', fmtMontant(q.resteAPayer)],
+    ['Mode', q.mode],
+    ...(q.referenceTransaction ? [['Réf. transaction', q.referenceTransaction]] : []),
+  ];
+
+  // Hauteur dynamique en fonction du nombre de lignes.
+  const hauteur = 58 + lignes.length * 6.4;
+  const doc = new jsPDF({ unit: 'mm', format: [80, hauteur] });
+  const cx = 40;
+  let y = 8;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(11);
+  doc.text('CROUS DE THIES', cx, y, { align: 'center' });
+  y += 5;
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(7.5);
+  doc.text('SyLOC-T — Gestion du patrimoine', cx, y, { align: 'center' });
+  y += 5;
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(4, y, 76, y);
+  y += 5;
+
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(9);
+  doc.text('REÇU OFFICIEL DE PAIEMENT', cx, y, { align: 'center' });
+  y += 6;
+
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(7.5);
+  lignes.forEach(([label, value]) => {
+    doc.setFont('courier', 'bold');
+    doc.text(`${label} :`, 4, y);
+    doc.setFont('courier', 'normal');
+    const texte = doc.splitTextToSize(String(value ?? '—'), 40);
+    doc.text(texte, 76, y, { align: 'right' });
+    y += 6.4 * texte.length;
+  });
+
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(4, y, 76, y);
+  y += 6;
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8);
+  doc.text('Reçu officiel — Merci', cx, y, { align: 'center' });
+
+  doc.save(`Ticket_${q.reference}.pdf`);
+};
+
+/** Facture / quitus institutionnel au format A4. */
+const genererA4 = (q) => {
   const doc = new jsPDF();
 
-  // En-tete institutionnel
   doc.setFontSize(22);
   doc.setTextColor(15, 27, 61);
   doc.text('CROUS DE THIES', 105, 20, { align: 'center' });
@@ -31,19 +139,26 @@ export const genererQuitusPDF = (data) => {
 
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
-  doc.text(`N° Quitus : ${data.quitusId}`, 20, 60);
-  doc.text(`Date d'émission : ${data.date}`, 140, 60);
+  doc.text(`N° Quitus : ${q.reference}`, 20, 60);
+  doc.text(`Date d'émission : ${q.date}`, 140, 60);
+
+  const corps = [
+    ['Occupant / Bénéficiaire', q.occupant],
+    ['Local domanial', `${q.local}${q.localLocalisation ? ` — ${q.localLocalisation}` : ''}`],
+    ...(q.contratReference ? [['Contrat', q.contratReference]] : []),
+    ['Échéance payée', q.echeance],
+    ['Mode de règlement', q.mode],
+    ...(q.referenceTransaction ? [['Référence transaction', q.referenceTransaction]] : []),
+    ['Montant dû', fmtMontant(q.montantDu)],
+    ...(q.montantPenalite > 0 ? [['Pénalité de retard', fmtMontant(q.montantPenalite)]] : []),
+    ['Montant total encaissé', fmtMontant(q.montantRegle)],
+    ['Reste à payer', q.resteAPayer > 0 ? fmtMontant(q.resteAPayer) : 'Soldé'],
+  ];
 
   autoTable(doc, {
     startY: 70,
     head: [['Désignation', 'Détails']],
-    body: [
-      ['Occupant / Bénéficiaire', data.occupant || '—'],
-      ['Local domanial', data.local || '—'],
-      ['Échéance payée', data.echeance || '—'],
-      ['Mode de règlement', data.modePaiement || '—'],
-      ['Montant total encaissé', `${Number(data.montant || 0).toLocaleString('fr-FR')} FCFA`],
-    ],
+    body: corps,
     theme: 'grid',
     headStyles: { fillColor: [15, 27, 61] },
     styles: { fontSize: 11, cellPadding: 6 },
@@ -58,13 +173,30 @@ export const genererQuitusPDF = (data) => {
 
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
-  doc.text('Le Service Comptable', 20, finalY + 40);
+  doc.text(q.serviceEmetteur || 'Le Service Comptable', 20, finalY + 40);
   doc.text("Signature de l'occupant", 140, finalY + 40);
 
   doc.line(20, finalY + 58, 80, finalY + 58);
   doc.line(140, finalY + 58, 190, finalY + 58);
 
-  doc.save(`Quitus_${data.quitusId}.pdf`);
+  doc.save(`Quitus_${q.reference}.pdf`);
+};
+
+/**
+ * Genere et telecharge le quitus de paiement, au format Ticket (80mm) ou A4.
+ *
+ * @param {Object} data Payload brut du backend (`editer_quitus`) ou ancienne forme aplatie.
+ * @param {Object} [options]
+ * @param {'A4'|'TICKET'} [options.format='A4']
+ */
+export const genererQuitusPDF = (data, options = {}) => {
+  const { format = 'A4' } = options;
+  const q = normaliserQuitus(data);
+  if (format === 'TICKET') {
+    genererTicket(q);
+  } else {
+    genererA4(q);
+  }
 };
 
 /**

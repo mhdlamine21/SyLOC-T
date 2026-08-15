@@ -1,15 +1,18 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   AlertBanner, Button, Card, EmptyState, Field, LoadingState, Modal,
   PageWrapper, SectionHeader, Select, StatusBadge, Textarea,
 } from '../common/ui';
-import { changerStatutDemande, getDemandes, confirmerReceptionPhysique } from '../../api/demandes';
-import { getCartesAValider, validerCarteEtudiant } from '../../api/comptes';
+import { changerStatutDemande, getDemandes, getDossiers } from '../../api/demandes';
 import { messageErreur } from '../../api/utils';
 import {
   STATUTS_DEMANDE, STATUTS_DEMANDE_LABELS, TYPES_DEMANDE_LABELS,
 } from '../../utils/constants';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
+import DocumentPreviewModal from './DocumentPreviewModal';
 
 // Le Bureau du Courrier ne traite que les dossiers a l'entree du circuit.
 const STATUTS_A_TRAITER = [STATUTS_DEMANDE.NOUVELLE, STATUTS_DEMANDE.MITIGEE_COMPLEMENT];
@@ -17,309 +20,302 @@ const STATUTS_A_TRAITER = [STATUTS_DEMANDE.NOUVELLE, STATUTS_DEMANDE.MITIGEE_COM
 const ORIENTATIONS = [
   {
     value: STATUTS_DEMANDE.CONTROLE_RECEVABILITE,
-    label: 'âœ… Dossier conforme - transmettre Ã  la DCUVE pour instruction',
+    label: 'Avis favorable — dossier conforme, transmettre à la DCUVE',
     succes: 'Dossier transmis au Directeur DCUVE pour instruction.',
+    destination: 'DCUVE',
+    avis: 'FAVORABLE',
+    btnLabel: 'Transmettre à la DCUVE →',
+    btnVariant: 'navy',
+    infoText: 'Avis favorable : ce dossier sera transmis à la DCUVE pour instruction.',
   },
   {
     value: STATUTS_DEMANDE.MITIGEE_COMPLEMENT,
-    label: "ðŸ“Ž PiÃ¨ces manquantes - demander un complÃ©ment Ã  l'usager",
-    succes: "Demande de complÃ©ment notifiÃ©e Ã  l'usager.",
+    label: "Avis défavorable — pièce manquante, retourner au candidat",
+    succes: "Demande de complément notifiée au candidat.",
+    destination: 'CANDIDAT',
+    avis: 'DEFAVORABLE',
+    piecesManquantes: true,
+    btnLabel: 'Retourner au candidat pour complément',
+    btnVariant: 'amber',
+    infoText: 'Avis défavorable : demande de pièces complémentaires renvoyée au candidat.',
+  },
+  {
+    value: STATUTS_DEMANDE.DEFAVORABLE,
+    label: "Avis défavorable — dossier irrecevable / non complété (Archivage direct)",
+    succes: "Dossier classé irrecevable et archivé directement.",
+    destination: 'ARCHIVES',
+    avis: 'DEFAVORABLE',
+    requiresMotif: true,
+    btnLabel: 'Archiver directement le dossier',
+    btnVariant: 'stamp',
+    infoText: 'Avis défavorable : dossier non complété / irrecevable, classé directement dans les archives.',
   },
 ];
 
 export default function BureauCourrierView() {
   const [demandes, setDemandes] = useState([]);
-  const [cartes, setCartes] = useState([]);
-  const [activeTab, setActiveTab] = useState('COURRIER');
   const [loading, setLoading] = useState(true);
-  
-  // States Modal Courrier
   const [selected, setSelected] = useState(null);
   const [orientation, setOrientation] = useState(ORIENTATIONS[0].value);
   const [commentaire, setCommentaire] = useState('');
-  const [receptionPhysique, setReceptionPhysique] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
-  // States Modal Carte
-  const [selectedCarte, setSelectedCarte] = useState(null);
-  const [decisionCarte, setDecisionCarte] = useState('VALIDE');
-  const [motifCarte, setMotifCarte] = useState('');
-  const [submittingCarte, setSubmittingCarte] = useState(false);
 
   const charger = useCallback(async () => {
     setLoading(true);
     try {
-      if (activeTab === 'COURRIER') {
-        const data = await getDemandes();
-        setDemandes(data.filter((d) => STATUTS_A_TRAITER.includes(d.statut)));
-      } else {
-        const dataCartes = await getCartesAValider();
-        setCartes(dataCartes);
-      }
+      const data = await getDemandes();
+      setDemandes(data);
     } catch (err) {
-      toast.error(messageErreur(err, 'Erreur de chargement.'));
+      toast.error(messageErreur(err, 'Erreur de chargement du courrier entrant.'));
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { charger(); }, [charger]);
 
-  const ouvrirTraitement = (demande) => {
+  const [dossier, setDossier] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
+
+  const ouvrirTraitement = async (demande) => {
     setSelected(demande);
     setOrientation(ORIENTATIONS[0].value);
     setCommentaire('');
-    setReceptionPhysique(false);
+    setDossier(null);
+    try {
+      const data = await getDossiers({ demande: demande.id });
+      if (data && data.length > 0) setDossier(data[0]);
+    } catch {
+      toast.error('Impossible de charger les pièces jointes.');
+    }
   };
+
+  const choixCourant = ORIENTATIONS.find((o) => o.value === orientation);
 
   const handleTraiter = async (e) => {
     e.preventDefault();
     if (!selected) return;
+
+    const choix = ORIENTATIONS.find((o) => o.value === orientation);
+    if (choix?.requiresMotif && (!commentaire || commentaire.trim().length < 5)) {
+      toast.error('Un motif d\'avis défavorable (min. 5 caractères) est obligatoire pour archiver le dossier.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      if (receptionPhysique) {
-        await confirmerReceptionPhysique(selected.id);
-        toast.success("PiÃ¨ces physiques marquÃ©es comme rÃ©ceptionnÃ©es.");
-      }
       await changerStatutDemande(selected.id, orientation, commentaire);
-      const choix = ORIENTATIONS.find((o) => o.value === orientation);
-      toast.success(choix?.succes || 'Dossier traitÃ©.');
+      toast.success(choix?.succes || 'Dossier traité.');
       setSelected(null);
       await charger();
     } catch (err) {
-      toast.error(messageErreur(err, 'Le traitement du courrier a Ã©chouÃ©.'));
+      toast.error(messageErreur(err, 'Le traitement du courrier a échoué.'));
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleValiderCarte = async (e) => {
-    e.preventDefault();
-    if (!selectedCarte) return;
-    setSubmittingCarte(true);
-    try {
-      await validerCarteEtudiant(selectedCarte.id, decisionCarte, motifCarte);
-      toast.success(decisionCarte === 'VALIDE' ? 'Carte validÃ©e avec succÃ¨s.' : 'Carte refusÃ©e avec motif.');
-      setSelectedCarte(null);
-      await charger();
-    } catch (err) {
-      toast.error(messageErreur(err, 'Erreur lors du traitement de la carte.'));
-    } finally {
-      setSubmittingCarte(false);
     }
   };
 
   return (
     <PageWrapper>
       <SectionHeader
-        eyebrow="Bureau du Courrier & RÃ©ception"
-        title="Enregistrement & orientation du courrier d'arrivÃ©e"
-        subtitle="Point d'entrÃ©e officiel des dossiers d'occupation : contrÃ´le prÃ©liminaire des piÃ¨ces, puis transmission Ã  la DCUVE ou demande de complÃ©ment."
+        eyebrow="Bureau du Courrier & Réception"
+        title="Enregistrement & orientation du courrier d'arrivée"
+        subtitle="Point d'entrée officiel des dossiers d'occupation : contrôle préliminaire des pièces, puis transmission à la DCUVE ou demande de complément."
       />
 
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
-        <button
-          onClick={() => setActiveTab('COURRIER')}
-          style={{
-            padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer',
-            fontWeight: activeTab === 'COURRIER' ? 'bold' : 'normal',
-            borderBottom: activeTab === 'COURRIER' ? '2px solid var(--navy)' : '2px solid transparent',
-            color: activeTab === 'COURRIER' ? 'var(--navy)' : 'var(--muted)',
-            fontSize: '15px'
-          }}
-        >
-          ðŸ“­ Courrier Entrant
-        </button>
-        <button
-          onClick={() => setActiveTab('CARTES')}
-          style={{
-            padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer',
-            fontWeight: activeTab === 'CARTES' ? 'bold' : 'normal',
-            borderBottom: activeTab === 'CARTES' ? '2px solid var(--navy)' : '2px solid transparent',
-            color: activeTab === 'CARTES' ? 'var(--navy)' : 'var(--muted)',
-            fontSize: '15px'
-          }}
-        >
-          ðŸŽ“ Cartes Ã‰tudiantes Ã  valider {cartes.length > 0 && <span style={{ background: 'var(--amber)', color: 'var(--ink)', padding: '2px 8px', borderRadius: 12, fontSize: 12, marginLeft: 8 }}>{cartes.length}</span>}
-        </button>
-      </div>
-
       <AlertBanner type="info">
-        {activeTab === 'COURRIER' 
-          ? `Les dossiers dÃ©posÃ©s en ligne par les usagers arrivent ici au statut Â« ${STATUTS_DEMANDE_LABELS.NOUVELLE} Â». Un dossier dÃ©posÃ© physiquement doit d'abord Ãªtre saisi par l'usager.`
-          : 'ContrÃ´lez les cartes Ã©tudiantes soumises par les candidats. Une carte valide est requise pour bÃ©nÃ©ficier des tarifs rÃ©duits des locaux de type "Ã‰tudiant".'}
+        Les dossiers déposés en ligne par les usagers arrivent ici au statut
+        « {STATUTS_DEMANDE_LABELS.NOUVELLE} ». Un dossier déposé physiquement doit
+        d'abord être saisi par l'usager ou par l'Administration SI depuis la
+        gestion des comptes, afin que le demandeur reste titulaire de son dossier.
       </AlertBanner>
 
-      {loading ? (
-        <LoadingState label="Chargementâ€¦" />
-      ) : activeTab === 'COURRIER' && demandes.length === 0 ? (
-        <EmptyState
-          icon="ðŸ“­"
-          title="Aucun courrier en attente"
-          description="Tous les dossiers reÃ§us ont Ã©tÃ© orientÃ©s. Les nouveaux dÃ©pÃ´ts apparaÃ®tront ici automatiquement."
-        />
-      ) : activeTab === 'COURRIER' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-          {demandes.map((d) => (
-            <Card key={d.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--slate)' }}>
-                    {d.reference_anonyme || `Dossier ${String(d.id).slice(0, 8)}`}
-                  </span>
-                  <StatusBadge statut={d.statut} />
-                </div>
+          {loading ? (
+            <LoadingState label="Chargement du courrier entrant…" />
+          ) : demandes.filter(d => STATUTS_A_TRAITER.includes(d.statut)).length === 0 ? (
+            <EmptyState
+              icon={<InboxOutlinedIcon style={{ fontSize: 20 }} />}
+              title="Aucun courrier en attente"
+              description="Tous les dossiers reçus ont été orientés. Les nouveaux dépôts apparaîtront ici automatiquement."
+            />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+              {demandes.filter(d => STATUTS_A_TRAITER.includes(d.statut)).map((d) => (
+                <Card 
+                  key={d.id} 
+                  style={{ 
+                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 12px 20px -3px rgba(0, 0, 0, 0.1)';
+                    e.currentTarget.style.borderColor = 'var(--teal)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--slate)' }}>
+                        {d.reference_anonyme || `Dossier ${String(d.id).slice(0, 8)}`}
+                      </span>
+                      <StatusBadge statut={d.statut} />
+                    </div>
 
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, margin: '0 0 6px', color: 'var(--navy)' }}>
-                  {TYPES_DEMANDE_LABELS[d.type_demande] || d.type_demande}
-                </h3>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, margin: '0 0 6px', color: 'var(--text-navy)' }}>
+                      {TYPES_DEMANDE_LABELS[d.type_demande] || d.type_demande}
+                    </h3>
 
-                {d.demandeur_nom && (
-                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 10px' }}>
-                    Demandeur : <strong>{d.demandeur_nom}</strong>
-                  </p>
-                )}
+                    {d.demandeur_nom && (
+                      <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 10px' }}>
+                        Demandeur : <strong>{d.demandeur_nom}</strong>
+                      </p>
+                    )}
 
-                <div style={{ background: 'var(--surface-2)', padding: 10, borderRadius: 8, fontSize: 12, marginBottom: 14, fontFamily: 'var(--font-mono)' }}>
-                  <div>ðŸ“… ReÃ§u le {d.date_depot ? new Date(d.date_depot).toLocaleDateString('fr-FR') : 'â€”'}</div>
-                  <div>ðŸ“ Local visÃ© : {d.local_reference || d.local || 'Non prÃ©cisÃ©'}</div>
-                </div>
+                    <div style={{ background: 'var(--surface-2)', padding: 10, borderRadius: 8, fontSize: 12, marginBottom: 14, fontFamily: 'var(--font-mono)' }}>
+                      <div>Reçu le {d.date_depot ? new Date(d.date_depot).toLocaleDateString('fr-FR') : '—'}</div>
+                      <div>Local visé : {d.local_reference || d.local || 'Non précisé'}</div>
+                    </div>
 
-                {d.description_projet && (
-                  <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 14px' }}>{d.description_projet}</p>
-                )}
-              </div>
+                    {d.description_projet && (
+                      <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 14px' }}>{d.description_projet}</p>
+                    )}
+                  </div>
 
-              <Button variant="primary" size="sm" onClick={() => ouvrirTraitement(d)} style={{ justifyContent: 'center' }}>
-                ðŸ“¥ Traiter & orienter le dossier â†’
-              </Button>
-            </Card>
-          ))}
-        </div>
-      ) : activeTab === 'CARTES' && cartes.length === 0 ? (
-        <EmptyState
-          icon="ðŸŽ“"
-          title="Aucune carte en attente"
-          description="Tous les profils Ã©tudiants ont Ã©tÃ© vÃ©rifiÃ©s."
-        />
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-          {cartes.map((c) => (
-            <Card key={c.id}>
-              <div style={{ marginBottom: 10 }}>
-                <span style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>Matricule: {c.matricule_etudiant || 'N/A'}</span>
-              </div>
-              <h3 style={{ fontSize: 16, margin: '0 0 6px', color: 'var(--navy)' }}>{c.utilisateur.nom_complet || c.utilisateur.username}</h3>
-              <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 14px' }}>Contact : {c.contact}</p>
-              
-              <div style={{ display: 'flex', gap: 10 }}>
-                <Button variant="ghost" size="sm" onClick={() => window.open(c.carte_etudiant_fichier, '_blank')} style={{ flex: 1, justifyContent: 'center' }}>
-                  ðŸ‘ï¸ Voir la carte
-                </Button>
-                <Button variant="navy" size="sm" onClick={() => { setSelectedCarte(c); setDecisionCarte('VALIDE'); setMotifCarte(''); }} style={{ flex: 1, justifyContent: 'center' }}>
-                  âœ“ Valider/Refuser
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+                  <Button 
+                    variant="primary" 
+                    size="sm" 
+                    onClick={() => ouvrirTraitement(d)} 
+                    style={{ 
+                      justifyContent: 'center', 
+                      marginTop: 10,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    Traiter & orienter le dossier →
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          )}
 
       {selected && (
         <Modal
           open={!!selected}
           onClose={() => setSelected(null)}
           title={`Traitement du dossier ${selected.reference_anonyme || String(selected.id).slice(0, 8)}`}
+          size="lg"
         >
-          <form onSubmit={handleTraiter} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Field label="Orientation du courrier *" required>
-              <Select value={orientation} onChange={(e) => setOrientation(e.target.value)}>
-                {ORIENTATIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field
-              label={orientation === STATUTS_DEMANDE.MITIGEE_COMPLEMENT ? "Motif de la demande de complÃ©ment *" : "Notes du rÃ©ceptionniste"}
-              hint={orientation === STATUTS_DEMANDE.MITIGEE_COMPLEMENT ? "Obligatoire : prÃ©cisez quelles piÃ¨ces manquent ou sont invalides." : "ConservÃ©es dans l'historique du dossier et visibles par les services suivants."}
-              required={orientation === STATUTS_DEMANDE.MITIGEE_COMPLEMENT}
-            >
-              <Textarea
-                value={commentaire}
-                onChange={(e) => setCommentaire(e.target.value)}
-                rows={3}
-                placeholder="Ex. PiÃ¨ce d'identitÃ© manquante, business plan non signÃ©â€¦"
-                required={orientation === STATUTS_DEMANDE.MITIGEE_COMPLEMENT}
-              />
-            </Field>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, padding: 12, background: 'var(--info-soft)', borderRadius: 8 }}>
-              <input
-                type="checkbox"
-                id="receptionPhysique"
-                checked={receptionPhysique}
-                onChange={(e) => setReceptionPhysique(e.target.checked)}
-                style={{ width: 18, height: 18, cursor: 'pointer' }}
-              />
-              <label htmlFor="receptionPhysique" style={{ fontSize: 14, color: 'var(--navy)', cursor: 'pointer', fontWeight: 600 }}>
-                Dossier physique rÃ©ceptionnÃ© au guichet
-              </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, margin: '0 0 10px', color: 'var(--text-navy)' }}>
+                Pièces justificatives fournies
+              </h4>
+              {!dossier ? (
+                <LoadingState label="Chargement des documents..." />
+              ) : dossier.documents && dossier.documents.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 400, overflowY: 'auto', paddingRight: 8 }}>
+                  {dossier.documents.map((doc) => (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      onClick={() => setPreviewDoc(doc)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, textDecoration: 'none', color: 'inherit', transition: 'all 0.2s', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                    >
+                      <InsertDriveFileOutlinedIcon style={{ color: 'var(--teal)' }} />
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-navy)' }}>{doc.type_label || doc.type_document}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.libelle || doc.fichier.split('/').pop()}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <AlertBanner type="warning">Aucun document joint à cette demande.</AlertBanner>
+              )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <Button variant="ghost" type="button" onClick={() => setSelected(null)}>Annuler</Button>
-              <Button variant="navy" type="submit" disabled={submitting}>
-                {submitting ? 'Enregistrementâ€¦' : 'Valider l\u2019orientation'}
-              </Button>
-            </div>
-          </form>
+            <form onSubmit={handleTraiter} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Field label="Orientation du courrier *" required>
+                <Select value={orientation} onChange={(e) => setOrientation(e.target.value)}>
+                  {ORIENTATIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </Select>
+              </Field>
+
+              {choixCourant && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, fontWeight: 700,
+                  padding: '10px 12px', borderRadius: 8,
+                  background: choixCourant.destination === 'DCUVE' 
+                    ? 'rgba(23,37,84,.08)' 
+                    : choixCourant.destination === 'CANDIDAT'
+                    ? 'rgba(217,119,6,.08)'
+                    : 'rgba(220,38,38,.08)',
+                  color: choixCourant.destination === 'DCUVE' 
+                    ? 'var(--navy)' 
+                    : choixCourant.destination === 'CANDIDAT'
+                    ? 'var(--amber)'
+                    : 'var(--red)',
+                }}>
+                  <ArrowForwardOutlinedIcon style={{ fontSize: 16 }} />
+                  {choixCourant.infoText}
+                </div>
+              )}
+
+              {choixCourant?.piecesManquantes && (
+                <Field
+                  label="Note du réceptionniste *"
+                  hint="Précisez les pièces manquantes attendues du candidat. Conservée dans l'historique du dossier."
+                  required
+                >
+                  <Textarea
+                    value={commentaire}
+                    onChange={(e) => setCommentaire(e.target.value)}
+                    rows={3}
+                    placeholder="Ex. Pièce d'identité manquante, business plan non signé…"
+                  />
+                </Field>
+              )}
+
+              {choixCourant?.requiresMotif && (
+                <Field
+                  label="Motif du rejet *"
+                  hint="Obligatoire pour rejeter et archiver le dossier."
+                  required
+                >
+                  <Textarea
+                    value={commentaire}
+                    onChange={(e) => setCommentaire(e.target.value)}
+                    rows={3}
+                    placeholder="Motif détaillé du rejet…"
+                  />
+                </Field>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
+                <Button variant="ghost" type="button" onClick={() => setSelected(null)}>Annuler</Button>
+                <Button variant={choixCourant?.btnVariant || 'navy'} type="submit" disabled={submitting}>
+                  {submitting ? 'Enregistrement…' : (choixCourant?.btnLabel || 'Valider l\u2019orientation')}
+                </Button>
+              </div>
+            </form>
+          </div>
         </Modal>
       )}
-      
-      {selectedCarte && (
-        <Modal
-          open={!!selectedCarte}
-          onClose={() => setSelectedCarte(null)}
-          title={`VÃ©rification de la carte Ã©tudiant de ${selectedCarte.utilisateur.nom_complet || selectedCarte.utilisateur.username}`}
-        >
-          <form onSubmit={handleValiderCarte} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ marginBottom: 10 }}>
-              <a href={selectedCarte.carte_etudiant_fichier} target="_blank" rel="noreferrer" style={{ color: 'var(--teal)', fontWeight: 'bold' }}>
-                Ouvrir la carte dans un nouvel onglet â†-
-              </a>
-            </div>
-            <Field label="DÃ©cision *" required>
-              <Select value={decisionCarte} onChange={(e) => setDecisionCarte(e.target.value)}>
-                <option value="VALIDE">âœ… VALIDER la carte Ã©tudiante</option>
-                <option value="REJETE">âŒ REFUSER la carte Ã©tudiante</option>
-              </Select>
-            </Field>
 
-            <Field
-              label={decisionCarte === 'REJETE' ? "Motif du refus *" : "Commentaire (Optionnel)"}
-              required={decisionCarte === 'REJETE'}
-              hint="Le motif sera envoyÃ© par email Ã  l'Ã©tudiant."
-            >
-              <Textarea
-                value={motifCarte}
-                onChange={(e) => setMotifCarte(e.target.value)}
-                rows={3}
-                placeholder="Ex. La carte est floue, illisible ou expirÃ©e..."
-                required={decisionCarte === 'REJETE'}
-              />
-            </Field>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
-              <Button variant="ghost" type="button" onClick={() => setSelectedCarte(null)}>Annuler</Button>
-              <Button variant={decisionCarte === 'VALIDE' ? 'navy' : 'stamp'} type="submit" disabled={submittingCarte}>
-                {submittingCarte ? 'Enregistrementâ€¦' : 'Confirmer'}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <DocumentPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
     </PageWrapper>
   );
 }
+
 

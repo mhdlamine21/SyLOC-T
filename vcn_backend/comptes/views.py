@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.audit import journaliser
+from core.acteurs import peut_consulter_profils
 from core.permissions import HasRole
 from .models import Demandeur, StatutVerificationEtudiant, Notification, JournalAudit
 from .serializers import (
@@ -31,8 +32,10 @@ def generer_mot_de_passe():
     from django.utils.crypto import get_random_string
     return get_random_string(12)
 
-ROLES_VALIDATION_CARTE = ["BUREAU_COURRIER", "AGENT_DCUVE", "DIRECTEUR_DCUVE", "ADMINISTRATEUR_SI"]
-ROLES_ADMIN = ["ADMINISTRATEUR_SI", "DIRECTEUR_CROUS_T"]
+ROLES_VALIDATION_CARTE = ["BUREAU_COURRIER", "AGENT_DCUVE", "DIRECTEUR_DCUVE"]
+# Administration TECHNIQUE des comptes : seul l'Administrateur SI agit.
+# Le Directeur CROUS-T garde la lecture (supervision) via `HasRole`.
+ROLES_ADMIN = ["ADMINISTRATEUR_SI"]
 
 
 class RegisterView(generics.CreateAPIView):
@@ -96,6 +99,14 @@ class UtilisateurViewSet(viewsets.ModelViewSet):
     serializer_class = UtilisateurSerializer
     permission_classes = [HasRole]
     roles_autorises = ROLES_ADMIN
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            from comptes.models import RoleUtilisateur
+            self.roles_autorises = [r[0] for r in RoleUtilisateur.choices if r[0] not in ('USAGER', 'AMICALE')]
+        else:
+            self.roles_autorises = ROLES_ADMIN
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -237,9 +248,10 @@ class DemandeurViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        role = getattr(self.request.user, 'role', None)
-        # Un usager ne voit que son propre profil.
-        if role == 'USAGER':
+        # Donnees personnelles : seuls les services instructeurs y accedent.
+        # Tout autre compte (Cellule Communication, Administrateur SI, usager)
+        # ne voit que son propre profil.
+        if not peut_consulter_profils(self.request.user):
             return qs.filter(utilisateur=self.request.user)
         statut = self.request.query_params.get('statut_verification_etudiant')
         if statut:
@@ -261,9 +273,13 @@ class DemandeurViewSet(viewsets.ModelViewSet):
     def cartes_a_valider(self, request):
         if request.user.role not in ROLES_VALIDATION_CARTE and not request.user.is_superuser:
             return Response({'detail': "Non autorise."}, status=403)
-        qs = Demandeur.objects.select_related('utilisateur').filter(
-            statut_verification_etudiant=StatutVerificationEtudiant.EN_ATTENTE
-        )
+        statut = request.query_params.get('statut') or StatutVerificationEtudiant.EN_ATTENTE
+        qs = Demandeur.objects.select_related('utilisateur', 'valide_par')
+        if statut != 'TOUTES':
+            qs = qs.filter(statut_verification_etudiant=statut)
+        else:
+            qs = qs.exclude(statut_verification_etudiant=StatutVerificationEtudiant.NON_SOUMIS)
+        qs = qs.order_by('-date_modification')
         return Response(DemandeurSerializer(qs, many=True, context={'request': request}).data)
 
     @action(detail=False, methods=['post'], url_path='soumettre-carte-etudiant')
@@ -283,6 +299,8 @@ class DemandeurViewSet(viewsets.ModelViewSet):
         if request.data.get('matricule_etudiant'):
             demandeur.matricule_etudiant = request.data['matricule_etudiant']
         demandeur.statut_verification_etudiant = StatutVerificationEtudiant.EN_ATTENTE
+        demandeur.carte_etudiant_date_soumission = timezone.now()
+        demandeur.motif_rejet_carte = None
         demandeur.save()
         journaliser(request.user, "DEPOT_CARTE_ETUDIANT", f"Demandeur {demandeur.id}")
         return Response(DemandeurSerializer(demandeur, context={'request': request}).data)
@@ -299,35 +317,26 @@ class DemandeurViewSet(viewsets.ModelViewSet):
                 {'decision': [f"Valeurs possibles : {', '.join(StatutVerificationEtudiant.values)}"]},
                 status=400,
             )
+        motif = (request.data.get('motif') or '').strip()
+        if decision == StatutVerificationEtudiant.REJETE and len(motif) < 5:
+            return Response(
+                {'motif': ["Un motif de rejet (min. 5 caracteres) est obligatoire."]},
+                status=400,
+            )
+
         demandeur.statut_verification_etudiant = decision
         demandeur.carte_etudiant_date_validation = timezone.now()
+        demandeur.motif_rejet_carte = motif or None
         demandeur.valide_par = request.user
         demandeur.save()
 
-        motif = request.data.get('motif', '')
-        
-        contenu_notif = f"Votre carte etudiant a ete traitee : {decision}."
-        if decision == StatutVerificationEtudiant.REJETE and motif:
-            contenu_notif += f"\nMotif du refus : {motif}"
-
         Notification.objects.create(
             destinataire=demandeur.utilisateur,
-            contenu=contenu_notif,
+            contenu=(
+                f"Votre carte etudiant a ete traitee : {decision}."
+                + (f" Motif : {motif}" if motif else "")
+            ),
         )
-        
-        if demandeur.utilisateur.email:
-            from django.core.mail import send_mail
-            from django.conf import settings
-            try:
-                send_mail(
-                    "Mise à jour du statut de votre carte étudiant",
-                    contenu_notif,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [demandeur.utilisateur.email],
-                    fail_silently=True,
-                )
-            except Exception as e:
-                print("Erreur email carte:", e)
         journaliser(request.user, "VALIDATION_CARTE_ETUDIANT", f"Demandeur {demandeur.id}",
                     f"decision={decision}")
         return Response(DemandeurSerializer(demandeur, context={'request': request}).data)

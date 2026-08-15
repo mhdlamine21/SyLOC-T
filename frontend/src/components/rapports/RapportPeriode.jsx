@@ -1,8 +1,14 @@
+import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined';
+import OutlinedFlagOutlinedIcon from '@mui/icons-material/OutlinedFlagOutlined';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from 'recharts';
+import { BarChart } from '../charts';
 import { PageWrapper, SectionHeader, Card, StatCard, Button, Field } from '../common/ui';
 import { getRapportPeriode } from '../../api/rapports';
 import { messageErreur } from '../../api/utils';
@@ -46,11 +52,6 @@ export default function RapportPeriode() {
       ...rapport.demandes.par_type.map((r) => ({
         categorie: 'Demandes par type',
         libelle: TYPES_DEMANDE_LABELS?.[r.type_demande] || r.type_demande,
-        total: r.total,
-      })),
-      ...rapport.finances.par_mode.map((r) => ({
-        categorie: 'Paiements par mode',
-        libelle: r.mode,
         total: r.total,
       })),
       ...rapport.terrain.par_type.map((r) => ({
@@ -104,14 +105,14 @@ export default function RapportPeriode() {
             />
           </Field>
           <Button variant="primary" onClick={charger} disabled={chargement}>
-            {chargement ? 'Chargement…' : '🔄 Générer le rapport'}
+            {chargement ? 'Chargement…' : 'Générer le rapport'}
           </Button>
           <Button
             variant="amber"
             disabled={!lignes.length}
             onClick={() => exportToCSV(lignes, `Rapport_${debut}_${fin}`, colonnes)}
           >
-            📊 Exporter en Excel (.CSV)
+            Exporter en Excel (.CSV)
           </Button>
           <Button
             variant="stamp"
@@ -123,25 +124,23 @@ export default function RapportPeriode() {
               colonnes,
             )}
           >
-            📄 Exporter en PDF (Imprimer)
+            Exporter en PDF (Imprimer)
           </Button>
         </div>
       </Card>
 
       {rapport && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <StatCard label="Demandes reçues" value={rapport.demandes.total} color="teal" icon="📋" />
-            <StatCard label="Favorables" value={rapport.demandes.favorables} color="ok" icon="✅" sub={`${rapport.demandes.taux_favorable}%`} />
-            <StatCard label="Défavorables" value={rapport.demandes.defavorables} color="stamp" icon="❌" />
-            <StatCard label="Redevances encaissées" value={fcfa(rapport.finances.montant_encaisse)} color="amber" icon="💰" sub="FCFA" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <StatCard label="Demandes reçues" value={rapport.demandes.total} color="teal" icon={<AssignmentOutlinedIcon style={{ fontSize: 20 }} />} />
+            <StatCard label="Favorables" value={rapport.demandes.favorables} color="ok" icon={<TaskAltOutlinedIcon style={{ fontSize: 20 }} />} sub={`${rapport.demandes.taux_favorable}%`} />
+            <StatCard label="Défavorables" value={rapport.demandes.defavorables} color="stamp" icon={<CloseOutlinedIcon style={{ fontSize: 20 }} />} />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <StatCard label="Contrats signés" value={rapport.contrats.signes} color="navy" icon="📜" sub={`${rapport.contrats.actifs} actifs`} />
-            <StatCard label="Impayés" value={fcfa(rapport.finances.impayes)} color="danger" icon="💸" sub="FCFA" />
-            <StatCard label="Signalements" value={rapport.terrain.signalements} color="stamp" icon="🚩" sub={`${rapport.terrain.resolus} résolus`} />
-            <StatCard label="Taux d'occupation" value={`${rapport.patrimoine.taux_occupation}%`} color="ok" icon="🏢" sub={`${rapport.patrimoine.locaux_libres} libres`} />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <StatCard label="Contrats signés" value={rapport.contrats.signes} color="navy" icon={<HistoryEduOutlinedIcon style={{ fontSize: 20 }} />} sub={`${rapport.contrats.actifs} actifs`} />
+            <StatCard label="Signalements" value={rapport.terrain.signalements} color="stamp" icon={<OutlinedFlagOutlinedIcon style={{ fontSize: 20 }} />} sub={`${rapport.terrain.resolus} résolus`} />
+            <StatCard label="Taux d'occupation" value={`${rapport.patrimoine.taux_occupation}%`} color="ok" icon={<ApartmentOutlinedIcon style={{ fontSize: 20 }} />} sub={`${rapport.patrimoine.locaux_libres} libres`} />
           </div>
 
           <Card>
@@ -149,19 +148,15 @@ export default function RapportPeriode() {
               <p className="font-display font-semibold text-base text-ink">Indicateurs de la période — {titrePeriode}</p>
               <span className="font-mono text-xs text-teal font-semibold">Bilan consolidé</span>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={graphe}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(32,28,20,0.08)" />
-                <XAxis dataKey="indicateur" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={70} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fontFamily: 'IBM Plex Mono' }} />
-                <Tooltip contentStyle={{ fontFamily: 'Inter', fontSize: 13 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="total" name="Total" fill="#1f4b3f" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              height={280}
+              labels={graphe.map((g) => g.indicateur)}
+              series={[{ label: 'Total', data: graphe.map((g) => g.total), color: '#172554' }]}
+            />
           </Card>
         </>
       )}
     </PageWrapper>
   );
 }
+

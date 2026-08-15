@@ -1,18 +1,32 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { changerMotDePasse } from '../../api/comptes';
+import { changerMotDePasse, updateMe } from '../../api/comptes';
 import {
   PageWrapper, SectionHeader, Card, StatusBadge, Button, Field, Input, AlertBanner,
 } from '../common/ui';
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
-  const [isEditingPass, setIsEditingPass] = useState(false);
+  
+  // Tabs: 'infos', 'security'
+  const [activeTab, setActiveTab] = useState('infos');
+
+  // Security State
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingPass, setLoadingPass] = useState(false);
+
+  // Profile Edit State
+  const [isEditingProfil, setIsEditingProfil] = useState(false);
+  const [loadingProfil, setLoadingProfil] = useState(false);
+  const [formProfil, setFormProfil] = useState({
+    prenom: '',
+    nom: '',
+    telephone: '',
+    service: '',
+  });
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -24,12 +38,11 @@ export default function Profile() {
       toast.error('Les mots de passe ne correspondent pas.');
       return;
     }
-    setLoading(true);
+    setLoadingPass(true);
     try {
       await changerMotDePasse(oldPass, newPass);
       updateUser({ doit_changer_mdp: false });
       toast.success('Mot de passe mis à jour avec succès !');
-      setIsEditingPass(false);
       setOldPass('');
       setNewPass('');
       setConfirmPass('');
@@ -37,7 +50,29 @@ export default function Profile() {
       const data = err.response?.data;
       toast.error(data?.detail || data?.ancien_mot_de_passe?.[0] || 'Erreur lors du changement de mot de passe.');
     } finally {
-      setLoading(false);
+      setLoadingPass(false);
+    }
+  };
+
+  const handleProfilSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingProfil(true);
+    try {
+      const payload = {
+        nom_complet: `${formProfil.prenom} ${formProfil.nom}`.trim(),
+      };
+      if (formProfil.telephone) {
+        payload.contact = formProfil.telephone;
+      }
+
+      const updatedUser = await updateMe(payload);
+      updateUser(updatedUser);
+      toast.success('Profil mis à jour avec succès !');
+      setIsEditingProfil(false);
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour du profil.');
+    } finally {
+      setLoadingProfil(false);
     }
   };
 
@@ -46,130 +81,170 @@ export default function Profile() {
       <SectionHeader
         eyebrow="Espace Personnel"
         title="Mon profil & Informations"
-        subtitle="Consultez vos informations personnelles, votre affectation et gérez vos accès."
+        subtitle="Consultez et modifiez vos informations personnelles, et gérez vos accès."
       />
 
       {user?.doit_changer_mdp && (
         <AlertBanner type="warn">
-          <strong>Attention :</strong> C'est votre première connexion avec un mot de passe temporaire. Veuillez modifier votre mot de passe ci-dessous.
+          <strong>Attention :</strong> C'est votre première connexion avec un mot de passe temporaire. Veuillez modifier votre mot de passe dans l'onglet Sécurité.
         </AlertBanner>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Fiche identité */}
-        <Card className="md:col-span-2">
-          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-ink/10">
-            <div className="w-16 h-16 rounded-full bg-teal text-paper font-display text-2xl font-bold flex items-center justify-center shadow-sm">
-              {user?.nom_complet ? user.nom_complet.substring(0, 2).toUpperCase() : 'US'}
-            </div>
-            <div>
-              <h2 className="font-display font-bold text-xl text-ink">{user?.nom_complet || 'Utilisateur SyLOC-T'}</h2>
-              <p className="text-sm text-muted">{user?.email}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs px-2.5 py-0.5 font-mono font-bold bg-amber-pale text-amber-deep rounded">
-                  {user?.role || 'USAGER'}
+      {/* ── En-tête Premium ── */}
+      <div className="mb-6 rounded-xl overflow-hidden shadow-sm border border-border bg-surface-card">
+        <div className="h-24 bg-gradient-to-r from-navy to-teal opacity-90 relative">
+          <div className="absolute -bottom-8 left-6 w-20 h-20 rounded-full border-4 border-surface-card bg-gold flex items-center justify-center shadow-md">
+            <span className="font-display text-3xl font-bold text-on-gold">
+              {user?.nom_complet ? user.nom_complet.substring(0, 2).toUpperCase() : 'U'}
+            </span>
+          </div>
+        </div>
+        <div className="pt-10 pb-6 px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="font-display font-bold text-2xl text-ink">{user?.nom_complet || 'Utilisateur'}</h2>
+            <p className="text-sm text-muted mb-2">{user?.email}</p>
+            <div className="flex gap-2">
+              <span className="text-[10px] px-2 py-1 font-mono font-bold bg-amber-pale text-amber-deep rounded uppercase tracking-wider">
+                {user?.role || 'USAGER'}
+              </span>
+              {(user?.est_etudiant || user?.profil_demandeur?.est_etudiant) && (
+                <span className="text-[10px] px-2 py-1 font-mono font-bold bg-teal-pale text-teal rounded uppercase tracking-wider">
+                  Étudiant
                 </span>
-                {user?.service && (
-                  <span className="text-xs font-mono text-muted">📍 {user.service}</span>
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+             <p className="text-xs text-muted font-mono">Identifiant système</p>
+             <p className="font-bold text-ink">{user?.id || 'USR-***'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Navigation Onglets ── */}
+      <div className="flex border-b border-border mb-6">
+        <button 
+          onClick={() => setActiveTab('infos')}
+          className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'infos' ? 'border-teal text-teal' : 'border-transparent text-muted hover:text-ink'}`}
+        >
+          Informations Personnelles
+        </button>
+        <button 
+          onClick={() => setActiveTab('security')}
+          className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'security' ? 'border-teal text-teal' : 'border-transparent text-muted hover:text-ink'}`}
+        >
+          Sécurité & Accès
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ── Onglet Infos ── */}
+        {activeTab === 'infos' && (
+          <Card className="md:col-span-2 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display font-bold text-lg text-ink">Détails du compte</h3>
+              {!isEditingProfil ? (
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={() => {
+                    const mots = user?.nom_complet ? user.nom_complet.split(' ') : [];
+                    setFormProfil({
+                      prenom: mots[0] || '',
+                      nom: mots.slice(1).join(' ') || '',
+                      telephone: user?.profil_demandeur?.contact || '',
+                      service: user?.service || '',
+                    });
+                    setIsEditingProfil(true);
+                  }}
+                >
+                  Modifier le profil
+                </Button>
+              ) : null}
+            </div>
+
+            {!isEditingProfil ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                <div>
+                  <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Prénom</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.prenom || user?.nom_complet?.split(' ')[0] || '—'}</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Nom</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.nom || user?.nom_complet?.split(' ')[1] || '—'}</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Téléphone / Contact</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.telephone || user?.profil_demandeur?.contact || '—'}</p>
+                </div>
+                <div>
+                  <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Service / Adresse</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.service || user?.profil_demandeur?.adresse || '—'}</p>
+                </div>
+                {(user?.est_etudiant || user?.profil_demandeur?.est_etudiant) && (
+                  <div className="sm:col-span-2 pt-4 border-t border-border mt-2">
+                    <p className="font-mono text-[11px] text-muted uppercase tracking-wider mb-2">Vérification de la Carte Étudiante</p>
+                    <StatusBadge statut={user?.profil_demandeur?.statut_verification_etudiant || user?.statut_verification_etudiant || 'EN_ATTENTE'} />
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-mono text-xs text-muted uppercase">Prénom</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.prenom || user?.nom_complet?.split(' ')[0] || '—'}</p>
-            </div>
-            <div>
-              <p className="font-mono text-xs text-muted uppercase">Nom</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.nom || user?.nom_complet?.split(' ')[1] || '—'}</p>
-            </div>
-            <div>
-              <p className="font-mono text-xs text-muted uppercase">Téléphone</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.profil_demandeur?.contact || user?.telephone || '—'}</p>
-            </div>
-            <div>
-              <p className="font-mono text-xs text-muted uppercase">Adresse physique</p>
-              <p className="font-semibold text-ink mt-0.5">{user?.profil_demandeur?.adresse || user?.service || '—'}</p>
-            </div>
-            <div>
-              <p className="font-mono text-xs text-muted uppercase">Qualité / Statut</p>
-              <p className="font-semibold text-ink mt-0.5">
-                {(user?.est_etudiant ?? user?.profil_demandeur?.est_etudiant) ? '🎓 Étudiant de l\'UIDT' : (user?.role === 'OCCUPANT' ? '🔑 Occupant Titulaire' : '🏢 Personnel / Usager')}
-              </p>
-            </div>
-            {(user?.est_etudiant || user?.profil_demandeur?.est_etudiant) && (
-              <div>
-                <p className="font-mono text-xs text-muted uppercase">Vérification Carte Étudiante</p>
-                <StatusBadge statut={user?.profil_demandeur?.statut_verification_etudiant || user?.statut_verification_etudiant || 'EN_ATTENTE'} className="mt-1" />
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Sécurité et Mot de Passe */}
-        <Card className="flex flex-col justify-between">
-          <div>
-            <p className="font-display font-semibold text-lg mb-2">Sécurité du compte</p>
-            <p className="text-xs text-muted mb-4">
-              Gérez votre mot de passe et vos identifiants d'accès au portail.
-            </p>
-
-            {!isEditingPass ? (
-              <div className="space-y-3">
-                <div className="p-3 bg-paper2 border border-ink/10 text-xs font-mono text-muted" style={{ borderRadius: 'var(--radius)' }}>
-                  Dernière modification : <span className="text-ink font-semibold">Récemment</span>
-                </div>
-                <Button variant="secondary" className="w-full text-xs" onClick={() => setIsEditingPass(true)}>
-                  🔒 Modifier le mot de passe
-                </Button>
-              </div>
             ) : (
-              <form onSubmit={handlePasswordChange} className="space-y-3">
-                <Field label="Ancien mot de passe *">
-                  <Input
-                    type="password"
-                    value={oldPass}
-                    onChange={(e) => setOldPass(e.target.value)}
-                    required
-                  />
-                </Field>
-                <Field label="Nouveau mot de passe *">
-                  <Input
-                    type="password"
-                    value={newPass}
-                    onChange={(e) => setNewPass(e.target.value)}
-                    placeholder="Min 8 caractères"
-                    required
-                  />
-                </Field>
-                <Field label="Confirmer mot de passe *">
-                  <Input
-                    type="password"
-                    value={confirmPass}
-                    onChange={(e) => setConfirmPass(e.target.value)}
-                    required
-                  />
-                </Field>
-
-                <div className="flex gap-2 pt-1">
-                  <Button variant="ghost" size="sm" type="button" onClick={() => setIsEditingPass(false)}>
-                    Annuler
-                  </Button>
-                  <Button variant="primary" size="sm" type="submit" disabled={loading}>
-                    {loading ? 'Mise à jour…' : 'Enregistrer'}
+              <form onSubmit={handleProfilSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Prénom">
+                    <Input value={formProfil.prenom} onChange={(e) => setFormProfil(p => ({...p, prenom: e.target.value}))} />
+                  </Field>
+                  <Field label="Nom">
+                    <Input value={formProfil.nom} onChange={(e) => setFormProfil(p => ({...p, nom: e.target.value}))} />
+                  </Field>
+                  <Field label="Téléphone">
+                    <Input value={formProfil.telephone} onChange={(e) => setFormProfil(p => ({...p, telephone: e.target.value}))} />
+                  </Field>
+                  <Field label="Service ou Adresse">
+                    <Input value={formProfil.service} onChange={(e) => setFormProfil(p => ({...p, service: e.target.value}))} />
+                  </Field>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button variant="ghost" onClick={() => setIsEditingProfil(false)} type="button">Annuler</Button>
+                  <Button variant="primary" type="submit" disabled={loadingProfil}>
+                    {loadingProfil ? 'Enregistrement…' : 'Sauvegarder les modifications'}
                   </Button>
                 </div>
               </form>
             )}
-          </div>
+          </Card>
+        )}
 
-          <div className="mt-6 pt-4 border-t border-ink/10 text-[11px] font-mono text-muted">
-            Identifiant SyLOC-T : <span className="text-ink font-bold">{user?.id || 'USR-001'}</span>
-          </div>
-        </Card>
+        {/* ── Onglet Sécurité ── */}
+        {activeTab === 'security' && (
+          <Card className="md:col-span-2 shadow-sm">
+            <h3 className="font-display font-bold text-lg text-ink mb-2">Changer le mot de passe</h3>
+            <p className="text-sm text-muted mb-6">
+              Assurez-vous d'utiliser un mot de passe fort et unique pour protéger votre compte.
+            </p>
+
+            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              <Field label="Mot de passe actuel *">
+                <Input type="password" value={oldPass} onChange={(e) => setOldPass(e.target.value)} required />
+              </Field>
+              <Field label="Nouveau mot de passe *">
+                <Input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} placeholder="Minimum 8 caractères" required />
+              </Field>
+              <Field label="Confirmer le nouveau mot de passe *">
+                <Input type="password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} required />
+              </Field>
+
+              <div className="pt-2">
+                <Button variant="primary" type="submit" disabled={loadingPass}>
+                  {loadingPass ? 'Mise à jour…' : 'Mettre à jour le mot de passe'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
       </div>
     </PageWrapper>
   );
 }
+
+

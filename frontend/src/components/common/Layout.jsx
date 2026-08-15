@@ -9,19 +9,20 @@ import TopHeader from './TopHeader';
  */
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const close = () => setMobileOpen(false);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ── Sidebar fixe (desktop) / drawer (mobile) ── */}
       <div
-        className={`app-shell-sidebar ${mobileOpen ? 'open' : ''}`}
+        className={`app-shell-sidebar ${mobileOpen ? 'open' : ''} ${desktopCollapsed ? 'collapsed' : ''}`}
         style={{
-          position: 'fixed', top: 0, bottom: 0, left: 0, width: 258, zIndex: 110,
-          transition: 'transform .25s cubic-bezier(.16,1,.3,1)',
+          position: 'fixed', top: 0, bottom: 0, left: 0, width: desktopCollapsed ? 76 : 258, zIndex: 110,
+          transition: 'transform .25s cubic-bezier(.16,1,.3,1), width .2s ease-in-out',
         }}
       >
-        <Sidebar onCloseMobile={close} />
+        <Sidebar onCloseMobile={close} collapsed={desktopCollapsed} onToggleCollapse={() => setDesktopCollapsed(c => !c)} />
       </div>
 
       {/* ── Voile mobile ── */}
@@ -34,7 +35,7 @@ export default function Layout() {
       )}
 
       {/* ── Zone principale ── */}
-      <div className="app-shell-main" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className={`app-shell-main ${desktopCollapsed ? 'collapsed' : ''}`} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <TopHeader onToggleMobileSidebar={() => setMobileOpen((o) => !o)} />
         <main id="main" style={{ flex: 1, minWidth: 0, padding: 'clamp(14px,2.2vw,24px)' }}>
           <Outlet />
@@ -55,7 +56,8 @@ export default function Layout() {
 
       <style>{`
         @media (min-width: 1024px) {
-          .app-shell-main { margin-left: 258px; }
+          .app-shell-main { margin-left: 258px; transition: margin-left .2s ease-in-out; }
+          .app-shell-main.collapsed { margin-left: 76px; }
           .app-shell-overlay { display: none !important; }
         }
         @media (max-width: 1023px) {
@@ -66,3 +68,4 @@ export default function Layout() {
     </div>
   );
 }
+

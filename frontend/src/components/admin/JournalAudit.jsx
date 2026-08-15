@@ -1,3 +1,5 @@
+﻿import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import { useCallback, useEffect, useState } from 'react';
 import { PageWrapper, SectionHeader, Card, Table, EmptyState, Button, Field, Input } from '../common/ui';
 import { getJournalAudit } from '../../api/audit';
@@ -5,12 +7,12 @@ import { messageErreur } from '../../api/utils';
 import { exportToCSV, exportToPDF } from '../../utils/exportUtils';
 
 const ACTION_STYLES = {
-  CONNEXION:            { label: '🔑 Connexion',              bg: 'bg-info-soft text-info' },
-  CHANGEMENT_ROLE:      { label: '🔄 Changement de rôle',     bg: 'bg-amber-pale text-amber-deep' },
-  DECISION_ATTRIBUTION: { label: '✅ Décision attribution',   bg: 'bg-ok-soft text-ok' },
+  CONNEXION:            { label: 'Connexion',              bg: 'bg-info-soft text-info' },
+  CHANGEMENT_ROLE:      { label: 'Changement de rôle',     bg: 'bg-amber-pale text-amber-deep' },
+  DECISION_ATTRIBUTION: { label: 'Décision attribution',   bg: 'bg-ok-soft text-ok' },
   SANCTION_PRONONCEE:   { label: '⚖ Sanction prononcée',      bg: 'bg-stamp-pale text-stamp' },
-  COMPTE_DESACTIVE:     { label: '🔒 Compte désactivé',        bg: 'bg-danger-soft text-danger' },
-  ARCHIVAGE:            { label: '📦 Archivage',              bg: 'bg-soft text-muted' },
+  COMPTE_DESACTIVE:     { label: 'Compte désactivé',        bg: 'bg-danger-soft text-danger' },
+  ARCHIVAGE:            { label: 'Archivage',              bg: 'bg-soft text-muted' },
 };
 
 export default function JournalAudit() {
@@ -125,10 +127,10 @@ export default function JournalAudit() {
         />
         <div className="flex gap-2">
           <Button variant="amber" size="sm" onClick={handleExportCSV} disabled={!entrees.length}>
-            📊 Exporter en Excel (.CSV)
+            Exporter en Excel (.CSV)
           </Button>
           <Button variant="stamp" size="sm" onClick={handleExportPDF} disabled={!entrees.length}>
-            📄 Exporter en PDF
+            Exporter en PDF
           </Button>
         </div>
       </div>
@@ -177,7 +179,7 @@ export default function JournalAudit() {
 
       <div className="mb-4 p-3 bg-paper2 border border-ink/10 text-sm text-muted flex items-center gap-2"
         style={{ borderRadius: 'var(--radius)' }}>
-        <span>🔒</span>
+        <span><LockOutlinedIcon style={{ fontSize: 16 }} /></span>
         <span>Ce journal d'audit est certifié infalsifiable en lecture seule pour la gouvernance SI.</span>
       </div>
 
@@ -193,7 +195,7 @@ export default function JournalAudit() {
           data={entrees}
           emptyState={
             <EmptyState
-              icon="📋"
+              icon={<AssignmentOutlinedIcon style={{ fontSize: 20 }} />}
               title={chargement ? 'Chargement…' : 'Journal vide'}
               description={
                 chargement
@@ -207,3 +209,4 @@ export default function JournalAudit() {
     </PageWrapper>
   );
 }
+

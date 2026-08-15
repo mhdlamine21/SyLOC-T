@@ -16,8 +16,8 @@ import { useMemo, useState } from 'react';
 import { EmptyState, LoadingState } from './ui';
 
 /* ─── Tonalites ──────────────────────────────────────────────────────── */
-export const TONES = {
-  navy: { fg: 'var(--navy)', soft: 'rgba(23,37,84,.10)' },
+const TONES = {
+  navy: { fg: 'var(--text-navy)', soft: 'rgba(23,37,84,.10)' },
   gold: { fg: 'var(--gold-deep, var(--gold))', soft: 'rgba(201,161,92,.16)' },
   green: { fg: 'var(--green)', soft: 'rgba(22,163,74,.14)' },
   red: { fg: 'var(--red)', soft: 'rgba(220,38,38,.13)' },
@@ -30,28 +30,27 @@ const tone = (t) => TONES[t] || TONES.navy;
 /* ─── PAGE HEADER ────────────────────────────────────────────────────── */
 export function PageHeader({ icon, title, subtitle, actions, breadcrumb }) {
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div style={{ marginBottom: 32 }}>
       {breadcrumb && (
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.8px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
           {breadcrumb}
         </div>
       )}
       <div
+        className="ui-card ui-rise"
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 14, flexWrap: 'wrap',
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 14, padding: '16px 20px', boxShadow: 'var(--shadow)',
+          gap: 14, flexWrap: 'wrap', padding: '22px 26px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
           {icon && (
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(23,37,84,.08)', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--gold-tint)', color: 'var(--gold-deep)', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0, border: '1px solid var(--gold-tint-2)' }}>
               {icon}
             </div>
           )}
           <div style={{ minWidth: 0 }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'var(--navy)', margin: 0, lineHeight: 1.25 }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'var(--text-navy)', margin: 0, lineHeight: 1.25 }}>
               {title}
             </h1>
             {subtitle && <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--muted)' }}>{subtitle}</p>}
@@ -66,11 +65,11 @@ export function PageHeader({ icon, title, subtitle, actions, breadcrumb }) {
 /* ─── SECTION LABEL ──────────────────────────────────────────────────── */
 export function SectionLabel({ icon, children, right }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '22px 0 12px', gap: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '32px 0 16px', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ width: 4, height: 16, borderRadius: 4, background: 'var(--gold)' }} />
         {icon && <span style={{ fontSize: 14 }}>{icon}</span>}
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--navy)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-navy)' }}>
           {children}
         </span>
       </div>
@@ -80,12 +79,14 @@ export function SectionLabel({ icon, children, right }) {
 }
 
 /* ─── GRILLE D'INDICATEURS ───────────────────────────────────────────── */
-export function StatGrid({ cols = 4, children, gap = 14 }) {
+export function StatGrid({ cols = 4, children, gap = 24, style = {} }) {
   return (
     <div
       style={{
         display: 'grid', gap,
-        gridTemplateColumns: `repeat(auto-fit, minmax(${cols >= 5 ? 150 : 210}px, 1fr))`,
+        gridTemplateColumns: `repeat(auto-fit, minmax(${cols >= 5 ? 165 : 220}px, 1fr))`,
+        marginBottom: 32,
+        ...style,
       }}
     >
       {children}
@@ -98,9 +99,9 @@ export function KpiCard({ icon, label, value, sub, trend, tone: t = 'navy', onCl
   return (
     <div
       onClick={onClick}
+      className="ui-card ui-lift ui-kpi ui-rise"
       style={{
-        background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--shadow)',
+        padding: '22px 24px',
         cursor: onClick ? 'pointer' : 'default', minWidth: 0,
       }}
     >
@@ -115,7 +116,7 @@ export function KpiCard({ icon, label, value, sub, trend, tone: t = 'navy', onCl
           {sub && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '5px 0 0' }}>{sub}</p>}
         </div>
         {icon && (
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>
+          <div className="ui-kpi-icon" style={{ width: 40, height: 40, borderRadius: 12, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>
             {icon}
           </div>
         )}
@@ -130,8 +131,8 @@ export function KpiCard({ icon, label, value, sub, trend, tone: t = 'navy', onCl
 export function MiniStat({ icon, label, value, tone: t = 'slate' }) {
   const c = tone(t);
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-      <span style={{ width: 26, height: 26, borderRadius: 8, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 13, flexShrink: 0 }}>{icon}</span>
+    <div className="ui-card ui-lift ui-kpi" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+      <span className="ui-kpi-icon" style={{ width: 32, height: 32, borderRadius: 10, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 14, flexShrink: 0 }}>{icon}</span>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8.8, letterSpacing: '.7px', textTransform: 'uppercase', color: 'var(--muted)', fontWeight: 800 }}>{label}</div>
         <div style={{ fontSize: 17, fontWeight: 800, color: c.fg, lineHeight: 1.2 }}>{value}</div>
@@ -144,24 +145,22 @@ export function MiniStat({ icon, label, value, tone: t = 'slate' }) {
 export function Panel({ icon, title, subtitle, action, children, padded = true, style = {} }) {
   return (
     <section
-      style={{
-        background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 14, boxShadow: 'var(--shadow)', overflow: 'hidden', minWidth: 0, ...style,
-      }}
+      className="ui-card ui-lift"
+      style={{ overflow: 'hidden', minWidth: 0, ...style }}
     >
       {(title || action) && (
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <header className="ui-panel-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '18px 24px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
-            {icon && <span style={{ fontSize: 15 }}>{icon}</span>}
+            {icon && <span style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--gold-tint)', color: 'var(--gold-deep)', display: 'grid', placeItems: 'center', fontSize: 15, flexShrink: 0 }}>{icon}</span>}
             <div style={{ minWidth: 0 }}>
-              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, color: 'var(--navy)' }}>{title}</h3>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, color: 'var(--text-navy)' }}>{title}</h3>
               {subtitle && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--muted)' }}>{subtitle}</p>}
             </div>
           </div>
           {action}
         </header>
       )}
-      <div style={{ padding: padded ? 18 : 0 }}>{children}</div>
+      <div style={{ padding: padded ? 24 : 0 }}>{children}</div>
     </section>
   );
 }
@@ -172,8 +171,8 @@ export function FilterBar({ children, onReset }) {
     <div
       style={{
         background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: 14, marginBottom: 16,
-        display: 'grid', gap: 10,
+        borderRadius: 16, padding: 20, marginBottom: 32, boxShadow: 'var(--shadow-sm)',
+        display: 'grid', gap: 14,
         gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
         alignItems: 'end',
       }}
@@ -184,7 +183,7 @@ export function FilterBar({ children, onReset }) {
           type="button"
           onClick={onReset}
           title="Reinitialiser les filtres"
-          style={{ justifySelf: 'start', height: 42, padding: '0 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--navy)', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}
+          style={{ justifySelf: 'start', height: 42, padding: '0 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-navy)', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}
         >
           ↺ Reinitialiser
         </button>
@@ -236,7 +235,7 @@ export function DataTable({
   rows,
   loading,
   empty,
-  emptyIcon = '📭',
+  emptyIcon = null,
   rowKey = (r, i) => r?.id ?? i,
   onRowClick,
   pageSize = 0,
@@ -253,7 +252,7 @@ export function DataTable({
   if (!total) return <EmptyState icon={emptyIcon} title={empty || 'Aucune donnee'} />;
 
   const pages = pageSize ? Math.ceil(total / pageSize) : 1;
-  const pad = dense ? '9px 14px' : '12px 16px';
+  const pad = dense ? '12px 16px' : '16px 20px';
 
   return (
     <>
@@ -321,7 +320,7 @@ export function DataTable({
 
 const pagerStyle = (disabled) => ({
   padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)',
-  background: 'var(--surface)', color: 'var(--navy)', fontSize: 12, fontWeight: 700,
+  background: 'var(--surface)', color: 'var(--text-navy)', fontSize: 12, fontWeight: 700,
   cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
 });
 
@@ -335,7 +334,7 @@ export function IdentityCell({ title, subtitle, initials, tone: t = 'navy' }) {
         {ini}
       </span>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 12.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+        <div style={{ fontWeight: 700, color: 'var(--text-navy)', fontSize: 12.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
         {subtitle && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{subtitle}</div>}
       </div>
     </div>
@@ -356,18 +355,22 @@ export function Pill({ children, tone: t = 'slate' }) {
 export function RankList({ items, empty = 'Aucune donnee' }) {
   if (!items?.length) return <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0 }}>{empty}</p>;
   return (
-    <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+    <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
       {items.map((it, i) => (
-        <li key={it.key ?? i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface-2)' }}>
-          <span style={{ width: 22, height: 22, borderRadius: 7, background: i < 3 ? 'var(--gold)' : 'rgba(100,116,139,.18)', color: i < 3 ? '#fff' : 'var(--slate)', display: 'grid', placeItems: 'center', fontSize: 10.5, fontWeight: 900, flexShrink: 0 }}>
+        <li key={it.key ?? i} className="ui-row" style={{
+          display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+          border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface-2)',
+          boxShadow: 'var(--shadow-sm)',
+        }}>
+          <span style={{ width: 28, height: 28, borderRadius: 8, background: i < 3 ? 'var(--gold)' : 'var(--slate-soft)', color: i < 3 ? 'var(--text-on-gold)' : 'var(--slate)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>
             {i + 1}
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
             {it.subtitle && <div style={{ fontSize: 10.5, color: 'var(--muted)' }}>{it.subtitle}</div>}
           </div>
           {it.value != null && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 800, color: 'var(--navy)', whiteSpace: 'nowrap' }}>{it.value}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 800, color: 'var(--text-navy)', whiteSpace: 'nowrap' }}>{it.value}</span>
           )}
         </li>
       ))}
@@ -380,8 +383,8 @@ export function ProgressRow({ label, value, total, tone: t = 'navy', suffix = ''
   const c = tone(t);
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, gap: 10 }}>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 8, gap: 10 }}>
         <span style={{ color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: c.fg, whiteSpace: 'nowrap' }}>{pct}%{suffix}</span>
       </div>
@@ -395,7 +398,7 @@ export function ProgressRow({ label, value, total, tone: t = 'navy', suffix = ''
 /* ─── ONGLETS ────────────────────────────────────────────────────────── */
 export function Tabs({ tabs, active, onChange }) {
   return (
-    <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--border)', marginBottom: 18, overflowX: 'auto', paddingBottom: 1 }}>
+    <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', marginBottom: 26, overflowX: 'auto', paddingBottom: 1 }}>
       {tabs.map((t) => {
         const on = t.key === active;
         return (
@@ -406,7 +409,7 @@ export function Tabs({ tabs, active, onChange }) {
             style={{
               padding: '10px 15px', border: 'none', background: 'transparent',
               borderBottom: `2px solid ${on ? 'var(--gold)' : 'transparent'}`,
-              color: on ? 'var(--navy)' : 'var(--muted)',
+              color: on ? 'var(--text-navy)' : 'var(--muted)',
               fontWeight: on ? 800 : 600, fontSize: 12.8, cursor: 'pointer',
               whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 7,
             }}
@@ -414,7 +417,7 @@ export function Tabs({ tabs, active, onChange }) {
             {t.icon && <span>{t.icon}</span>}
             {t.label}
             {t.count != null && (
-              <span style={{ background: on ? 'var(--navy)' : 'var(--surface-2)', color: on ? '#fff' : 'var(--muted)', borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 800 }}>
+              <span style={{ background: on ? 'var(--navy)' : 'var(--surface-2)', color: on ? 'var(--text-on-navy)' : 'var(--muted)', borderRadius: 20, padding: '1px 7px', fontSize: 10, fontWeight: 800 }}>
                 {t.count}
               </span>
             )}
@@ -428,7 +431,7 @@ export function Tabs({ tabs, active, onChange }) {
 /* ─── GRILLE DE CARTES ───────────────────────────────────────────────── */
 export function CardGrid({ children, min = 240 }) {
   return (
-    <div style={{ display: 'grid', gap: 14, gridTemplateColumns: `repeat(auto-fill, minmax(${min}px, 1fr))` }}>
+    <div style={{ display: 'grid', gap: 28, gridTemplateColumns: `repeat(auto-fill, minmax(${min}px, 1fr))` }}>
       {children}
     </div>
   );
@@ -437,7 +440,7 @@ export function CardGrid({ children, min = 240 }) {
 /* ─── DISPOSITION 2 COLONNES (contenu large + panneau) ───────────────── */
 export function SplitLayout({ children, ratio = '1.6fr 1fr' }) {
   return (
-    <div className="split-layout" style={{ display: 'grid', gap: 14, gridTemplateColumns: ratio, alignItems: 'start' }}>
+    <div className="split-layout" style={{ display: 'grid', gap: 32, gridTemplateColumns: ratio, alignItems: 'start' }}>
       {children}
       <style>{`@media (max-width: 1023px){ .split-layout { grid-template-columns: 1fr !important; } }`}</style>
     </div>
@@ -448,19 +451,19 @@ export function SplitLayout({ children, ratio = '1.6fr 1fr' }) {
 export function WelcomeBanner({ title, subtitle, meta, action }) {
   return (
     <div
+      className="ui-welcome ui-rise"
       style={{
-        background: 'linear-gradient(120deg, var(--navy) 0%, var(--navy-2, #0f1b3d) 100%)',
-        color: '#fff', borderRadius: 16, padding: '20px 22px', marginBottom: 18,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
-        boxShadow: '0 14px 34px rgba(15,27,61,.22)',
+        padding: '30px 32px', marginBottom: 32,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, flexWrap: 'wrap',
       }}
     >
-      <div style={{ minWidth: 0 }}>
-        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>{title}</h2>
-        {subtitle && <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(255,255,255,.78)' }}>{subtitle}</p>}
+      <div style={{ minWidth: 0, position: 'relative' }}>
+        <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 23, fontWeight: 800, letterSpacing: '-.02em' }}>{title}</h2>
+        {subtitle && <p style={{ margin: '5px 0 0', fontSize: 13, color: 'rgba(250,241,225,.82)', maxWidth: 620 }}>{subtitle}</p>}
         {meta && <p style={{ margin: '8px 0 0', fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.7px', textTransform: 'uppercase', color: 'var(--gold)' }}>{meta}</p>}
       </div>
-      {action}
+      <div style={{ position: 'relative' }}>{action}</div>
     </div>
   );
 }
+

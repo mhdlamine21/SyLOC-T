@@ -247,7 +247,7 @@ export default function GestionComptes() {
         <div className="flex items-center gap-1.5">
           <p className="font-semibold text-sm">{v}</p>
           {row.est_etudiant && (
-            <span className="bg-teal text-white text-[10px] font-mono font-bold px-1.5 py-0.2 rounded" title="Étudiant">
+            <span className="bg-teal text-on-navy text-[10px] font-mono font-bold px-1.5 py-0.2 rounded" title="Étudiant">
               🎓 Étudiant
             </span>
           )}

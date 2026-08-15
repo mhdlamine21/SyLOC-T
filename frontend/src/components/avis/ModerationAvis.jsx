@@ -1,3 +1,10 @@
+﻿import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import StarOutlineOutlinedIcon from '@mui/icons-material/StarOutlineOutlined';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getAvis, modererAvis } from '../../api/avis';
@@ -78,7 +85,7 @@ export default function ModerationAvis() {
         <IdentityCell
           title={r.local_reference || 'Local'}
           subtitle={`Avis #${String(r.id).slice(0, 8).toUpperCase()}`}
-          initials="⭐"
+          initials="AV"
           tone="gold"
         />
       ),
@@ -104,7 +111,7 @@ export default function ModerationAvis() {
         <RowActions>
           <IconButton title="Publier" tone="green" disabled={r.statut === 'PUBLIE'} onClick={() => moderer(r.id, 'PUBLIE')}>✓</IconButton>
           <IconButton title="Signaler" tone="gold" disabled={r.statut === 'SIGNALE'} onClick={() => moderer(r.id, 'SIGNALE')}>⚑</IconButton>
-          <IconButton title="Masquer" tone="red" disabled={r.statut === 'MASQUE'} onClick={() => moderer(r.id, 'MASQUE')}>🚫</IconButton>
+          <IconButton title="Masquer" tone="red" disabled={r.statut === 'MASQUE'} onClick={() => moderer(r.id, 'MASQUE')}><BlockOutlinedIcon style={{ fontSize: 17 }} /></IconButton>
         </RowActions>
       ),
     },
@@ -113,21 +120,21 @@ export default function ModerationAvis() {
   return (
     <div>
       <PageHeader
-        icon="🛡️"
+        icon={<ShieldOutlinedIcon style={{ fontSize: 20 }} />}
         title="Moderation des avis cantines"
         subtitle="Validation et filtrage des commentaires deposes par la communaute etudiante."
         actions={<Button variant="secondary" onClick={charger}>↻ Actualiser</Button>}
       />
 
       <StatGrid cols={4}>
-        <KpiCard icon="💬" label="Avis collectes" value={stats.total} sub={`${stats.publies} publies`} tone="navy" />
-        <KpiCard icon="⭐" label="Note moyenne" value={`${stats.moyenne}/5`} sub="Satisfaction globale" tone="gold" />
-        <KpiCard icon="⚑" label="Avis signales" value={stats.signales} sub="A examiner" tone="red" />
-        <KpiCard icon="🚫" label="Avis masques" value={stats.masques} sub="Retires de la vitrine" tone="slate" />
+        <KpiCard icon={<ChatBubbleOutlineOutlinedIcon style={{ fontSize: 20 }} />} label="Avis collectes" value={stats.total} sub={`${stats.publies} publies`} tone="navy" />
+        <KpiCard icon={<StarOutlineOutlinedIcon style={{ fontSize: 20 }} />} label="Note moyenne" value={`${stats.moyenne}/5`} sub="Satisfaction globale" tone="gold" />
+        <KpiCard icon={<FlagOutlinedIcon style={{ fontSize: 20 }} />} label="Avis signales" value={stats.signales} sub="A examiner" tone="red" />
+        <KpiCard icon={<BlockOutlinedIcon style={{ fontSize: 20 }} />} label="Avis masques" value={stats.masques} sub="Retires de la vitrine" tone="slate" />
       </StatGrid>
 
       <SplitLayout ratio="1.8fr 1fr">
-        <Panel icon="📋" title="File de moderation" padded={false}>
+        <Panel icon={<AssignmentOutlinedIcon style={{ fontSize: 20 }} />} title="File de moderation" padded={false}>
           <div style={{ padding: '14px 16px 0' }}>
             <FilterBar onReset={() => { setQ(''); setStatut(''); setNote(''); }}>
               <FilterField label="Recherche">
@@ -152,7 +159,7 @@ export default function ModerationAvis() {
           <DataTable columns={columns} rows={rows} loading={loading} empty="Aucun avis a moderer." pageSize={10} dense />
         </Panel>
 
-        <Panel icon="📊" title="Repartition des notes">
+        <Panel icon={<BarChartOutlinedIcon style={{ fontSize: 20 }} />} title="Repartition des notes">
           {stats.repartition.map((r) => (
             <ProgressRow
               key={r.n}
@@ -167,3 +174,4 @@ export default function ModerationAvis() {
     </div>
   );
 }
+

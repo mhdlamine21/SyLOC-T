@@ -39,3 +39,32 @@ class Annonce(BaseModel):
 
     def __str__(self):
         return self.titre
+
+
+class ParametreSysteme(BaseModel):
+    """Parametres systeme editables par l'Administrateur SI (Phase 2).
+
+    Sert aussi de source de verite pour les contenus editoriaux de la
+    vitrine publique (etapes du parcours, FAQ, contacts) : le front ne
+    contient plus de texte en dur, il lit `/api/public/vitrine/`.
+    """
+
+    CATEGORIES = [
+        ('GENERAL', 'General'),
+        ('VITRINE', 'Vitrine publique'),
+        ('WORKFLOW', 'Workflow & delais'),
+        ('NOTIFICATION', 'Notifications'),
+    ]
+
+    cle = models.CharField(max_length=100, unique=True)
+    libelle = models.CharField(max_length=200)
+    valeur = models.JSONField(default=dict, blank=True)
+    categorie = models.CharField(max_length=30, choices=CATEGORIES, default='GENERAL')
+    description = models.TextField(blank=True)
+    est_public = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['categorie', 'cle']
+
+    def __str__(self):
+        return f"{self.categorie}:{self.cle}"

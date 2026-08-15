@@ -29,6 +29,14 @@ def role_effectif(user):
 class DemandeurSerializer(serializers.ModelSerializer):
     nom_complet = serializers.CharField(source='utilisateur.nom_complet', read_only=True)
     email = serializers.EmailField(source='utilisateur.email', read_only=True)
+    username = serializers.CharField(source='utilisateur.username', read_only=True)
+    compte_cree_le = serializers.DateTimeField(source='utilisateur.date_joined', read_only=True)
+    compte_actif = serializers.BooleanField(source='utilisateur.is_active', read_only=True)
+    valide_par_nom = serializers.SerializerMethodField()
+    anciennete_jours = serializers.SerializerMethodField()
+    nb_demandes = serializers.SerializerMethodField()
+    nb_contrats_actifs = serializers.SerializerMethodField()
+    est_etudiant_verifie = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Demandeur
@@ -38,6 +46,32 @@ class DemandeurSerializer(serializers.ModelSerializer):
             'statut_verification_etudiant', 'carte_etudiant_date_validation',
             'valide_par', 'score_fidelite',
         )
+
+    def get_valide_par_nom(self, obj):
+        if not obj.valide_par:
+            return None
+        return obj.valide_par.nom_complet or obj.valide_par.username
+
+    def get_anciennete_jours(self, obj):
+        from django.utils import timezone
+        ref = obj.utilisateur.date_joined
+        if not ref:
+            return None
+        return (timezone.now() - ref).days
+
+    def get_nb_demandes(self, obj):
+        try:
+            from demandes.models import Demande
+            return Demande.objects.filter(demandeur=obj).count()
+        except Exception:
+            return 0
+
+    def get_nb_contrats_actifs(self, obj):
+        try:
+            from contrats.models import Contrat
+            return Contrat.objects.filter(demandeur=obj, est_actif=True).count()
+        except Exception:
+            return 0
 
 
 class UtilisateurSerializer(serializers.ModelSerializer):
@@ -81,17 +115,27 @@ class MeSerializer(serializers.ModelSerializer):
     """Profil de l'utilisateur connecte (GET/PATCH /comptes/me/)."""
     role_effectif = serializers.SerializerMethodField()
     profil_demandeur = serializers.SerializerMethodField()
+    est_membre_commission = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
         fields = (
             'id', 'username', 'email', 'nom_complet', 'role', 'role_effectif',
-            'is_active', 'date_joined', 'profil_demandeur',
+            'is_active', 'date_joined', 'profil_demandeur', 'est_membre_commission',
         )
         read_only_fields = ('id', 'username', 'role', 'is_active', 'date_joined')
 
     def get_role_effectif(self, obj):
         return role_effectif(obj)
+
+    def get_est_membre_commission(self, obj):
+        try:
+            from demandes.models import MembreCommission
+            return MembreCommission.objects.filter(
+                utilisateur=obj, actif=True, commission__active=True
+            ).exists()
+        except Exception:
+            return False
 
     def get_profil_demandeur(self, obj):
         profil = getattr(obj, 'profil_demandeur', None)

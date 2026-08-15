@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+﻿import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function PrivateRoute() {
@@ -6,7 +6,7 @@ export default function PrivateRoute() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--navy)', fontFamily: 'var(--font-body)' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--text-navy)', fontFamily: 'var(--font-body)' }}>
         <div>Chargement...</div>
       </div>
     );
@@ -15,3 +15,4 @@ export default function PrivateRoute() {
   // Rediriger vers l'accueil (Home.jsx) et non une page de connexion isolée
   return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 }
+

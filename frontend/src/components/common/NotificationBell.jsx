@@ -1,4 +1,6 @@
+import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   getNotifications,
@@ -36,7 +38,8 @@ function formaterDate(valeur) {
 const INTERVALLE_RAFRAICHISSEMENT = 60_000;
 
 export default function NotificationBell({ position = 'header' }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [chargement, setChargement] = useState(false);
@@ -60,6 +63,7 @@ export default function NotificationBell({ position = 'header' }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     charger();
     if (!isAuthenticated) return undefined;
     const timer = setInterval(charger, INTERVALLE_RAFRAICHISSEMENT);
@@ -69,18 +73,38 @@ export default function NotificationBell({ position = 'header' }) {
   const unreadCount = notifications.filter((n) => !n.est_lue).length;
 
   const toggleRead = async (notif) => {
-    if (notif.est_lue) return;
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, est_lue: true } : n)),
-    );
-    try {
-      await marquerNotificationLue(notif.id);
-    } catch (err) {
+    if (!notif.est_lue) {
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notif.id ? { ...n, est_lue: false } : n)),
+        prev.map((n) => (n.id === notif.id ? { ...n, est_lue: true } : n)),
       );
-      toast.error(messageErreur(err, 'Impossible de marquer la notification comme lue.'));
+      try {
+        await marquerNotificationLue(notif.id);
+      } catch (err) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, est_lue: false } : n)),
+        );
+        toast.error(messageErreur(err, 'Impossible de marquer la notification comme lue.'));
+      }
     }
+
+    // Redirection contextuelle vers la page appropriée
+    const texte = (notif.contenu || '').toLowerCase();
+    if (texte.includes('dossier') || texte.includes('candidature') || texte.includes('pièce') || texte.includes('complément')) {
+      if (role === 'USAGER') {
+        navigate('/suivi');
+      } else if (role === 'BUREAU_COURRIER') {
+        navigate('/courrier');
+      } else if (role === 'AGENT_DCUVE' || role === 'DIRECTEUR_DCUVE') {
+        navigate('/instruction');
+      }
+    } else if (texte.includes('contrat') || texte.includes('redevance') || texte.includes('loyer')) {
+      if (role === 'OCCUPANT') {
+        navigate('/espace-occupant');
+      } else if (role === 'SERVICE_COMPTABLE') {
+        navigate('/caisse');
+      }
+    }
+    setShowDropdown(false);
   };
 
   const clearAll = async () => {
@@ -108,7 +132,7 @@ export default function NotificationBell({ position = 'header' }) {
         title="Notifications In-App & Alertes Email"
         aria-label="Notifications"
       >
-        <span className="text-lg">🔔</span>
+        <NotificationsNoneRoundedIcon style={{ fontSize: 20 }} />
 
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-stamp text-paper text-[10px] font-mono font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-pulse">
@@ -190,3 +214,4 @@ export default function NotificationBell({ position = 'header' }) {
     </div>
   );
 }
+

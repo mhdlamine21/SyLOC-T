@@ -1,11 +1,19 @@
-﻿/**
- * SyLOC-T â€” BibliothÃ¨que de composants UI rÃ©utilisables
- * ThÃ¨me Navy / Or (Objetif/index.html reference)
+/**
+ * SyLOC-T — Bibliothèque de composants UI réutilisables
+ * Thème Navy / Or (Objetif/index.html reference)
  */
 
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import { STATUT_STYLES } from '../../utils/statutStyles';
 
-// â”€â”€â”€ BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── BUTTON ────────────────────────────────────────────────────────────────────
 export function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
   const base = 'inline-flex items-center justify-center gap-2 font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -17,18 +25,18 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
 
   // All button variants use CSS vars for consistency with dark mode
   const variantStyles = {
-    primary:   { background: 'var(--navy)',    color: '#fff', border: 'none', borderRadius: 10, boxShadow: '0 6px 14px rgba(23,37,84,.22)', cursor: 'pointer' },
-    secondary: { background: '#fff',           color: 'var(--navy)', border: '1px solid #cbd5e1', borderRadius: 10, cursor: 'pointer' },
-    amber:     { background: 'var(--gold)',    color: '#fff', border: 'none', borderRadius: 10, boxShadow: '0 4px 10px rgba(201,161,92,.25)', cursor: 'pointer' },
-    stamp:     { background: 'var(--red)',     color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer' },
-    ghost:     { background: 'transparent',   color: 'var(--navy)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer' },
-    danger:    { background: 'var(--red)',     color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer' },
-    text:      { background: 'transparent',   color: 'var(--navy)', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' },
+    primary:   { background: 'var(--navy)',      color: 'var(--text-on-navy)', border: '1px solid transparent', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer' },
+    secondary: { background: 'var(--surface)',   color: 'var(--text-navy)', border: '1px solid var(--border)', borderRadius: 12, cursor: 'pointer' },
+    amber:     { background: 'var(--gold)',      color: 'var(--text-on-gold)', border: '1px solid transparent', borderRadius: 12, boxShadow: 'var(--shadow-sm)', cursor: 'pointer' },
+    stamp:     { background: 'var(--red)',       color: 'var(--text-on-navy)', border: 'none', borderRadius: 12, cursor: 'pointer' },
+    ghost:     { background: 'transparent',      color: 'var(--text-navy)', border: '1px solid var(--border)', borderRadius: 12, cursor: 'pointer' },
+    danger:    { background: 'var(--red)',       color: 'var(--text-on-navy)', border: 'none', borderRadius: 12, cursor: 'pointer' },
+    text:      { background: 'transparent',      color: 'var(--text-navy)', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' },
   };
 
   return (
     <button
-      className={`${base} ${sizes[size]} ${className}`}
+      className={`${base} ui-btn ${sizes[size]} ${className}`}
       style={variantStyles[variant] || variantStyles.primary}
       {...props}
     >
@@ -37,51 +45,46 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   );
 }
 
-// â”€â”€â”€ CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CARD ──────────────────────────────────────────────────────────────────────
 export function Card({ className = '', children, onClick, style = {} }) {
   return (
     <div
       onClick={onClick}
-      className={`${onClick ? 'cursor-pointer' : ''} ${className}`}
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 14,
-        padding: 20,
-        boxShadow: 'var(--shadow)',
-        transition: 'transform 0.15s, box-shadow 0.15s',
-        ...style,
-      }}
-      onMouseEnter={onClick ? (e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(23,37,84,.12)'; } : undefined}
-      onMouseLeave={onClick ? (e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = 'var(--shadow)'; } : undefined}
+      className={`ui-card ui-lift ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{ padding: 22, ...style }}
     >
       {children}
     </div>
   );
 }
 
-// â”€â”€â”€ FIELD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── FIELD ─────────────────────────────────────────────────────────────────────
 export function Field({ label, hint, error, required, children, className = '' }) {
   return (
     <div className={`mb-4 ${className}`}>
-      {label && (
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--navy)', marginBottom: 7, fontFamily: 'var(--font-body)' }}>
-          {label}
-          {required && <span style={{ color: 'var(--red)', marginLeft: 4 }}>*</span>}
-          {hint && <span style={{ fontWeight: 400, color: 'var(--muted)', fontSize: 11, marginLeft: 8 }}>{hint}</span>}
+      {label ? (
+        // Le libelle enveloppe le champ : association accessible sans id explicite.
+        <label style={{ display: 'block', fontFamily: 'var(--font-body)' }}>
+          <span style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--text-navy)', marginBottom: 7 }}>
+            {label}
+            {required && <span style={{ color: 'var(--red)', marginLeft: 4 }}>*</span>}
+            {hint && <span style={{ fontWeight: 400, color: 'var(--muted)', fontSize: 11, marginLeft: 8 }}>{hint}</span>}
+          </span>
+          {children}
         </label>
+      ) : (
+        children
       )}
-      {children}
       {error && (
         <p style={{ fontSize: 11, color: 'var(--red)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span>âš </span> {error}
+          <WarningAmberOutlinedIcon style={{ fontSize: 14 }} /> {error}
         </p>
       )}
     </div>
   );
 }
 
-// â”€â”€â”€ INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── INPUT ─────────────────────────────────────────────────────────────────────
 export function Input({ className = '', style: extraStyle = {}, ...props }) {
   return (
     <input
@@ -94,7 +97,7 @@ export function Input({ className = '', style: extraStyle = {}, ...props }) {
         transition: 'border-color 0.15s',
         ...extraStyle,
       }}
-      onFocus={(e) => { e.target.style.borderColor = 'var(--navy)'; e.target.style.boxShadow = '0 0 0 3px rgba(23,37,84,.10)'; }}
+      onFocus={(e) => { e.target.style.borderColor = 'var(--gold)'; e.target.style.boxShadow = '0 0 0 3px var(--gold-tint)'; }}
       onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
       {...props}
     />
@@ -114,7 +117,7 @@ export function Textarea({ className = '', style: extraStyle = {}, ...props }) {
         transition: 'border-color 0.15s',
         ...extraStyle,
       }}
-      onFocus={(e) => { e.target.style.borderColor = 'var(--navy)'; }}
+      onFocus={(e) => { e.target.style.borderColor = 'var(--gold)'; }}
       onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
       {...props}
     />
@@ -140,7 +143,7 @@ export function Select({ className = '', style: extraStyle = {}, children, ...pr
   );
 }
 
-// â”€â”€â”€ STATUS BADGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STATUS BADGE ──────────────────────────────────────────────────────────────
 export function StatusBadge({ statut, className = '' }) {
   const style = STATUT_STYLES[statut] ?? { label: statut, bg: 'bg-soft', fg: 'text-muted', dot: 'bg-muted' };
   return (
@@ -154,7 +157,7 @@ export function StatusBadge({ statut, className = '' }) {
   );
 }
 
-// â”€â”€â”€ SECTION HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SECTION HEADER ────────────────────────────────────────────────────────────
 export function SectionHeader({ eyebrow, title, subtitle }) {
   return (
     <div style={{ marginBottom: 24 }}>
@@ -166,7 +169,7 @@ export function SectionHeader({ eyebrow, title, subtitle }) {
           </span>
         </div>
       )}
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', fontWeight: 800, color: 'var(--navy)', margin: '0 0 6px', lineHeight: 1.2 }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', fontWeight: 800, color: 'var(--text-navy)', margin: '0 0 6px', lineHeight: 1.2 }}>
         {title}
       </h1>
       {subtitle && <p style={{ color: 'var(--muted)', fontSize: 14, margin: 0, lineHeight: 1.6 }}>{subtitle}</p>}
@@ -174,7 +177,7 @@ export function SectionHeader({ eyebrow, title, subtitle }) {
   );
 }
 
-// â”€â”€â”€ PAGE WRAPPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PAGE WRAPPER ──────────────────────────────────────────────────────────────
 export function PageWrapper({ children, className = '' }) {
   return (
     <div className={`fade-in ${className}`} style={{ padding: 'clamp(16px,3vw,28px)', maxWidth: 1240, margin: '0 auto' }}>
@@ -183,36 +186,38 @@ export function PageWrapper({ children, className = '' }) {
   );
 }
 
-// â”€â”€â”€ EMPTY STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-export function EmptyState({ icon = 'ðŸ“­', title, description, action }) {
+// ─── EMPTY STATE ───────────────────────────────────────────────────────────────
+export function EmptyState({ icon = '📭', title, description, action }) {
   return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
-      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--navy)', margin: '0 0 8px' }}>{title}</p>
+      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--text-navy)', margin: '0 0 8px' }}>{title}</p>
       {description && <p style={{ fontSize: 14, margin: '0 0 18px' }}>{description}</p>}
       {action}
     </div>
   );
 }
 
-// â”€â”€â”€ LOADING STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-export function LoadingState({ label = 'Chargementâ€¦' }) {
+// ─── LOADING STATE ─────────────────────────────────────────────────────────────
+export function LoadingState({ label = 'Chargement…' }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--muted)', gap: 12 }}>
-      <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--navy)', animation: 'spin .7s linear infinite', display: 'inline-block' }} />
+      <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--gold)', animation: 'spin .7s linear infinite', display: 'inline-block' }} />
       <span style={{ fontSize: 14 }}>{label}</span>
     </div>
   );
 }
 
-// â”€â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import { createPortal } from 'react-dom';
+
+// ─── MODAL ─────────────────────────────────────────────────────────────────────
 export function Modal({ open, onClose, title, children, size = 'md' }) {
   if (!open) return null;
   const maxWidths = { sm: 400, md: 540, lg: 760, xl: 960 };
-  return (
+  return createPortal(
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
+        position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(15,27,61,.60)',
         backdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -229,29 +234,30 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
           maxHeight: '90vh', overflowY: 'auto',
           position: 'relative',
           animation: 'fadeIn 0.2s ease-out both',
-          boxShadow: '0 30px 80px rgba(0,0,0,.25)',
+          boxShadow: 'var(--shadow-lg)',
         }}
       >
         {/* Header de la modale */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 18px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--navy)', margin: 0 }}>{title}</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--text-navy)', margin: 0 }}>{title}</h2>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: 'var(--muted)', lineHeight: 1, padding: '2px 6px' }}
+            style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', color: 'var(--muted)', lineHeight: 1, width: 32, height: 32, display: 'grid', placeItems: 'center' }}
             aria-label="Fermer"
           >
-            Ã-
+            <CloseRoundedIcon style={{ fontSize: 18 }} />
           </button>
         </div>
         <div style={{ padding: '20px 24px 24px' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
-// â”€â”€â”€ TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TABLE ─────────────────────────────────────────────────────────────────────
 export function Table({ columns, data, onRow, emptyState }) {
-  if (!data?.length) return emptyState ?? <EmptyState title="Aucune donnÃ©e" />;
+  if (!data?.length) return emptyState ?? <EmptyState title="Aucune donnée" />;
   return (
     <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--border)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
@@ -301,7 +307,7 @@ export function Table({ columns, data, onRow, emptyState }) {
   );
 }
 
-// â”€â”€â”€ TIMELINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TIMELINE ──────────────────────────────────────────────────────────────────
 export function Timeline({ items }) {
   return (
     <ol style={{ position: 'relative', borderLeft: '2px solid var(--border)', paddingLeft: 24, margin: 0, listStyle: 'none' }}>
@@ -310,37 +316,37 @@ export function Timeline({ items }) {
           <span style={{
             position: 'absolute', left: -31, top: 2,
             width: 14, height: 14, borderRadius: '50%',
-            border: '2px solid var(--navy)', background: 'var(--surface)',
+            border: '2px solid var(--gold)', background: 'var(--surface)',
           }} />
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>{item.date}</p>
-          <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--navy)', margin: '0 0 4px' }}>
+          <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-navy)', margin: '0 0 4px' }}>
             {item.statut ? <StatusBadge statut={item.statut} /> : item.titre}
           </p>
           {item.commentaire && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{item.commentaire}</p>}
-          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>â€” {item.auteur}</p>}
+          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>— {item.auteur}</p>}
         </li>
       ))}
     </ol>
   );
 }
 
-// â”€â”€â”€ STAT CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STAT CARD ─────────────────────────────────────────────────────────────────
 export function StatCard({ label, value, sub, color = 'navy', icon }) {
   const accentColors = {
-    navy: 'var(--navy)',
-    teal: 'var(--navy)',
-    amber: 'var(--gold)',
+    navy: 'var(--text-navy)',
+    teal: 'var(--text-navy)',
+    amber: 'var(--gold-deep)',
     stamp: 'var(--red)',
     ok: 'var(--green)',
     danger: 'var(--red)',
     slate: 'var(--slate)',
   };
-  const accent = accentColors[color] || 'var(--navy)';
+  const accent = accentColors[color] || 'var(--text-navy)';
 
   return (
     <div
-      className="kpi-pill"
-      style={{ borderTop: `3px solid ${accent}` }}
+      className="kpi-pill ui-lift ui-kpi"
+      style={{ borderTop: `3px solid ${accent}`, position: 'relative', overflow: 'hidden' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -348,13 +354,13 @@ export function StatCard({ label, value, sub, color = 'navy', icon }) {
           <p className="kpi-num" style={{ color: accent }}>{value}</p>
           {sub && <p style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 4 }}>{sub}</p>}
         </div>
-        {icon && <span style={{ fontSize: 24, opacity: 0.4 }}>{icon}</span>}
+        {icon && <span className="ui-kpi-icon" style={{ fontSize: 24, color: 'var(--gold-deep)', opacity: .75 }}>{icon}</span>}
       </div>
     </div>
   );
 }
 
-// â”€â”€â”€ STAR RATING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── STAR RATING ───────────────────────────────────────────────────────────────
 export function StarRating({ value, onChange, max = 5, readOnly = false }) {
   return (
     <div style={{ display: 'flex', gap: 4 }}>
@@ -366,20 +372,21 @@ export function StarRating({ value, onChange, max = 5, readOnly = false }) {
           onClick={() => onChange?.(i + 1)}
           style={{
             fontSize: 22, background: 'none', border: 'none', cursor: readOnly ? 'default' : 'pointer',
-            color: i < value ? 'var(--gold)' : 'rgba(23,37,84,.15)',
-            transition: 'transform 0.1s',
+            color: i < value ? 'var(--gold)' : 'var(--border)',
+            transition: 'transform .2s var(--ease-premium)',
+            display: 'grid', placeItems: 'center', padding: 0,
           }}
-          onMouseEnter={(e) => { if (!readOnly) e.target.style.transform = 'scale(1.1)'; }}
-          onMouseLeave={(e) => { e.target.style.transform = ''; }}
+          onMouseEnter={(e) => { if (!readOnly) e.currentTarget.style.transform = 'scale(1.18)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = ''; }}
         >
-          â˜…
+          <StarRoundedIcon style={{ fontSize: 26 }} />
         </button>
       ))}
     </div>
   );
 }
 
-// â”€â”€â”€ ALERT BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ALERT BANNER ──────────────────────────────────────────────────────────────
 export function AlertBanner({ type = 'info', children, className = '' }) {
   const styles = {
     info:    { borderColor: 'var(--slate)', background: 'var(--slate-soft)', color: 'var(--slate)' },
@@ -388,16 +395,22 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
     success: { borderColor: 'var(--green)', background: 'var(--green-soft)', color: 'var(--green)' },
     demo:    { borderColor: 'var(--gold)',  background: 'var(--gold-soft)',  color: 'var(--gold-deep)' },
   };
-  const icons = { info: 'â„¹ï¸', warn: 'âš ï¸', danger: 'ðŸš«', success: 'âœ…', demo: 'ðŸ”§' };
+  const icons = {
+    info: <InfoOutlinedIcon style={{ fontSize: 19 }} />,
+    warn: <WarningAmberOutlinedIcon style={{ fontSize: 19 }} />,
+    danger: <BlockOutlinedIcon style={{ fontSize: 19 }} />,
+    success: <CheckCircleOutlinedIcon style={{ fontSize: 19 }} />,
+    demo: <BuildOutlinedIcon style={{ fontSize: 19 }} />,
+  };
   const s = styles[type] || styles.info;
 
   return (
     <div
       className={`flex gap-3 ${className}`}
       style={{
-        padding: '12px 16px', borderLeft: `4px solid ${s.borderColor}`,
-        background: s.background, color: s.color,
-        borderRadius: 10, fontSize: 14, marginBottom: 16,
+        padding: '14px 18px', borderLeft: `4px solid ${s.borderColor}`,
+        background: s.background, color: s.color, alignItems: 'center',
+        borderRadius: 12, fontSize: 14, marginBottom: 20, boxShadow: 'var(--shadow-sm)',
       }}
     >
       <span style={{ flexShrink: 0 }}>{icons[type]}</span>
@@ -405,4 +418,5 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
     </div>
   );
 }
+
 

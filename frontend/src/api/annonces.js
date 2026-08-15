@@ -14,3 +14,6 @@ export const deleteAnnonce = async (id) => {
   await api.delete(`${BASE}${id}/`);
   return id;
 };
+
+// Audit Phase 1 — detail d'une annonce.
+export const getAnnonceById = async (id) => (await api.get(`${BASE}${id}/`)).data;

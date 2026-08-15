@@ -45,6 +45,11 @@ export const STATUT_STYLES = {
   // Divers (contrats)
   RESILIE:                  { label: 'Contrat résilié',         bg: 'bg-stamp-pale',  fg: 'text-stamp',      dot: 'bg-stamp' },
   ACTIF:                    { label: 'Contrat actif',           bg: 'bg-ok-soft',     fg: 'text-ok',         dot: 'bg-ok' },
+
+  // Catalogue Locaux
+  DISPONIBLE:               { label: 'Disponible',              bg: 'bg-ok-soft',     fg: 'text-ok',         dot: 'bg-ok' },
+  OCCUPE:                   { label: 'Occupé',                  bg: 'bg-stamp-pale',  fg: 'text-stamp',      dot: 'bg-stamp' },
+  AUTRE:                    { label: 'Autre',                   bg: 'bg-soft',        fg: 'text-muted',      dot: 'bg-muted' },
 };
 
 export default STATUT_STYLES;

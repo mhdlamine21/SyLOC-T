@@ -19,6 +19,12 @@ class Gestionnaire(models.TextChoices):
     CROUS_T = 'CROUS_T', 'CROUS-T'
     AMICALE = 'AMICALE', 'Amicale'
 
+
+class StatutOccupation(models.TextChoices):
+    DISPONIBLE = 'DISPONIBLE', 'Disponible'
+    OCCUPE = 'OCCUPE', 'Occupe'
+    AUTRE = 'AUTRE', 'Autre (travaux/degrade)'
+
 class Local(BaseModel):
     reference = models.CharField(max_length=50, unique=True)
     localisation = models.CharField(max_length=200)
@@ -33,6 +39,20 @@ class Local(BaseModel):
     photo_url = models.URLField(max_length=500, blank=True)
     photo = models.ImageField(upload_to='locaux_photos/', null=True, blank=True)
     est_libre = models.BooleanField(default=True)
+
+    @property
+    def statut_occupation(self):
+        """Statut d'occupation calcule, utilise pour le filtre ?statut_occupation=.
+
+        - OCCUPE : un contrat actif occupe le local (est_libre = False)
+        - AUTRE : le local est libre mais indisponible (travaux/degrade)
+        - DISPONIBLE : libre et exploitable, eligible a une candidature
+        """
+        if not self.est_libre:
+            return StatutOccupation.OCCUPE
+        if self.etat_physique in (EtatLocal.EN_TRAVAUX, EtatLocal.DEGRADE):
+            return StatutOccupation.AUTRE
+        return StatutOccupation.DISPONIBLE
 
     def __str__(self):
         return f"{self.reference} ({self.type_local})"

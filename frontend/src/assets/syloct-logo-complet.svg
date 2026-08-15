@@ -1,41 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 470" width="400" height="470">
-  <!--
-    Logo SyLOC-T — version « thémable ».
-    Toutes les couleurs passent par des variables CSS (custom properties),
-    avec une valeur par défaut (celle du thème actuel) si rien ne les redéfinit.
-
-      navy        (variable CSS)  couleur principale (icône + texte)        défaut #172554
-      gold        (variable CSS)  couleur d'accent (clé + anneau intérieur) défaut #c9a15c
-      syloc badge (variable CSS)  fond du médaillon                         défaut #faf6ec
-
-    Pour que le logo s'adapte réellement au thème d'une page :
-    - il doit être inséré en svg INLINE dans le HTML (copier son contenu
-      directement dans la page), et non chargé via une balise img, car cela
-      isole le SVG et l'empêche de lire les variables CSS de la page ;
-    - il suffit ensuite de définir/actualiser les variables navy et gold sur
-      un ancêtre (ex. la racine, ou une classe « thème sombre ») pour que le
-      logo change de couleur automatiquement, sans toucher au fichier.
-
-    Ce fichier peut aussi être ouvert et modifié normalement dans un éditeur
-    vectoriel (Illustrator, Inkscape, Figma) : les valeurs par défaut ci-
-    dessous s'appliquent alors telles quelles.
-  -->
   <defs>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&amp;display=swap');
-      .syloct-navy { fill: var(--navy, #172554); }
-      .syloct-gold { fill: var(--gold, #c9a15c); }
+      .syloct-navy { fill: #1b2a4e; }
+      .syloct-gold { fill: #c99a3d; }
       .syloct-word { font-family: 'Poppins', 'Trebuchet MS', 'Segoe UI', sans-serif; }
-      .syloct-badge-bg { fill: var(--syloc-badge, #faf6ec); stroke: var(--navy, #172554); stroke-width: 6; }
-      .syloct-badge-ring { fill: none; stroke: var(--gold, #c9a15c); stroke-width: 2; }
     </style>
   </defs>
-
-  <!-- ============ CERCLE D'ENCADREMENT (médaillon) ============ -->
-  <g id="cercle-badge">
-    <circle class="syloct-badge-bg" cx="200" cy="176" r="152"/>
-    <circle class="syloct-badge-ring" cx="200" cy="176" r="140"/>
-  </g>
 
   <!-- ============ ICONE ============ -->
   <g id="icone">

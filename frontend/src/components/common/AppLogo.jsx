@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export default function AppLogo({ height = 38, showText = true, variant = 'auto', className = '' }) {
   const isDarkVariant = variant === 'dark' || variant === 'footer';
@@ -50,3 +50,4 @@ export default function AppLogo({ height = 38, showText = true, variant = 'auto'
     </div>
   );
 }
+

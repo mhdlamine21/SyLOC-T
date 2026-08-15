@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from comptes.models import Utilisateur, RoleUtilisateur, Demandeur
 from patrimoine.models import Local, TypeLocal
-from .models import Demande, TypeDemande, StatutDemande, HistoriqueStatutDemande, TypeDocument, Document
+from .models import Demande, TypeDemande, StatutDemande, HistoriqueStatutDemande, TypeDocument, Document, Commission
 class DemandesTests(APITestCase):
     def setUp(self):
         self.admin = Utilisateur.objects.create_user(
@@ -133,7 +133,7 @@ class TestCommissionAPI(APITestCase):
     def setUp(self):
         from django.utils import timezone
         from patrimoine.models import Local
-        from .models import TypeDemande, TypeCritere, AvisCommission, AppelCandidature, CritereAppel, MembreCommission
+        from .models import TypeDemande, TypeCritere, AvisCommission, AppelCandidature, CritereAppel, MembreCommission, Commission
         self.directeur = Utilisateur.objects.create_user(username="dir1", email="d@test.com", password="pwd", role=RoleUtilisateur.DIRECTEUR_CROUS_T, is_staff=True)
         self.usager = Utilisateur.objects.create_user(username="usg1", email="u@test.com", password="pwd", role=RoleUtilisateur.USAGER)
         self.demandeur = Demandeur.objects.create(utilisateur=self.usager, contact="123")
@@ -142,7 +142,8 @@ class TestCommissionAPI(APITestCase):
         CritereAppel.objects.create(appel=self.appel, type_critere=TypeCritere.EXPERIENCE_PREALABLE, valeur_cible="NON", poids=5)
         
         self.demande = Demande.objects.create(demandeur=self.demandeur, type_demande=TypeDemande.LOCAL_ARTISANAL, appel_candidature=self.appel)
-        self.membre = MembreCommission.objects.create(utilisateur=self.directeur)
+        self.commission = Commission.objects.create(nom="Commission d'évaluation", active=True)
+        self.membre = MembreCommission.objects.create(utilisateur=self.directeur, commission=self.commission)
         
     def test_avis_sanitaire(self):
         self.client.force_authenticate(user=self.directeur)

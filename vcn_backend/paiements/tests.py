@@ -26,9 +26,7 @@ class PaiementAPITest(APITestCase):
             demandeur=self.demandeur,
             signataire_crous_t=self.directeur,
             date_debut=timezone.now().date(),
-            duree_mois=12,
-            redevance_mensuelle=10000.0,
-            montant_caution=20000.0
+            duree_mois=12
         )
         
         self.echeance = self.contrat.echeances.first()
@@ -39,7 +37,7 @@ class PaiementAPITest(APITestCase):
         
         data = {
             "echeance_id": str(self.echeance.id),
-            "montant_regle": 10000.0,
+            "montant_regle": 45000.0,
             "mode": ModePaiement.MOBILE_MONEY,
             "reference_transaction": "TX123456"
         }
@@ -58,7 +56,7 @@ class PaiementAPITest(APITestCase):
         
         data = {
             "echeance_id": str(self.echeance.id),
-            "montant_regle": 10000.0,
+            "montant_regle": 45000.0,
             "mode": ModePaiement.MOBILE_MONEY
         }
         

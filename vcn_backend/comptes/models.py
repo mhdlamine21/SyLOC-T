@@ -62,6 +62,8 @@ class Demandeur(BaseModel):
         default=StatutVerificationEtudiant.NON_SOUMIS
     )
     carte_etudiant_date_validation = models.DateTimeField(null=True, blank=True)
+    carte_etudiant_date_soumission = models.DateTimeField(null=True, blank=True)
+    motif_rejet_carte = models.TextField(blank=True, null=True)
     valide_par = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name="demandeurs_valides")
     score_fidelite = models.FloatField(default=0.0)
 

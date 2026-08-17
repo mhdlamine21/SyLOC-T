@@ -8,3 +8,5 @@ python-dateutil>=2.9
 mysqlclient>=2.2.0 ; platform_system != "Windows"
 PyMySQL>=1.1.0  # fallback pur Python si mysqlclient ne compile pas
 Faker==25.8.0
+pillow>=10.0.0
+PyYAML>=6.0

@@ -11,6 +11,8 @@ import localCroustImg from '../assets/local_croust.jpeg';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 
+import { messageErreur } from '../api/utils';
+
 // Repli visuel si l'API n'a pas encore attribue de photo : une image par
 // vocation de local, jamais la meme pour tout le parc.
 const PHOTOS_PAR_TYPE = {
@@ -160,7 +162,7 @@ export default function Home() {
       setShowLoginModal(false);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.message || 'Identifiants incorrects. Veuillez réessayer.');
+      toast.error(messageErreur(err, 'Identifiants incorrects ou serveur inaccessible.'));
     } finally {
       setLoadingLogin(false);
     }

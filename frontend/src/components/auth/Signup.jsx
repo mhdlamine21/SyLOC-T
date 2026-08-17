@@ -88,7 +88,7 @@ export default function Signup() {
         email: formData.email,
         password: formData.password,
         nom_complet: `${formData.prenom} ${formData.nom}`.trim(),
-        contact: [formData.telephone, formData.adresse].filter(Boolean).join(" — "),
+        contact: [formData.telephone, formData.adresse].filter(Boolean).join(" - "),
         est_etudiant: estEtudiant,
         matricule_etudiant: estEtudiant ? matricule.trim() : "",
         carte_etudiant_fichier: estEtudiant ? carteFichier : null,
@@ -141,7 +141,7 @@ export default function Signup() {
         </div>
 
         <p className="su-aside-legal">
-          © {new Date().getFullYear()} CROUS de Thiès — Université Iba Der Thiam
+          © {new Date().getFullYear()} CROUS de Thiès - Université Iba Der Thiam
         </p>
       </aside>
 
@@ -164,7 +164,7 @@ export default function Signup() {
           </div>
 
           <form onSubmit={handleSubmit} noValidate={false}>
-            {/* Etape 1 — profil */}
+            {/* Etape 1 - profil */}
             <section className="su-step">
               <div className="su-step-head">
                 <span className="su-step-num">1</span>
@@ -197,7 +197,7 @@ export default function Signup() {
               </div>
             </section>
 
-            {/* Etape 2 — identite */}
+            {/* Etape 2 - identite */}
             <section className="su-step">
               <div className="su-step-head">
                 <span className="su-step-num">2</span>
@@ -235,7 +235,7 @@ export default function Signup() {
               </div>
             </section>
 
-            {/* Etape 3 — securite */}
+            {/* Etape 3 - securite */}
             <section className="su-step">
               <div className="su-step-head">
                 <span className="su-step-num">3</span>
@@ -280,7 +280,7 @@ export default function Signup() {
               </div>
             </section>
 
-            {/* Etape 4 — piece etudiante */}
+            {/* Etape 4 - piece etudiante */}
             {typeUsager === "ETUDIANT" && (
               <section className="su-step su-step-student">
                 <div className="su-step-head">

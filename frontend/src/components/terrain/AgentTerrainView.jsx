@@ -1,10 +1,12 @@
-﻿import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import FolderCopyOutlinedIcon from '@mui/icons-material/FolderCopyOutlined';
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 import NotificationImportantOutlinedIcon from '@mui/icons-material/NotificationImportantOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getPlaintes, updatePlainte } from '../../api/terrain';
@@ -20,8 +22,8 @@ const STATUT_TONE = { OUVERTE: 'red', EN_COURS_TRAITEMENT: 'gold', RESOLUE: 'gre
 const TYPES = ['TECHNIQUE', 'NON_CONFORMITE_QHSE', 'ENVIRONNEMENT', 'DENONCIATION_ILLEGALE'];
 
 /**
- * Brigade de controle terrain : pilotage complet des constats et signalements
- * (tri, filtres, transmission, resolution, rejet).
+ * Brigade de contrôle terrain : pilotage complet des constats et signalements
+ * (tri, filtres, transmission, résolution, rejet).
  */
 export default function AgentTerrainView() {
   const [plaintes, setPlaintes] = useState([]);
@@ -52,7 +54,7 @@ export default function AgentTerrainView() {
       setDetail(null);
       charger();
     } catch (e) {
-      toast.error(messageErreur(e, 'Mise a jour impossible.'));
+      toast.error(messageErreur(e, 'Mise à jour impossible.'));
     }
   };
 
@@ -94,14 +96,14 @@ export default function AgentTerrainView() {
     {
       key: 'localisation',
       label: 'Localisation',
-      render: (r) => r.localisation_libre || r.local_reference || '—',
+      render: (r) => r.localisation_libre || r.local_reference || '-',
     },
     { key: 'urgence', label: 'Urgence', render: (r) => <Pill tone={URGENCE_TONE[r.urgence] || 'slate'}>{r.urgence}</Pill> },
     { key: 'statut', label: 'Statut', render: (r) => <Pill tone={STATUT_TONE[r.statut] || 'slate'}>{(r.statut || '').replace(/_/g, ' ')}</Pill> },
     {
       key: 'date',
-      label: 'Depose le',
-      render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '—'),
+      label: 'Déposé le',
+      render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '-'),
     },
     {
       key: 'actions',
@@ -109,22 +111,24 @@ export default function AgentTerrainView() {
       align: 'right',
       render: (r) => (
         <RowActions>
-          <IconButton title="Consulter" onClick={() => setDetail(r)}><VisibilityOutlinedIcon style={{ fontSize: 17 }} /></IconButton>
+          <IconButton title="Consulter le détail" onClick={() => setDetail(r)}>
+            <VisibilityOutlinedIcon style={{ fontSize: 17 }} />
+          </IconButton>
           <IconButton
-            title="Transmettre au QHSE"
+            title="Transmettre au Bureau QHSE"
             tone="gold"
             disabled={r.statut !== 'OUVERTE'}
             onClick={() => majStatut(r.id, { statut: 'EN_COURS_TRAITEMENT', urgence: 'ELEVEE' }, 'Rapport de constat transmis au Bureau QHSE.')}
           >
-
+            <SendOutlinedIcon style={{ fontSize: 16 }} />
           </IconButton>
           <IconButton
-            title="Marquer resolu"
+            title="Marquer résolu"
             tone="green"
             disabled={r.statut === 'RESOLUE'}
-            onClick={() => majStatut(r.id, { statut: 'RESOLUE' }, 'Constat cloture.')}
+            onClick={() => majStatut(r.id, { statut: 'RESOLUE' }, 'Constat clôturé avec succès.')}
           >
-            ✓
+            <CheckCircleOutlinedIcon style={{ fontSize: 16 }} />
           </IconButton>
         </RowActions>
       ),
@@ -164,14 +168,14 @@ export default function AgentTerrainView() {
                 <option value="">Tous</option>
                 <option value="OUVERTE">Ouverte</option>
                 <option value="EN_COURS_TRAITEMENT">En cours</option>
-                <option value="RESOLUE">Resolue</option>
-                <option value="REJETEE">Rejetee</option>
+                <option value="RESOLUE">Résolue</option>
+                <option value="REJETEE">Rejetée</option>
               </Select>
             </FilterField>
             <FilterField label="Urgence">
               <Select value={urgence} onChange={(e) => setUrgence(e.target.value)}>
                 <option value="">Toutes</option>
-                <option value="ELEVEE">Elevee</option>
+                <option value="ELEVEE">Élevée</option>
                 <option value="MOYENNE">Moyenne</option>
                 <option value="FAIBLE">Faible</option>
               </Select>
@@ -181,7 +185,7 @@ export default function AgentTerrainView() {
         <DataTable columns={columns} rows={rows} loading={loading} empty="Aucun constat ne correspond aux filtres." pageSize={12} dense />
       </Panel>
 
-      <Modal open={!!detail} onClose={() => setDetail(null)} title="Detail du constat" size="md">
+      <Modal open={!!detail} onClose={() => setDetail(null)} title="Détail du constat" size="md">
         {detail && (
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -194,9 +198,9 @@ export default function AgentTerrainView() {
               <Textarea value={detail.description || ''} readOnly rows={4} />
             </Field>
             <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>
-              Localisation : {detail.localisation_libre || detail.local_reference || '—'}<br />
-              {detail.latitude && detail.longitude ? `GPS : ${detail.latitude}, ${detail.longitude}` : 'GPS non renseigne'}<br />
-              {detail.date_limite_sla ? `Echeance SLA : ${new Date(detail.date_limite_sla).toLocaleString('fr-FR')}` : ''}
+              Localisation : {detail.localisation_libre || detail.local_reference || '-'}<br />
+              {detail.latitude && detail.longitude ? `GPS : ${detail.latitude}, ${detail.longitude}` : 'GPS non renseigné'}<br />
+              {detail.date_limite_sla ? `Échéance SLA : ${new Date(detail.date_limite_sla).toLocaleString('fr-FR')}` : ''}
             </div>
             {detail.photo_preuve && (
               <a href={detail.photo_preuve} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--gold-deep)' }}>
@@ -204,8 +208,8 @@ export default function AgentTerrainView() {
               </a>
             )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="danger" size="sm" onClick={() => majStatut(detail.id, { statut: 'REJETEE' }, 'Constat rejete.')}>Rejeter</Button>
-              <Button size="sm" onClick={() => majStatut(detail.id, { statut: 'RESOLUE' }, 'Constat cloture.')}>Marquer resolu</Button>
+              <Button variant="danger" size="sm" onClick={() => majStatut(detail.id, { statut: 'REJETEE' }, 'Constat rejeté.')}>Rejeter</Button>
+              <Button size="sm" onClick={() => majStatut(detail.id, { statut: 'RESOLUE' }, 'Constat clôturé avec succès.')}>Marquer résolu</Button>
             </div>
           </div>
         )}

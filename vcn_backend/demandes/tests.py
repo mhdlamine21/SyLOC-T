@@ -138,12 +138,23 @@ class TestCommissionAPI(APITestCase):
         self.usager = Utilisateur.objects.create_user(username="usg1", email="u@test.com", password="pwd", role=RoleUtilisateur.USAGER)
         self.demandeur = Demandeur.objects.create(utilisateur=self.usager, contact="123")
         self.local = Local.objects.create(reference="LOC-TEST-COM", type_local="ARTISANAT", surface_m2=20)
-        self.appel = AppelCandidature.objects.create(titre="Test Appel", publie_par=self.directeur, local=self.local, date_lancement=timezone.now(), date_cloture=timezone.now(), description="test")
+        self.appel = AppelCandidature.objects.create(
+            titre="Test Appel", publie_par=self.directeur, local=self.local,
+            date_lancement=timezone.now(), date_cloture=timezone.now(),
+            description="test", loyer_mensuel=35000
+        )
         CritereAppel.objects.create(appel=self.appel, type_critere=TypeCritere.EXPERIENCE_PREALABLE, valeur_cible="NON", poids=5)
         
         self.demande = Demande.objects.create(demandeur=self.demandeur, type_demande=TypeDemande.LOCAL_ARTISANAL, appel_candidature=self.appel)
         self.commission = Commission.objects.create(nom="Commission d'évaluation", active=True)
         self.membre = MembreCommission.objects.create(utilisateur=self.directeur, commission=self.commission)
+
+    def test_appel_loyer_mensuel(self):
+        self.client.force_authenticate(user=self.directeur)
+        response = self.client.get(f'/api/demandes/appels/{self.appel.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(float(response.data['loyer_mensuel']), 35000.0)
+        self.assertEqual(response.data['local_reference'], 'LOC-TEST-COM')
         
     def test_avis_sanitaire(self):
         self.client.force_authenticate(user=self.directeur)

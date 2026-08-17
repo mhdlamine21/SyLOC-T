@@ -32,6 +32,10 @@ class Utilisateur(AbstractUser):
     nom_complet = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=32, choices=RoleUtilisateur.choices, default=RoleUtilisateur.USAGER)
+    telephone = models.CharField(max_length=30, blank=True, null=True)
+    # Corps de metier (electricien, plombier, frigoriste, menuisier...) :
+    # sert au Service Technique pour affecter le bon profil sur une intervention.
+    specialite = models.CharField(max_length=64, blank=True, null=True)
     delegation_active = models.BooleanField(default=False)
     delegation_expiration = models.DateTimeField(null=True, blank=True)
 

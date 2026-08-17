@@ -15,5 +15,8 @@ export const deleteAnnonce = async (id) => {
   return id;
 };
 
-// Audit Phase 1 — detail d'une annonce.
+// Audit Phase 1 - detail d'une annonce.
 export const getAnnonceById = async (id) => (await api.get(`${BASE}${id}/`)).data;
+
+/** Valider et publier officiellement une annonce transmise par la Direction */
+export const publierAnnonce = async (id) => (await api.post(`${BASE}${id}/publier/`)).data;

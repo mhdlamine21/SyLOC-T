@@ -67,6 +67,16 @@
   --ok:          var(--green);
   --ok-soft:     var(--green-soft);
 
+  /* ── Palette Beige (Bureau du Courrier / registre d'arrivée) ── */
+  --beige:        #f7f1e6;
+  --beige-2:      #efe4d2;
+  --beige-3:      #e5d5bb;
+  --beige-line:   #dcc9a9;
+  --beige-ink:    #4a3a26;
+  --beige-muted:  #8a7660;
+  --beige-grad:   linear-gradient(135deg, #f7f1e6 0%, #e9dcc6 100%);
+  --beige-shadow: 0 10px 26px rgba(122, 96, 58, .14);
+
   /* ── Géométrie ── */
   --radius:      10px;
   --radius-sm:   6px;
@@ -387,12 +397,12 @@ h1, h2, h3, h4, h5, .font-display {
 }
 
 .hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
   color: var(--slate); font-size: 12px; font-weight: 800;
   text-transform: uppercase; letter-spacing: 1.6px;
 }
 .hero-eyebrow::before {
-  content: ""; width: 24px; height: 2px; background: var(--gold);
+  content: "-"; font-size: 14px; font-weight: 800; color: var(--gold);
 }
 
 .hero-pill {

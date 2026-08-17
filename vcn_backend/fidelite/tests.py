@@ -39,11 +39,20 @@ class FideliteTests(APITestCase):
         Sanction.objects.create(
             local=self.local,
             contrat=self.contrat,
-            niveau=NiveauSanction.EXPULSION,
-            motif="Degradation"
+            niveau=NiveauSanction.AVERTISSEMENT,
+            motif="Degradation mineure"
         )
         self.demandeur.refresh_from_db()
-        self.assertEqual(self.demandeur.score_fidelite, -50.0)
+        self.assertEqual(self.demandeur.score_fidelite, -3.0)
+
+        Sanction.objects.create(
+            local=self.local,
+            contrat=self.contrat,
+            niveau=NiveauSanction.CONVOCATION,
+            motif="Entretien"
+        )
+        self.demandeur.refresh_from_db()
+        self.assertEqual(self.demandeur.score_fidelite, -8.0)
 
     def test_maj_score_avis(self):
         AvisCantine.objects.create(
@@ -95,4 +104,45 @@ class FideliteTests(APITestCase):
         sanction = Sanction.objects.filter(local=self.local, niveau=NiveauSanction.AVERTISSEMENT).first()
         self.assertIsNotNone(sanction)
         self.assertIn("Avertissement", sanction.motif)
+
+    def test_api_classement_fidelite_occupant(self):
+        self.demandeur.score_fidelite = 50.0
+        self.demandeur.save()
+
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.get('/api/fidelite/classement/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) > 0)
+        self.assertEqual(response.data[0]['demandeur_id'], str(self.demandeur.id))
+        self.assertEqual(response.data[0]['score'], 50)
+        self.assertEqual(response.data[0]['rang'], 1)
+        self.assertTrue(response.data[0]['est_moi'])
+
+    def test_api_classement_fidelite_occupant_hors_top_10(self):
+        # Créer 11 autres demandeurs avec des scores plus élevés
+        for i in range(1, 12):
+            u = Utilisateur.objects.create_user(
+                username=f"autre_{i}", email=f"autre_{i}@test.com", password="pwd", role=RoleUtilisateur.USAGER
+            )
+            Demandeur.objects.create(utilisateur=u, contact=f"12{i}", score_fidelite=100 - i)
+
+        # L'occupant connecté a un score plus bas (rang 12)
+        self.demandeur.score_fidelite = 10.0
+        self.demandeur.save()
+
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.get('/api/fidelite/classement/?limit=10')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 10)
+        # Les 9 premiers sont du top 9
+        for idx in range(9):
+            self.assertEqual(response.data[idx]['rang'], idx + 1)
+            self.assertFalse(response.data[idx]['est_moi'])
+        # Le 10ème élément est l'occupant connecté avec sa vraie position (12)
+        self.assertEqual(response.data[9]['demandeur_id'], str(self.demandeur.id))
+        self.assertEqual(response.data[9]['rang'], 12)
+        self.assertEqual(response.data[9]['score'], 10)
+        self.assertTrue(response.data[9]['est_moi'])
+
+
 

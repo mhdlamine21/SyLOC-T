@@ -8,15 +8,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getCartesAValider, validerCarteEtudiant } from '../../api/comptes';
 import { messageErreur } from '../../api/utils';
-import { Button, Field, Input, Modal, Textarea } from '../common/ui';
+import { Button, Field, Input, Modal, Textarea, PageWrapper, SectionHeader } from '../common/ui';
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import {
   PageHeader, StatGrid, KpiCard, Panel, FilterBar, FilterField, DataTable,
   IdentityCell, Pill, RowActions, IconButton, Tabs, MiniStat,
 } from '../common/dashboard';
 
 const TONE_STATUT = { VALIDE: 'green', REJETE: 'red', EN_ATTENTE: 'gold' };
-const dateFr = (v) => (v ? new Date(v).toLocaleDateString('fr-FR') : '—');
-const dateHeureFr = (v) => (v ? new Date(v).toLocaleString('fr-FR') : '—');
+const dateFr = (v) => (v ? new Date(v).toLocaleDateString('fr-FR') : '-');
+const dateHeureFr = (v) => (v ? new Date(v).toLocaleString('fr-FR') : '-');
 
 /**
  * Validation enrichie des cartes etudiantes (Bureau du Courrier / DCUVE).
@@ -91,7 +92,7 @@ export default function ValidationCartes() {
     label: 'Étudiant',
     render: (r) => (
       <IdentityCell
-        title={r.nom_complet || r.username || '—'}
+        title={r.nom_complet || r.username || '-'}
         subtitle={`Matricule : ${r.matricule_etudiant || 'non renseigné'}`}
         initials={(r.nom_complet || r.username || 'ET').slice(0, 2).toUpperCase()}
       />
@@ -103,8 +104,8 @@ export default function ValidationCartes() {
     label: 'Contact',
     render: (r) => (
       <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-        <div style={{ fontWeight: 600, color: 'var(--text-navy)' }}>{r.contact || '—'}</div>
-        <div style={{ color: 'var(--muted)' }}>{r.email || '—'}</div>
+        <div style={{ fontWeight: 600, color: 'var(--text-navy)' }}>{r.contact || '-'}</div>
+        <div style={{ color: 'var(--muted)' }}>{r.email || '-'}</div>
       </div>
     ),
   };
@@ -162,19 +163,23 @@ export default function ValidationCartes() {
     colonneIdentite,
     colonneContact,
     { key: 'statut', label: 'Décision', render: (r) => <Pill tone={TONE_STATUT[r.statut_verification_etudiant] || 'slate'}>{(r.statut_verification_etudiant || '').replace(/_/g, ' ')}</Pill> },
-    { key: 'motif', label: 'Motif', render: (r) => r.motif_rejet_carte || '—' },
-    { key: 'par', label: 'Traité par', render: (r) => r.valide_par_nom || '—' },
+    { key: 'motif', label: 'Motif', render: (r) => r.motif_rejet_carte || '-' },
+    { key: 'par', label: 'Traité par', render: (r) => r.valide_par_nom || '-' },
     { key: 'date', label: 'Le', render: (r) => dateHeureFr(r.carte_etudiant_date_validation) },
     colonnePiece,
   ];
 
   return (
-    <div>
-      <PageHeader
-        icon={<BadgeOutlinedIcon style={{ fontSize: 20 }} />}
+    <PageWrapper>
+      <SectionHeader
+        eyebrow="Bureau du Courrier & DCUVE"
         title="Validation des cartes étudiantes"
         subtitle="Vérification des pièces de scolarité ouvrant droit à la gratuité : fiche complète du candidat, aperçu de la carte et traçabilité des décisions."
-        actions={<Button variant="secondary" onClick={charger}>↻ Actualiser</Button>}
+        action={(
+          <Button variant="secondary" onClick={charger} disabled={loading}>
+            <RefreshOutlinedIcon style={{ fontSize: 17 }} /> Actualiser
+          </Button>
+        )}
       />
 
       <StatGrid cols={4}>
@@ -211,7 +216,7 @@ export default function ValidationCartes() {
       <Modal
         open={!!fiche}
         onClose={() => { setFiche(null); setMotif(''); }}
-        title={`Carte étudiante — ${fiche?.nom_complet || ''}`}
+        title={`Carte étudiante - ${fiche?.nom_complet || ''}`}
         size="lg"
       >
         {fiche && (
@@ -237,8 +242,8 @@ export default function ValidationCartes() {
 
             <div style={{ display: 'grid', gap: 8, alignContent: 'start' }}>
               <MiniStat label="Matricule" value={fiche.matricule_etudiant || 'Non renseigné'} tone="navy" />
-              <MiniStat label="Téléphone" value={fiche.contact || '—'} />
-              <MiniStat label="Email" value={fiche.email || '—'} />
+              <MiniStat label="Téléphone" value={fiche.contact || '-'} />
+              <MiniStat label="Email" value={fiche.email || '-'} />
               <MiniStat label="Compte créé le" value={dateFr(fiche.compte_cree_le)} />
               <MiniStat label="Ancienneté" value={`${fiche.anciennete_jours ?? 0} jour(s)`} />
               <MiniStat label="Dossiers déposés" value={`${fiche.nb_demandes ?? 0}`} />
@@ -274,6 +279,6 @@ export default function ValidationCartes() {
           </div>
         )}
       </Modal>
-    </div>
+    </PageWrapper>
   );
 }

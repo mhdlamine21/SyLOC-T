@@ -19,7 +19,7 @@ from django.core.management import call_command  # noqa: E402
 
 
 def run():
-    call_command('seed_demo')
+    call_command('seed_senegal_godmode')
 
 
 if __name__ == '__main__':

@@ -82,7 +82,7 @@ export default function Sidebar({ onCloseMobile, collapsed, onToggleCollapse }) 
               <NavLink
                 key={item.path + item.label}
                 to={item.path}
-                end={item.path === '/dashboard'}
+                end={true}
                 aria-label={item.label}
                 data-tooltip={collapsed ? item.label : undefined}
                 onClick={() => onCloseMobile?.()}

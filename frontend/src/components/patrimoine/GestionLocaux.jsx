@@ -1,8 +1,5 @@
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import TableRowsOutlinedIcon from '@mui/icons-material/TableRowsOutlined';
-import ViewModuleOutlinedIcon from '@mui/icons-material/ViewModuleOutlined';
 import EngineeringOutlinedIcon from '@mui/icons-material/EngineeringOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import { useEffect, useMemo, useState } from 'react';
@@ -11,19 +8,18 @@ import { getLocaux, createLocal, updateLocal } from '../../api/patrimoine';
 import { messageErreur } from '../../api/utils';
 import { Button, Field, Input, Select, Modal, Textarea } from '../common/ui';
 import { useAuth } from '../../context/AuthContext';
+import { photoLocal } from '../../utils/locaux';
 import {
-  PageHeader, StatGrid, KpiCard, Panel, FilterBar, FilterField, CardGrid, Pill, Tabs,
-  DataTable, IdentityCell, RowActions, IconButton,
+  PageHeader, StatGrid, KpiCard, Panel, FilterBar, FilterField, CardGrid, Pill,
 } from '../common/dashboard';
 
 const TYPES = ['RESTAURATION', 'MULTISERVICES', 'PAPETERIE', 'ARTISANAT', 'AUTRE'];
 const ETATS = ['BON_ETAT', 'NECESSITE_RENOVATION', 'DEGRADE', 'EN_TRAVAUX'];
 const ETAT_TONE = { BON_ETAT: 'green', NECESSITE_RENOVATION: 'gold', DEGRADE: 'red', EN_TRAVAUX: 'navy' };
-const TYPE_ICON = { RESTAURATION: 'RS', MULTISERVICES: 'MS', PAPETERIE: 'PA', ARTISANAT: 'AR', AUTRE: 'LC' };
 
 const VIDE = {
   reference: '', localisation: '', type_local: 'RESTAURATION', zone_cartographie: '',
-  surface_m2: '25', capacite_accueil: '1', etat_physique: 'BON_ETAT', gestionnaire: 'CROUS_T',
+  surface_m2: '25', etat_physique: 'BON_ETAT', gestionnaire: 'CROUS_T',
   latitude: '', longitude: '', photo_url: '', est_libre: true,
 };
 
@@ -34,7 +30,6 @@ const VIDE = {
 export default function GestionLocaux() {
   const [locaux, setLocaux] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [vue, setVue] = useState('cartes');
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [etat, setEtat] = useState('');
@@ -79,7 +74,7 @@ export default function GestionLocaux() {
     setForm({
       reference: loc.reference || '', localisation: loc.localisation || '',
       type_local: loc.type_local || 'AUTRE', zone_cartographie: loc.zone_cartographie || '',
-      surface_m2: String(loc.surface_m2 ?? ''), capacite_accueil: String(loc.capacite_accueil ?? '0'),
+      surface_m2: String(loc.surface_m2 ?? ''),
       etat_physique: loc.etat_physique || 'BON_ETAT', gestionnaire: loc.gestionnaire || 'CROUS_T',
       latitude: loc.latitude ?? '', longitude: loc.longitude ?? '',
       photo_url: loc.photo_url || '', est_libre: !!loc.est_libre,
@@ -93,7 +88,6 @@ export default function GestionLocaux() {
     const payload = {
       ...form,
       surface_m2: Number(form.surface_m2 || 0),
-      capacite_accueil: Number(form.capacite_accueil || 0),
       latitude: form.latitude === '' ? null : Number(form.latitude),
       longitude: form.longitude === '' ? null : Number(form.longitude),
     };
@@ -145,38 +139,6 @@ export default function GestionLocaux() {
         || (l.zone_cartographie || '').toLowerCase().includes(term));
   }, [locaux, q, type, etat, dispo]);
 
-  const columns = [
-    {
-      key: 'ref',
-      label: 'Local',
-      render: (r) => (
-        <IdentityCell
-          title={r.reference}
-          subtitle={`${(r.type_local || '').replace(/_/g, ' ')} · ${r.surface_m2 || 0} m²`}
-          initials={TYPE_ICON[r.type_local] || 'LC'}
-        />
-      ),
-    },
-    { key: 'localisation', label: 'Localisation', render: (r) => `${r.localisation || '—'}${r.zone_cartographie ? ` (${r.zone_cartographie})` : ''}` },
-    { key: 'capacite_accueil', label: 'Capacite', align: 'right', render: (r) => r.capacite_accueil ?? '—' },
-    { key: 'etat_physique', label: 'Etat', render: (r) => <Pill tone={ETAT_TONE[r.etat_physique] || 'slate'}>{(r.etat_physique || '').replace(/_/g, ' ')}</Pill> },
-    { key: 'gestionnaire', label: 'Gestionnaire', render: (r) => <Pill tone="navy">{r.gestionnaire}</Pill> },
-    { key: 'est_libre', label: 'Disponibilite', render: (r) => <Pill tone={r.est_libre ? 'green' : 'gold'}>{r.est_libre ? 'Libre' : 'Occupe'}</Pill> },
-    {
-      key: 'actions',
-      label: 'Actions',
-      align: 'right',
-      render: (r) => (
-        <RowActions>
-          <IconButton title="Modifier" onClick={() => ouvrirEdition(r)}>✏️</IconButton>
-          <IconButton title={r.est_libre ? 'Marquer occupe' : 'Marquer libre'} tone={r.est_libre ? 'gold' : 'green'} onClick={() => basculerDisponibilite(r)}>
-            {r.est_libre ? <LockOutlinedIcon style={{ fontSize: 16 }} /> : <LockOpenOutlinedIcon style={{ fontSize: 16 }} />}
-          </IconButton>
-        </RowActions>
-      ),
-    },
-  ];
-
   return (
     <div>
       <PageHeader
@@ -199,11 +161,6 @@ export default function GestionLocaux() {
 
       <Panel padded={false}>
         <div style={{ padding: '14px 16px 0' }}>
-          <Tabs
-            active={vue}
-            onChange={setVue}
-            tabs={[{ key: 'cartes', label: 'Vitrine', icon: <ViewModuleOutlinedIcon style={{ fontSize: 18 }} /> }, { key: 'table', label: 'Registre', icon: <TableRowsOutlinedIcon style={{ fontSize: 18 }} /> }]}
-          />
           <FilterBar onReset={() => { setQ(''); setType(''); setEtat(''); setDispo(''); }}>
             <FilterField label="Recherche">
               <Input placeholder="Reference, localisation, zone…" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -230,55 +187,148 @@ export default function GestionLocaux() {
           </FilterBar>
         </div>
 
-        {vue === 'table' ? (
-          <DataTable columns={columns} rows={rows} loading={loading} empty="Aucun local ne correspond aux filtres." pageSize={12} dense />
-        ) : (
-          <div style={{ padding: 16 }}>
-            {loading ? (
-              <p style={{ color: 'var(--muted)' }}>Chargement des locaux…</p>
-            ) : rows.length === 0 ? (
-              <p style={{ color: 'var(--muted)' }}>Aucun local ne correspond aux filtres.</p>
-            ) : (
-              <CardGrid min={250}>
-                {rows.map((loc) => (
-                  <div
-                    key={loc.id}
-                    style={{
-                      border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden',
-                      background: 'var(--surface-card, var(--surface))', display: 'flex', flexDirection: 'column',
-                    }}
-                  >
-                    <div style={{ height: 118, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', position: 'relative' }}>
-                      {loc.photo_url
-                        ? <img src={loc.photo_url} alt={loc.reference} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span style={{ color: 'var(--gold-deep)', opacity: .6 }}><ApartmentOutlinedIcon style={{ fontSize: 40 }} /></span>}
-                      <span style={{ position: 'absolute', top: 8, right: 8 }}>
-                        <Pill tone={loc.est_libre ? 'green' : 'gold'}>{loc.est_libre ? 'Libre' : 'Occupe'}</Pill>
+        <div style={{ padding: 16 }}>
+          {loading ? (
+            <p style={{ color: 'var(--muted)' }}>Chargement des locaux…</p>
+          ) : rows.length === 0 ? (
+            <p style={{ color: 'var(--muted)' }}>Aucun local ne correspond aux filtres.</p>
+          ) : (
+            <CardGrid min={280}>
+              {rows.map((loc) => (
+                <div
+                  key={loc.id}
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                    background: 'var(--surface-card, var(--surface))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05))',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  }}
+                >
+                  {/* Photo avec hauteur fixe garantie et badges superposés */}
+                  <div style={{
+                    height: 140,
+                    width: '100%',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: 'var(--surface-2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <img
+                      src={photoLocal(loc)}
+                      alt={loc.reference}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = photoLocal({ ...loc, photo_url: null });
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+
+                    {/* Gradient overlay pour lisibilité des badges */}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.3) 100%)',
+                      pointerEvents: 'none',
+                    }} />
+
+                    <span style={{ position: 'absolute', top: 10, left: 10 }}>
+                      <Pill tone={ETAT_TONE[loc.etat_physique] || 'slate'}>
+                        {(loc.etat_physique || '').replace(/_/g, ' ')}
+                      </Pill>
+                    </span>
+
+                    <span style={{ position: 'absolute', top: 10, right: 10 }}>
+                      <Pill tone={loc.est_libre ? 'green' : 'gold'}>
+                        {loc.est_libre ? '● Libre' : '● Occupé'}
+                      </Pill>
+                    </span>
+                  </div>
+
+                  {/* Corps de la carte */}
+                  <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11.5,
+                        color: 'var(--text-navy)',
+                        fontWeight: 800,
+                        background: 'var(--surface-2)',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        border: '1px solid var(--border)',
+                      }}>
+                        {loc.reference}
+                      </span>
+                      <span style={{ fontSize: 11.5, color: 'var(--muted)', fontWeight: 600 }}>
+                        🏢 {loc.gestionnaire}
                       </span>
                     </div>
-                    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--muted)', fontWeight: 800 }}>{loc.reference}</div>
-                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14.5, color: 'var(--text-navy)' }}>
-                        {(loc.type_local || '').replace(/_/g, ' ')} · {loc.surface_m2} m²
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>{loc.localisation}</div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-                        <Pill tone={ETAT_TONE[loc.etat_physique] || 'slate'}>{(loc.etat_physique || '').replace(/_/g, ' ')}</Pill>
-                        <Pill tone="navy">{loc.gestionnaire}</Pill>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 10 }}>
-                        <Button variant="secondary" size="sm" onClick={() => ouvrirEdition(loc)}>Modifier</Button>
-                        <Button variant="secondary" size="sm" onClick={() => basculerDisponibilite(loc)}>
-                          {loc.est_libre ? 'Marquer occupe' : 'Liberer'}
-                        </Button>
-                      </div>
+
+                    <div style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: 15,
+                      color: 'var(--text-navy)',
+                    }}>
+                      {(loc.type_local || '').replace(/_/g, ' ')} · {Number(loc.surface_m2 || 0).toFixed(1)} m²
+                    </div>
+
+                    <div style={{
+                      fontSize: 12,
+                      color: 'var(--muted)',
+                      lineHeight: 1.4,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      📍 {loc.localisation ? loc.localisation.replace(/\r?\n/g, ', ') : 'Emplacement non renseigné'}
+                    </div>
+
+                    {/* Actions unifiées et explicites */}
+                    <div style={{
+                      display: 'flex',
+                      gap: 8,
+                      marginTop: 'auto',
+                      paddingTop: 12,
+                      borderTop: '1px solid var(--border)',
+                    }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => ouvrirEdition(loc)}
+                        style={{ flex: 1, fontWeight: 700 }}
+                      >
+                        ✏️ Modifier
+                      </Button>
+                      <Button
+                        variant={loc.est_libre ? 'outline' : 'ghost'}
+                        size="sm"
+                        onClick={() => basculerDisponibilite(loc)}
+                        style={{ flex: 1, fontWeight: 700 }}
+                      >
+                        {loc.est_libre ? '🔒 Marquer occupé' : '🔓 Libérer'}
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </CardGrid>
-            )}
-          </div>
-        )}
+                </div>
+              ))}
+            </CardGrid>
+          )}
+        </div>
       </Panel>
 
       <Modal
@@ -298,10 +348,7 @@ export default function GestionLocaux() {
               </Select>
             </Field>
             <Field label="Surface (m²)" required>
-              <Input type="number" min="1" value={form.surface_m2} onChange={(e) => setForm({ ...form, surface_m2: e.target.value })} required />
-            </Field>
-            <Field label="Capacite d'accueil">
-              <Input type="number" min="0" value={form.capacite_accueil} onChange={(e) => setForm({ ...form, capacite_accueil: e.target.value })} />
+              <Input type="number" min="1" step="0.1" value={form.surface_m2} onChange={(e) => setForm({ ...form, surface_m2: e.target.value })} required />
             </Field>
             <Field label="Etat physique">
               <Select value={form.etat_physique} onChange={(e) => setForm({ ...form, etat_physique: e.target.value })}>
@@ -343,4 +390,5 @@ export default function GestionLocaux() {
     </div>
   );
 }
-
+
+

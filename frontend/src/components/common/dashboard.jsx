@@ -1,5 +1,5 @@
 /**
- * SyLOC-T — Primitives de structure "back-office"
+ * SyLOC-T - Primitives de structure "back-office"
  * Structure calquee sur les maquettes de reference :
  *  PageHeader (icone + titre + sous-titre + actions)
  *  StatGrid / KpiCard / MiniStat  (rangees d'indicateurs)
@@ -14,6 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import { EmptyState, LoadingState } from './ui';
+export { EmptyState, LoadingState } from './ui';
 
 /* ─── Tonalites ──────────────────────────────────────────────────────── */
 const TONES = {
@@ -79,12 +80,12 @@ export function SectionLabel({ icon, children, right }) {
 }
 
 /* ─── GRILLE D'INDICATEURS ───────────────────────────────────────────── */
-export function StatGrid({ cols = 4, children, gap = 24, style = {} }) {
+export function StatGrid({ cols = 4, children, gap = 20, style = {} }) {
   return (
     <div
       style={{
         display: 'grid', gap,
-        gridTemplateColumns: `repeat(auto-fit, minmax(${cols >= 5 ? 165 : 220}px, 1fr))`,
+        gridTemplateColumns: `repeat(auto-fit, minmax(${cols >= 5 ? 165 : 240}px, 1fr))`,
         marginBottom: 32,
         ...style,
       }}
@@ -96,33 +97,119 @@ export function StatGrid({ cols = 4, children, gap = 24, style = {} }) {
 
 export function KpiCard({ icon, label, value, sub, trend, tone: t = 'navy', onClick }) {
   const c = tone(t);
+
+  // Découpage propre de la valeur et de l'unité monétaire (affichage 100% visible)
+  const renderValue = () => {
+    if (typeof value === 'string' && value.includes(' FCFA')) {
+      const [val] = value.split(' FCFA');
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', flexWrap: 'nowrap' }}>
+          <span>{val}</span>
+          <span style={{ fontSize: '0.62em', fontWeight: 800, marginLeft: 5, letterSpacing: '0.5px', opacity: 0.85 }}>
+            FCFA
+          </span>
+        </span>
+      );
+    }
+    return value;
+  };
+
   return (
     <div
       onClick={onClick}
       className="ui-card ui-lift ui-kpi ui-rise"
       style={{
-        padding: '22px 24px',
-        cursor: onClick ? 'pointer' : 'default', minWidth: 0,
+        padding: '18px 20px',
+        cursor: onClick ? 'pointer' : 'default',
+        minWidth: 0,
+        position: 'relative',
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        background: 'var(--surface-card, var(--surface))',
+        boxShadow: '0 2px 10px rgba(15, 27, 61, 0.04)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.9px', textTransform: 'uppercase', color: 'var(--muted)', margin: 0, fontWeight: 800 }}>
+      {/* Accent supérieur subtil */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3.5,
+        background: c.fg === 'var(--text-navy)'
+          ? 'linear-gradient(90deg, #0d1b2a 0%, #172554 100%)'
+          : `linear-gradient(90deg, ${c.fg} 0%, ${c.soft} 100%)`,
+      }} />
+
+      <div>
+        {/* Ligne d'en-tête : Label + Icône à droite */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10.5,
+            letterSpacing: '0.8px',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+            margin: 0,
+            fontWeight: 800,
+          }}>
             {label}
           </p>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: c.fg, margin: '6px 0 0', lineHeight: 1.1, wordBreak: 'break-word' }}>
-            {value}
-          </p>
-          {sub && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '5px 0 0' }}>{sub}</p>}
+          {icon && (
+            <div
+              className="ui-kpi-icon"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: c.soft,
+                color: c.fg,
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: 18,
+                flexShrink: 0,
+                border: `1px solid ${c.soft}`,
+              }}
+            >
+              {icon}
+            </div>
+          )}
         </div>
-        {icon && (
-          <div className="ui-kpi-icon" style={{ width: 40, height: 40, borderRadius: 12, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 16, flexShrink: 0 }}>
-            {icon}
-          </div>
-        )}
+
+        {/* Valeur en pleine largeur (aucun masquage ou troncature) */}
+        <div style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: typeof value === 'string' && value.length > 12 ? '21px' : '25px',
+          fontWeight: 800,
+          color: c.fg,
+          margin: 0,
+          lineHeight: 1.15,
+          whiteSpace: 'nowrap',
+        }}>
+          {renderValue()}
+        </div>
       </div>
+
+      {sub && (
+        <p style={{
+          fontSize: 11.5,
+          color: 'var(--muted)',
+          margin: '10px 0 0',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {sub}
+        </p>
+      )}
+
       {trend != null && trend !== '' && (
-        <div style={{ marginTop: 10, fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{trend}</div>
+        <div style={{ marginTop: 8, fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{trend}</div>
       )}
     </div>
   );
@@ -225,8 +312,8 @@ export function IconButton({ title, onClick, tone: t = 'navy', children, disable
   );
 }
 
-export function RowActions({ children }) {
-  return <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>{children}</div>;
+export function RowActions({ children, align = 'flex-end' }) {
+  return <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: align, flexWrap: 'nowrap' }}>{children}</div>;
 }
 
 /* ─── TABLEAU DE DONNEES ─────────────────────────────────────────────── */
@@ -306,7 +393,7 @@ export function DataTable({
       {pages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderTop: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)', flexWrap: 'wrap', gap: 8 }}>
           <span>
-            {page * pageSize + 1}–{Math.min(total, (page + 1) * pageSize)} sur {total}
+            {page * pageSize + 1}-{Math.min(total, (page + 1) * pageSize)} sur {total}
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} style={pagerStyle(page === 0)}>‹ Precedent</button>
@@ -325,17 +412,19 @@ const pagerStyle = (disabled) => ({
 });
 
 /* ─── CELLULE IDENTITE (avatar + libelle) ────────────────────────────── */
-export function IdentityCell({ title, subtitle, initials, tone: t = 'navy' }) {
+export function IdentityCell({ title, subtitle, primary, secondary, initials, tone: t = 'navy' }) {
+  const displayTitle = title || primary || '-';
+  const displaySubtitle = subtitle || secondary;
   const c = tone(t);
-  const ini = initials ?? (title || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const ini = initials ?? (displayTitle !== '-' ? displayTitle : '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
       <span style={{ width: 30, height: 30, borderRadius: 9, background: c.soft, color: c.fg, display: 'grid', placeItems: 'center', fontSize: 10.5, fontWeight: 900, flexShrink: 0 }}>
         {ini}
       </span>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 700, color: 'var(--text-navy)', fontSize: 12.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {subtitle && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{subtitle}</div>}
+        <div style={{ fontWeight: 700, color: 'var(--text-navy)', fontSize: 12.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle}</div>
+        {displaySubtitle && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{displaySubtitle}</div>}
       </div>
     </div>
   );
@@ -356,24 +445,79 @@ export function RankList({ items, empty = 'Aucune donnee' }) {
   if (!items?.length) return <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0 }}>{empty}</p>;
   return (
     <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
-      {items.map((it, i) => (
-        <li key={it.key ?? i} className="ui-row" style={{
-          display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
-          border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface-2)',
-          boxShadow: 'var(--shadow-sm)',
-        }}>
-          <span style={{ width: 28, height: 28, borderRadius: 8, background: i < 3 ? 'var(--gold)' : 'var(--slate-soft)', color: i < 3 ? 'var(--text-on-gold)' : 'var(--slate)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 900, flexShrink: 0 }}>
-            {i + 1}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-            {it.subtitle && <div style={{ fontSize: 10.5, color: 'var(--muted)' }}>{it.subtitle}</div>}
-          </div>
-          {it.value != null && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 800, color: 'var(--text-navy)', whiteSpace: 'nowrap' }}>{it.value}</span>
-          )}
-        </li>
-      ))}
+      {items.map((it, i) => {
+        const isHighlight = Boolean(it.highlight || it.isCurrentOccupant || it.est_moi);
+        const rank = it.rank ?? it.rang ?? (i + 1);
+        const badgeBg = isHighlight
+          ? 'var(--green, #16a34a)'
+          : (rank <= 3 ? 'var(--gold)' : 'var(--slate-soft)');
+        const badgeColor = isHighlight
+          ? '#ffffff'
+          : (rank <= 3 ? 'var(--text-on-gold)' : 'var(--slate)');
+
+        return (
+          <li key={it.key ?? i} className="ui-row" style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+            border: isHighlight ? '1.5px solid var(--green, #16a34a)' : '1px solid var(--border)',
+            borderRadius: 14,
+            background: isHighlight ? 'rgba(22, 163, 74, 0.08)' : 'var(--surface-2)',
+            boxShadow: isHighlight ? '0 2px 8px rgba(22, 163, 74, 0.15)' : 'var(--shadow-sm)',
+          }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: badgeBg,
+              color: badgeColor,
+              display: 'grid', placeItems: 'center',
+              fontSize: rank > 99 ? 10 : 12,
+              fontWeight: 900,
+              flexShrink: 0
+            }}>
+              {rank}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 12.5,
+                fontWeight: isHighlight ? 800 : 700,
+                color: isHighlight ? 'var(--green, #16a34a)' : 'var(--text-navy)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <span>{it.title}</span>
+                {isHighlight && (
+                  <span style={{
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: 6,
+                    background: 'var(--green, #16a34a)',
+                    color: '#ffffff',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    Vous
+                  </span>
+                )}
+              </div>
+              {it.subtitle && <div style={{ fontSize: 10.5, color: isHighlight ? 'var(--green, #16a34a)' : 'var(--muted)' }}>{it.subtitle}</div>}
+            </div>
+            {it.value != null && (
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+                fontWeight: 800,
+                color: isHighlight ? 'var(--green, #16a34a)' : 'var(--text-navy)',
+                whiteSpace: 'nowrap'
+              }}>
+                {it.value}
+              </span>
+            )}
+          </li>
+        );
+      })}
     </ol>
   );
 }

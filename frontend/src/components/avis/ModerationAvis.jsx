@@ -1,4 +1,4 @@
-﻿import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
@@ -12,7 +12,7 @@ import { messageErreur } from '../../api/utils';
 import { Button, Input, Select } from '../common/ui';
 import {
   PageHeader, StatGrid, KpiCard, Panel, FilterBar, FilterField, DataTable,
-  IdentityCell, Pill, RowActions, IconButton, SplitLayout, ProgressRow,
+  IdentityCell, Pill, ProgressRow,
 } from '../common/dashboard';
 
 const STATUT_TONE = { PUBLIE: 'green', SIGNALE: 'gold', MASQUE: 'red' };
@@ -100,19 +100,62 @@ export default function ModerationAvis() {
         </span>
       ),
     },
-    { key: 'commentaire', label: 'Commentaire', render: (r) => <span title={r.commentaire}>{(r.commentaire || '—').slice(0, 90)}</span> },
-    { key: 'date_creation', label: 'Depose le', render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '—') },
+    { key: 'commentaire', label: 'Commentaire', render: (r) => <span title={r.commentaire}>{(r.commentaire || '-').slice(0, 90)}</span> },
+    { key: 'date_creation', label: 'Depose le', render: (r) => (r.date_creation ? new Date(r.date_creation).toLocaleDateString('fr-FR') : '-') },
     { key: 'statut', label: 'Statut', render: (r) => <Pill tone={STATUT_TONE[r.statut] || 'slate'}>{r.statut}</Pill> },
     {
       key: 'actions',
-      label: 'Moderation',
+      label: 'Action',
       align: 'right',
       render: (r) => (
-        <RowActions>
-          <IconButton title="Publier" tone="green" disabled={r.statut === 'PUBLIE'} onClick={() => moderer(r.id, 'PUBLIE')}>✓</IconButton>
-          <IconButton title="Signaler" tone="gold" disabled={r.statut === 'SIGNALE'} onClick={() => moderer(r.id, 'SIGNALE')}>⚑</IconButton>
-          <IconButton title="Masquer" tone="red" disabled={r.statut === 'MASQUE'} onClick={() => moderer(r.id, 'MASQUE')}><BlockOutlinedIcon style={{ fontSize: 17 }} /></IconButton>
-        </RowActions>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+          {r.statut === 'PUBLIE' && (
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Retirer cet avis de la vitrine publique"
+              style={{ color: '#dc2626', borderColor: 'rgba(220, 38, 38, 0.25)', fontSize: 12, padding: '4px 8px' }}
+              onClick={() => moderer(r.id, 'MASQUE')}
+            >
+              <BlockOutlinedIcon style={{ fontSize: 15, marginRight: 4 }} />
+              Masquer
+            </Button>
+          )}
+          {r.statut === 'MASQUE' && (
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Rendre cet avis à nouveau visible sur la vitrine"
+              style={{ color: '#16a34a', borderColor: 'rgba(22, 163, 74, 0.25)', fontSize: 12, padding: '4px 8px' }}
+              onClick={() => moderer(r.id, 'PUBLIE')}
+            >
+              ✓ Rétablir
+            </Button>
+          )}
+          {r.statut === 'SIGNALE' && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Ignorer le signalement et maintenir l'avis visible"
+                style={{ color: '#16a34a', borderColor: 'rgba(22, 163, 74, 0.25)', fontSize: 12, padding: '4px 8px' }}
+                onClick={() => moderer(r.id, 'PUBLIE')}
+              >
+                ✓ Conserver
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Valider le signalement et masquer l'avis"
+                style={{ color: '#dc2626', borderColor: 'rgba(220, 38, 38, 0.25)', fontSize: 12, padding: '4px 8px' }}
+                onClick={() => moderer(r.id, 'MASQUE')}
+              >
+                <BlockOutlinedIcon style={{ fontSize: 15, marginRight: 4 }} />
+                Masquer
+              </Button>
+            </>
+          )}
+        </div>
       ),
     },
   ];
@@ -133,7 +176,7 @@ export default function ModerationAvis() {
         <KpiCard icon={<BlockOutlinedIcon style={{ fontSize: 20 }} />} label="Avis masques" value={stats.masques} sub="Retires de la vitrine" tone="slate" />
       </StatGrid>
 
-      <SplitLayout ratio="1.8fr 1fr">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%', marginTop: 24 }}>
         <Panel icon={<AssignmentOutlinedIcon style={{ fontSize: 20 }} />} title="File de moderation" padded={false}>
           <div style={{ padding: '14px 16px 0' }}>
             <FilterBar onReset={() => { setQ(''); setStatut(''); setNote(''); }}>
@@ -160,17 +203,19 @@ export default function ModerationAvis() {
         </Panel>
 
         <Panel icon={<BarChartOutlinedIcon style={{ fontSize: 20 }} />} title="Repartition des notes">
-          {stats.repartition.map((r) => (
-            <ProgressRow
-              key={r.n}
-              label={`${r.n} etoile${r.n > 1 ? 's' : ''} — ${r.count} avis`}
-              value={r.count}
-              total={stats.total || 1}
-              tone={r.n >= 4 ? 'green' : r.n === 3 ? 'gold' : 'red'}
-            />
-          ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            {stats.repartition.map((r) => (
+              <ProgressRow
+                key={r.n}
+                label={`${r.n} etoile${r.n > 1 ? 's' : ''} - ${r.count} avis`}
+                value={r.count}
+                total={stats.total || 1}
+                tone={r.n >= 4 ? 'green' : r.n === 3 ? 'gold' : 'red'}
+              />
+            ))}
+          </div>
         </Panel>
-      </SplitLayout>
+      </div>
     </div>
   );
 }

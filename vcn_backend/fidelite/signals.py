@@ -19,27 +19,38 @@ def mettre_a_jour_score(demandeur, points, motif):
 
 @receiver(post_save, sender=Paiement)
 def maj_score_sur_paiement(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.echeance and instance.echeance.contrat:
         demandeur = instance.echeance.contrat.demandeur
-        mettre_a_jour_score(demandeur, 5.0, "Paiement d'une échéance")
+        date_paiement = instance.date_paiement.date() if hasattr(instance.date_paiement, 'date') else instance.date_paiement
+        date_exigibilite = instance.echeance.date_exigibilite
+        
+        # Date limite normale : exigibilité (ex: le 10 du mois)
+        diff_jours = (date_paiement - date_exigibilite).days if (date_paiement and date_exigibilite) else 0
+        
+        if diff_jours <= 0:
+            # Payé à temps (avant ou le 10)
+            mettre_a_jour_score(demandeur, 5.0, "Paiement ponctuel de redevance (avant le 10)")
+        elif diff_jours <= 5:
+            # Payé entre le 11 et le 15 (retard léger)
+            mettre_a_jour_score(demandeur, -3.0, "Retard léger de paiement (réglé entre le 11 et le 15)")
+        else:
+            # Payé après le 15 (retard conséquent)
+            mettre_a_jour_score(demandeur, -7.0, f"Retard significatif de paiement ({diff_jours}j de retard, réglé après le 15)")
 
 @receiver(post_save, sender=Echeance)
 def maj_score_sur_retard_echeance(sender, instance, **kwargs):
-    """Malus de fidelite progressif lorsqu'une echeance bascule en retard de paiement."""
+    """Malus de fidélité progressif lorsqu'une échéance bascule en impayé de plus de 30 jours (1 mois de retard)."""
     if instance.statut == StatutEcheance.EN_RETARD and instance.contrat:
         demandeur = instance.contrat.demandeur
         nb_retards = Echeance.objects.filter(contrat__demandeur=demandeur, statut=StatutEcheance.EN_RETARD).count()
-        if nb_retards >= 5:
-            points = -15.0
-        elif nb_retards >= 3:
-            points = -10.0
-        elif nb_retards >= 2:
-            points = -7.0
-        else:
-            points = -5.0
-        motif = f"Impayé critique (#{nb_retards} retard(s)) — bail {instance.contrat.reference or instance.id}"
-        if not HistoriqueScore.objects.filter(demandeur=demandeur, motif=motif).exists():
-            mettre_a_jour_score(demandeur, points, motif)
+        
+        # Pour 1 mois d'arriéré impayé (> 30 jours) : malus de -12 points
+        # À 2 mois : procédure d'expulsion (pas de cumul infini de points)
+        if nb_retards == 1:
+            points = -12.0
+            motif = f"Impayé de 1 mois (> 30 jours) - bail {instance.contrat.reference or instance.id}"
+            if not HistoriqueScore.objects.filter(demandeur=demandeur, motif=motif).exists():
+                mettre_a_jour_score(demandeur, points, motif)
 
 @receiver(post_save, sender=Sanction)
 def maj_score_sur_sanction(sender, instance, created, **kwargs):
@@ -47,13 +58,9 @@ def maj_score_sur_sanction(sender, instance, created, **kwargs):
         demandeur = instance.contrat.demandeur
         points = 0
         if instance.niveau == NiveauSanction.AVERTISSEMENT:
-            points = -10.0
-        elif instance.niveau == NiveauSanction.RAPPEL_A_L_ORDRE:
-            points = -15.0
+            points = -3.0
         elif instance.niveau == NiveauSanction.CONVOCATION:
-            points = -20.0
-        elif instance.niveau == NiveauSanction.EXPULSION:
-            points = -50.0
+            points = -5.0
         
         if points < 0:
             mettre_a_jour_score(demandeur, points, f"Sanction: {instance.niveau}")
@@ -70,7 +77,7 @@ def maj_score_sur_avis(sender, instance, created, **kwargs):
 
 
 # ---------------------------------------------------------------------------
-# Phase 3 — le parcours de candidature alimente aussi le score de fidelite.
+# Phase 3 - le parcours de candidature alimente aussi le score de fidelite.
 # ---------------------------------------------------------------------------
 
 @receiver(post_save, sender=Demande)
@@ -86,18 +93,9 @@ def maj_score_sur_decision_demande(sender, instance, created, **kwargs):
     if instance.statut not in bareme:
         return
     points, motif = bareme[instance.statut]
-    motif_complet = f"{motif} — dossier {instance.reference_anonyme}"
+    motif_complet = f"{motif} - dossier {instance.reference_anonyme}"
     # Idempotence : un meme dossier ne cree qu'une seule ligne par motif.
     if HistoriqueScore.objects.filter(demandeur=instance.demandeur, motif=motif_complet).exists():
         return
     mettre_a_jour_score(instance.demandeur, points, motif_complet)
 
-@receiver(post_save, sender=Plainte)
-def maj_score_sur_plainte(sender, instance, created, **kwargs):
-    """Pénalité lorsqu'un occupant signale un problème (dégradation)."""
-    if created and instance.plaignant:
-        try:
-            demandeur = instance.plaignant.profil_demandeur
-            mettre_a_jour_score(demandeur, -5.0, "Signalement de problème technique")
-        except AttributeError:
-            pass

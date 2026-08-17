@@ -1,4 +1,4 @@
-"""Tests Phase 3 — appels a candidature, chronologie de suivi, commission."""
+"""Tests Phase 3 - appels a candidature, chronologie de suivi, commission."""
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.test import APITestCase
@@ -28,7 +28,7 @@ class Phase3TestCase(APITestCase):
         self.membre = MembreCommission.objects.create(utilisateur=self.membre_user, commission=self.commission)
         self.local = Local.objects.create(
             reference="LOC-P3", localisation="Zone A", type_local="RESTAURATION",
-            surface_m2=20, capacite_accueil=10,
+            surface_m2=20,
         )
 
     # ── Communication : publication d'un appel ────────────────────────────

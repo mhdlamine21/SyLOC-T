@@ -41,7 +41,7 @@ export const updateSanction = async (id, data) => {
   return response.data;
 };
 
-/* Audit Phase 1 — tous les ViewSets terrain sont des ModelViewSet complets. */
+/* Audit Phase 1 - tous les ViewSets terrain sont des ModelViewSet complets. */
 export const getPlainteById = async (id) => (await api.get(`/terrain/plaintes/${id}/`)).data;
 export const deletePlainte = async (id) => (await api.delete(`/terrain/plaintes/${id}/`)).data;
 export const getInspectionById = async (id) => (await api.get(`/terrain/inspections/${id}/`)).data;
@@ -52,7 +52,7 @@ export const getSanctionById = async (id) => (await api.get(`/terrain/sanctions/
 export const deleteSanction = async (id) => (await api.delete(`/terrain/sanctions/${id}/`)).data;
 
 /* ------------------------------------------------------------------ *
- * Phase 5 — Statistiques QHSE, ordres de mission, maintenance
+ * Phase 5 - Statistiques QHSE, ordres de mission, maintenance
  * ------------------------------------------------------------------ */
 
 /** Statistiques des plaintes/signalements (filtres optionnels). */
@@ -131,7 +131,7 @@ export const getStatistiquesMaintenance = async (params = {}) =>
   (await api.get('/terrain/maintenance/statistiques/', { params })).data;
 
 /* ------------------------------------------------------------------ *
- * Dispatch d'agent de terrain — occupants au score de fidélité
+ * Dispatch d'agent de terrain - occupants au score de fidélité
  * fortement négatif (déclenché par la Commission Environnement)
  * ------------------------------------------------------------------ */
 
@@ -148,7 +148,7 @@ export const updateDispatchFidelite = async (id, data) =>
   (await api.patch(`/terrain/dispatch-fidelite/${id}/`, data)).data;
 
 /* ------------------------------------------------------------------ *
- * Rapports de visite terrain — cadence réglementaire de 10 jours,
+ * Rapports de visite terrain - cadence réglementaire de 10 jours,
  * transmission à la commission de rattachement de l'agent.
  * ------------------------------------------------------------------ */
 

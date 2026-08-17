@@ -31,7 +31,6 @@ class Local(BaseModel):
     type_local = models.CharField(max_length=30, choices=TypeLocal.choices)
     zone_cartographie = models.CharField(max_length=50, blank=True)
     surface_m2 = models.FloatField()
-    capacite_accueil = models.PositiveIntegerField(default=0)
     etat_physique = models.CharField(max_length=30, choices=EtatLocal.choices, default=EtatLocal.BON_ETAT)
     gestionnaire = models.CharField(max_length=20, choices=Gestionnaire.choices, default=Gestionnaire.CROUS_T)
     latitude = models.FloatField(null=True, blank=True)

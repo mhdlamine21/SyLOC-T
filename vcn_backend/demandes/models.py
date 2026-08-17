@@ -28,12 +28,13 @@ class TypeDocument(models.TextChoices):
 
 
 class StatutDemande(models.TextChoices):
-    NOUVELLE = "NOUVELLE", "Nouvelle demande"
+    NOUVELLE = "NOUVELLE", "En attente"
     CONTROLE_RECEVABILITE = "CONTROLE_RECEVABILITE", "Contrôle de recevabilité"
     MITIGEE_COMPLEMENT = "MITIGEE_COMPLEMENT", "En attente de compléments"
     EN_EXPERTISE_TECHNIQUE = "EN_EXPERTISE_TECHNIQUE", "Expertise technique"
     CONTROLE_HYGIENE = "CONTROLE_HYGIENE", "Contrôle sanitaire et hygiène"
     EN_ATTENTE_DECISION = "EN_ATTENTE_DECISION", "En attente de décision finale"
+    EN_COMMISSION = "EN_COMMISSION", "Transmis à la Commission d'évaluation"
     FAVORABLE = "FAVORABLE", "Favorable"
     DEFAVORABLE = "DEFAVORABLE", "Défavorable"
     MITIGEE_ARCHIVEE = "MITIGEE_ARCHIVEE", "Mitigée (Archivée)"
@@ -73,6 +74,7 @@ class AppelCandidature(BaseModel):
     est_actif = models.BooleanField(default=True)
     local = models.ForeignKey(Local, on_delete=models.CASCADE, related_name="appels_candidature")
     publie_par = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, related_name="appels_publies")
+    loyer_mensuel = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Montant du loyer ou redevance mensuelle en FCFA")
 
     class Meta:
         ordering = ['-date_lancement']
@@ -167,6 +169,7 @@ class Demande(BaseModel):
         StatutDemande.EN_EXPERTISE_TECHNIQUE,
         StatutDemande.CONTROLE_HYGIENE,
         StatutDemande.EN_ATTENTE_DECISION,
+        StatutDemande.EN_COMMISSION,
         StatutDemande.FAVORABLE,
     ]
 
@@ -296,3 +299,30 @@ class VoteCommission(BaseModel):
     def note_moyenne(self):
         notes = [n for n in (self.note_formelle, self.note_technique) if n is not None]
         return round(sum(notes) / len(notes), 2) if notes else None
+
+
+class StatutLot(models.TextChoices):
+    EN_COURS = "EN_COURS", "En cours d'évaluation"
+    CLOTURE = "CLOTURE", "Clôturé"
+
+
+class LotCommission(BaseModel):
+    """Groupe de demandes concurrentes sur un même local, envoyé à la commission."""
+    local = models.ForeignKey(Local, on_delete=models.CASCADE, related_name="lots_commission")
+    commission = models.ForeignKey(
+        Commission, on_delete=models.SET_NULL, null=True, blank=True, related_name="lots"
+    )
+    demandes = models.ManyToManyField(Demande, related_name="lots_commission")
+    cree_par = models.ForeignKey(
+        Utilisateur, on_delete=models.SET_NULL, null=True, related_name="lots_crees"
+    )
+    commentaire = models.TextField(blank=True)
+    statut = models.CharField(
+        max_length=20, choices=StatutLot.choices, default=StatutLot.EN_COURS
+    )
+
+    class Meta:
+        ordering = ['-date_creation']
+
+    def __str__(self):
+        return f"Lot {self.id} - Local {self.local_id} ({self.demandes.count()} demandes)"

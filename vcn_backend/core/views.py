@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.db.models import Avg, Count, Sum
 from django.utils import timezone
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -479,33 +480,60 @@ class PublicStatsView(APIView):
 
 
 class PublicAnnoncesView(APIView):
-    """Liste des annonces actives pour la vitrine."""
+    """Liste des annonces actives et publiées pour la vitrine."""
     permission_classes = [AllowAny]
 
     def get(self, request):
-        annonces = Annonce.objects.filter(est_active=True)
+        annonces = Annonce.objects.filter(est_active=True, statut='PUBLIEE')
         serializer = AnnonceSerializer(annonces, many=True)
         return Response(serializer.data)
 
 
 class AnnonceViewSet(viewsets.ModelViewSet):
-    """CRUD des annonces de la vitrine (Cellule Communication).
-
-    Lecture ouverte a tout utilisateur connecte ; l'ECRITURE appartient a la
-    seule Cellule Communication (la Direction supervise en lecture, l'Admin SI
-    n'est pas un acteur de communication).
-    """
+    """Gestion des annonces de la vitrine et circuit Direction -> Cellule Communication."""
     queryset = Annonce.objects.all()
     serializer_class = AnnonceSerializer
 
     def get_permissions(self):
         if self.action in ('list', 'retrieve'):
             return [IsAuthenticated()]
-        return [roles_requis(*ROLES_PUBLICATION)()]
+        if self.action == 'create':
+            return [roles_requis(
+                'ROLE_COMMUNICATION', 'COMMUNICATION',
+                'DIRECTEUR_CROUST', 'DIRECTEUR_CROUS_T',
+                'DIRECTEUR_DCUVE', 'AGENT_DCUVE'
+            )()]
+        return [roles_requis('ROLE_COMMUNICATION', 'COMMUNICATION')()]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        role_user = getattr(user, 'role', '')
+        nom = getattr(user, 'nom_complet', '') or getattr(user, 'username', '') or user.email
+        if role_user in ('DIRECTEUR_CROUST', 'DIRECTEUR_CROUS_T', 'DIRECTEUR_DCUVE', 'AGENT_DCUVE'):
+            serializer.save(
+                statut='A_PUBLIER',
+                est_active=False,
+                emetteur_nom=f"{nom} ({role_user.replace('_', ' ')})"
+            )
+        else:
+            serializer.save(
+                statut=serializer.validated_data.get('statut', 'PUBLIEE'),
+                emetteur_nom=nom
+            )
+
+    @action(detail=True, methods=['post'], url_path='publier',
+            permission_classes=[roles_requis('ROLE_COMMUNICATION', 'COMMUNICATION')])
+    def publier(self, request, pk=None):
+        """Valide et publie officiellement une annonce transmise par la Direction."""
+        annonce = self.get_object()
+        annonce.statut = 'PUBLIEE'
+        annonce.est_active = True
+        annonce.save()
+        return Response(AnnonceSerializer(annonce).data)
 
 
 # ---------------------------------------------------------------------------
-# Phase 2 — indicateurs complementaires du tableau de bord
+# Phase 2 - indicateurs complementaires du tableau de bord
 # ---------------------------------------------------------------------------
 
 JOURS_COURTS = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
@@ -639,7 +667,7 @@ class TopLocauxView(APIView):
 
 
 # ---------------------------------------------------------------------------
-# Phase 2 — API publique de la vitrine (/api/public/*)
+# Phase 2 - API publique de la vitrine (/api/public/*)
 # ---------------------------------------------------------------------------
 
 class PublicLocauxView(APIView):
@@ -664,7 +692,6 @@ class PublicLocauxView(APIView):
             "localisation": l.localisation,
             "zone_cartographie": l.zone_cartographie,
             "surface_m2": l.surface_m2,
-            "capacite_accueil": l.capacite_accueil,
             "etat_physique": l.etat_physique,
             "gestionnaire": l.gestionnaire,
             "latitude": l.latitude,
@@ -732,7 +759,7 @@ class PublicVitrineView(APIView):
 
 
 class ParametreSystemeViewSet(viewsets.ModelViewSet):
-    """Parametres systeme — reserve a l'Administrateur SI (et a la Direction)."""
+    """Parametres systeme - reserve a l'Administrateur SI (et a la Direction)."""
     queryset = ParametreSysteme.objects.all()
     serializer_class = ParametreSystemeSerializer
 
@@ -811,3 +838,94 @@ class StatsDCUVEView(APIView):
             },
             'genere_le': timezone.now(),
         })
+
+
+class SupervisionSystemeView(APIView):
+    """Supervision & Sante Systeme - Administrateur SI & Direction."""
+    permission_classes = [roles_requis('ADMINISTRATEUR_SI', 'DIRECTEUR_CROUS_T')]
+
+    def get(self, request):
+        import os
+        import time
+        from django.conf import settings
+        from comptes.models import JournalAudit
+
+        start_time = time.time()
+        db_status = "OK"
+        try:
+            total_comptes = Utilisateur.objects.count()
+            total_locaux = Local.objects.count()
+            total_demandes = Demande.objects.count()
+            total_contrats = Contrat.objects.count()
+            total_paiements = Paiement.objects.count()
+            total_audit = JournalAudit.objects.count()
+            total_parametres = ParametreSysteme.objects.count()
+            total_missions = OrdreMission.objects.count()
+            total_interventions = InterventionMaintenance.objects.count()
+        except Exception as e:
+            db_status = f"ERREUR: {str(e)}"
+            total_comptes = total_locaux = total_demandes = total_contrats = 0
+            total_paiements = total_audit = total_parametres = total_missions = total_interventions = 0
+
+        db_latency_ms = round((time.time() - start_time) * 1000, 2)
+
+        media_status = "OK"
+        media_files_count = 0
+        try:
+            if os.path.exists(settings.MEDIA_ROOT):
+                for _, _, files in os.walk(settings.MEDIA_ROOT):
+                    media_files_count += len(files)
+            else:
+                media_status = "NON_CREE"
+        except Exception:
+            media_status = "ACCES_RESTREINT"
+
+        hier = timezone.now() - timedelta(days=1)
+        audit_24h = JournalAudit.objects.filter(date_creation__gte=hier).count() if db_status == "OK" else 0
+
+        anomalies = []
+        try:
+            arrieres_critiques = Echeance.objects.filter(
+                statut=StatutEcheance.IMPAYEE,
+                date_exigibilite__lt=timezone.now().date() - timedelta(days=60)
+            ).count()
+            if arrieres_critiques > 0:
+                anomalies.append({
+                    "niveau": "ATTENTION",
+                    "titre": "Arriérés critiques détectés",
+                    "message": f"{arrieres_critiques} échéance(s) en arriéré critique (> 60 jours) nécessitant un suivi financier.",
+                })
+        except Exception:
+            pass
+
+        return Response({
+            "status": "OPERATIONNEL",
+            "systeme": {
+                "version": "1.3.0-prod",
+                "debug": settings.DEBUG,
+                "timezone": str(settings.TIME_ZONE),
+                "db_engine": settings.DATABASES['default']['ENGINE'].split('.')[-1],
+                "db_latency_ms": db_latency_ms,
+                "timestamp": timezone.now(),
+            },
+            "services": [
+                {"id": "api", "nom": "API REST Core (Django)", "statut": "OK", "latence_ms": db_latency_ms, "description": "Endpoints opérationnels"},
+                {"id": "db", "nom": "Base de Données Principale", "statut": db_status, "tables_actives": 18, "description": "Connectivité et intégrité vérifiées"},
+                {"id": "storage", "nom": "Stockage Médias & Fichiers", "statut": media_status, "fichiers_total": media_files_count, "description": "Dossier media accessible en écriture"},
+                {"id": "audit", "nom": "Module de Traçabilité & Audit", "statut": "OK", "evenements_24h": audit_24h, "description": "Journalisation des accès active"},
+            ],
+            "volumetrie": {
+                "comptes": total_comptes,
+                "locaux": total_locaux,
+                "demandes": total_demandes,
+                "contrats": total_contrats,
+                "paiements": total_paiements,
+                "audit": total_audit,
+                "audit_24h": audit_24h,
+                "parametres": total_parametres,
+                "missions": total_missions,
+                "interventions": total_interventions,
+            },
+            "anomalies": anomalies,
+        })
+

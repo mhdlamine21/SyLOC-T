@@ -20,7 +20,7 @@ function adapter(u, membresParUtilisateur) {
   return {
     ...u,
     nom_complet: u.nom_complet || u.username,
-    service: SERVICE_PAR_ROLE[u.role_effectif || u.role] || '—',
+    service: SERVICE_PAR_ROLE[u.role_effectif || u.role] || '-',
     statut: u.is_active ? 'ACTIF' : 'INACTIF',
     est_membre_commission: !!membre?.actif,
     membre_commission_id: membre?.id ?? null,
@@ -154,7 +154,7 @@ export default function GestionComptes() {
       majLocal(utilisateur.id, {
         role: maj.role,
         role_effectif: maj.role_effectif,
-        service: SERVICE_PAR_ROLE[maj.role_effectif || maj.role] || '—',
+        service: SERVICE_PAR_ROLE[maj.role_effectif || maj.role] || '-',
       });
       toast.success('Rôle et affectation mis à jour.');
       setSelected(null);
@@ -216,7 +216,7 @@ export default function GestionComptes() {
         {
           ...cree,
           nom_complet,
-          service: SERVICE_PAR_ROLE[cree.role] || '—',
+          service: SERVICE_PAR_ROLE[cree.role] || '-',
           statut: cree.is_active ? 'ACTIF' : 'INACTIF',
           est_membre_commission: !!membreId,
           membre_commission_id: membreId,
@@ -268,7 +268,7 @@ export default function GestionComptes() {
         </span>
       );
     } },
-    { key: 'service', label: 'Service / Département', render: (v) => <span className="text-xs font-mono text-muted">{v || '—'}</span> },
+    { key: 'service', label: 'Service / Département', render: (v) => <span className="text-xs font-mono text-muted">{v || '-'}</span> },
     {
       key: 'statut', label: 'Statut',
       render: (v) => (
@@ -303,7 +303,7 @@ export default function GestionComptes() {
         <SectionHeader
           eyebrow={isAdminSI ? 'Supervision SI' : 'Direction Générale CROUS-T'}
           title="Gestion des comptes utilisateurs du système"
-          subtitle={`${users.length} comptes — ${users.filter((u) => u.est_membre_commission).length} membres de la commission d'évaluation.`}
+          subtitle={`${users.length} comptes - ${users.filter((u) => u.est_membre_commission).length} membres de la commission d'évaluation.`}
         />
         <div className="flex gap-2">
           <Button variant="amber" size="sm" disabled={!users.length}
@@ -380,7 +380,7 @@ export default function GestionComptes() {
       </Card>
 
       {/* Modal Fiche Utilisateur */}
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Fiche Utilisateur — ${selected.nom_complet}` : ''} size="lg">
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Fiche Utilisateur - ${selected.nom_complet}` : ''} size="lg">
         {selected && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 text-sm bg-paper2 p-4 rounded border border-ink/10">
@@ -388,7 +388,7 @@ export default function GestionComptes() {
                 ['Identifiant', selected.username],
                 ['Nom complet', selected.nom_complet],
                 ['Email pro', selected.email || 'Non renseigné'],
-                ['Créé le', selected.date_joined ? new Date(selected.date_joined).toLocaleDateString('fr-SN') : '—'],
+                ['Créé le', selected.date_joined ? new Date(selected.date_joined).toLocaleDateString('fr-SN') : '-'],
                 ['Dernière connexion', selected.last_login ? new Date(selected.last_login).toLocaleString('fr-SN') : 'Jamais'],
                 ['Service / Affectation', selected.service || 'Non spécifié'],
                 ['Rôle principal', selected.role],

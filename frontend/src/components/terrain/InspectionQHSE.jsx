@@ -80,7 +80,7 @@ export default function InspectionQHSE() {
             ) : (
               <Select value={localId} onChange={(e) => setLocalId(e.target.value)}>
                 {locaux.map(l => (
-                  <option key={l.id} value={l.id}>{l.reference} — {l.type_local.replace(/_/g, ' ')}</option>
+                  <option key={l.id} value={l.id}>{l.reference} - {l.type_local.replace(/_/g, ' ')}</option>
                 ))}
               </Select>
             )}

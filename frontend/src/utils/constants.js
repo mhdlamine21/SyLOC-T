@@ -80,11 +80,12 @@ export const STATUTS_DEMANDE_LABELS = {
   MITIGEE_COMPLEMENT: "En attente de compléments",
   EN_EXPERTISE_TECHNIQUE: "Expertise technique",
   CONTROLE_HYGIENE: "Contrôle sanitaire et hygiène",
-  EN_ATTENTE_DECISION: "En attente de décision finale",
+  EN_ATTENTE_DECISION: "En attente de validation finale",
+  EN_COMMISSION: "Transmis à la Commission",
   FAVORABLE: "Favorable",
   DEFAVORABLE: "Défavorable",
   MITIGEE_ARCHIVEE: "Mitigée (archivée)",
-  EN_ATTENTE_SIGNATURE: "En attente de signature",
+  EN_ATTENTE_SIGNATURE: "En attente de validation finale",
   CONTRAT_ACCEPTE_RDV_FIXE: "Contrat accepté (RDV fixé)",
   CONTRAT_REFUSE: "Contrat refusé",
 };
@@ -218,15 +219,15 @@ export const TYPE_DEMANDE_OPTIONS = [
 ];
 
 // Règlement intérieur type annexé à tout contrat d'occupation domaniale.
-export const REGLEMENT_CONTRAT = `ARTICLE 1 — USAGE DU LOCAL : Le local est concédé à titre d'occupation domaniale précaire et révocable. Toute sous-location est formellement interdite sous peine de résiliation immédiate.
+export const REGLEMENT_CONTRAT = `ARTICLE 1 - USAGE DU LOCAL : Le local est concédé à titre d'occupation domaniale précaire et révocable. Toute sous-location est formellement interdite sous peine de résiliation immédiate.
 
-ARTICLE 2 — NORMES SANITAIRES ET PRIX : L'occupant s'engage à respecter la grille des prix arrêtée avec le CROUS-T et à maintenir un état de propreté irréprochable.
+ARTICLE 2 - NORMES SANITAIRES ET PRIX : L'occupant s'engage à respecter la grille des prix arrêtée avec le CROUS-T et à maintenir un état de propreté irréprochable.
 
-ARTICLE 3 — PAIEMENT DES REDEVANCES : La redevance est payable d'avance selon l'échéancier généré par la plateforme. Tout retard entraîne des pénalités et un rappel à l'ordre.
+ARTICLE 3 - PAIEMENT DES REDEVANCES : La redevance est payable d'avance selon l'échéancier généré par la plateforme. Tout retard entraîne des pénalités et un rappel à l'ordre.
 
-ARTICLE 4 — SANCTIONS & EXPULSION : En cas de non-conformités QHSE répétées ou d'impayé persistant, le contrat peut être résilié de plein droit après notification.`;
+ARTICLE 4 - SANCTIONS & EXPULSION : En cas de non-conformités QHSE répétées ou d'impayé persistant, le contrat peut être résilié de plein droit après notification.`;
 
-// terrain.models — Phase 5 (ordres de mission & maintenance technique)
+// terrain.models - Phase 5 (ordres de mission & maintenance technique)
 export const STATUTS_ORDRE_MISSION = {
   EMIS: "EMIS",
   EN_COURS: "EN_COURS",

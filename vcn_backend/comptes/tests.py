@@ -191,3 +191,70 @@ class DemandeurAPITest(APITestCase):
         self.assertEqual(self.demandeur.valide_par, self.agent)
 
 
+class NotificationAPITest(APITestCase):
+    def setUp(self):
+        self.usager = Utilisateur.objects.create_user(
+            username="usager_notif", email="u_notif@test.com", password="pwd", role=RoleUtilisateur.USAGER
+        )
+        self.agent = Utilisateur.objects.create_user(
+            username="agent_notif", email="a_notif@test.com", password="pwd", role=RoleUtilisateur.AGENT_DCUVE
+        )
+        self.comptable = Utilisateur.objects.create_user(
+            username="cpt_notif", email="c_notif@test.com", password="pwd", role=RoleUtilisateur.SERVICE_COMPTABLE
+        )
+        # Notifications pour l'usager
+        self.n1 = Notification.objects.create(
+            destinataire=self.usager, contenu="Dossier validé", canal=CanalNotification.EMAIL, est_lue=False
+        )
+        self.n2 = Notification.objects.create(
+            destinataire=self.usager, contenu="Quitus émis", canal=CanalNotification.SMS, est_lue=False
+        )
+        # Notification pour l'agent
+        self.n3 = Notification.objects.create(
+            destinataire=self.agent, contenu="Nouveau dossier soumis", canal=CanalNotification.EMAIL, est_lue=False
+        )
+
+    def test_liste_notifications_usager(self):
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.get('/api/comptes/notifications/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        self.assertEqual(len(results), 2)
+        # Ne voit pas la notif de l'agent
+        ids = [item['id'] for item in results]
+        self.assertNotIn(str(self.n3.id), ids)
+
+    def test_liste_notifications_agent_et_comptable(self):
+        self.client.force_authenticate(user=self.agent)
+        response = self.client.get('/api/comptes/notifications/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        self.assertEqual(len(results), 1)
+
+        self.client.force_authenticate(user=self.comptable)
+        response = self.client.get('/api/comptes/notifications/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        self.assertEqual(len(results), 0)
+
+    def test_non_lues_count(self):
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.get('/api/comptes/notifications/non-lues/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('count'), 2)
+
+    def test_marquer_lue(self):
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.post(f'/api/comptes/notifications/{self.n1.id}/marquer-lue/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.n1.refresh_from_db()
+        self.assertTrue(self.n1.est_lue)
+
+    def test_marquer_toutes_lues(self):
+        self.client.force_authenticate(user=self.usager)
+        response = self.client.post('/api/comptes/notifications/marquer-toutes-lues/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Notification.objects.filter(destinataire=self.usager, est_lue=False).count(), 0)
+
+
+

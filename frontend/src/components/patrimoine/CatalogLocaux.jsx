@@ -1,41 +1,32 @@
 import HouseSidingOutlinedIcon from '@mui/icons-material/HouseSidingOutlined';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getLocaux } from '../../api/patrimoine';
 import { messageErreur } from '../../api/utils';
-import { TYPES_LOCAL_LABELS, ETATS_LOCAL } from '../../utils/constants';
 import { useAuth } from '../../context/AuthContext';
-import InteractiveGpsMap from '../common/InteractiveGpsMap';
-import { Card, SectionHeader, StatusBadge, Button, PageWrapper, Modal, EmptyState, LoadingState } from '../common/ui';
+import { Card, SectionHeader, StatusBadge, Button, PageWrapper, Modal, EmptyState, LoadingState, Input } from '../common/ui';
 import toast from 'react-hot-toast';
-import photoBoutique from '../../assets/local_boutique_sn.jpg';
-import photoCantine from '../../assets/local_cantine_sn.jpg';
-import photoDisponible from '../../assets/local_disponible_sn.jpg';
-import photoOccupe from '../../assets/local_occupe_sn.jpg';
+import {
+  photoLocal, categorieOccupation, estCandidatable, phraseDisponibilite,
+  formatSurface, libelleType, libelleEtat, libelleGestionnaire, correspondRecherche,
+  formatLoyerMensuel,
+} from '../../utils/locaux';
 
-/** Photo de repli (visuels du campus, contexte senegalais) selon le type/etat du local. */
-export function photoLocal(loc) {
-  if (loc?.photo_url) return loc.photo_url;
-  if (loc?.type_local === 'RESTAURATION') return photoCantine;
-  if (loc?.type_local === 'PAPETERIE' || loc?.type_local === 'MULTISERVICES') return photoOccupe;
-  if (loc?.est_libre) return photoDisponible;
-  return photoBoutique;
-}
+// Reexports historiques : ces regles vivent desormais dans utils/locaux.js
+export { photoLocal, categorieOccupation };
 
-/** Categorie d'occupation unifiee : DISPONIBLE / OCCUPE / AUTRE. */
-export function categorieOccupation(loc) {
-  const indispo = ['EN_TRAVAUX', 'DEGRADE', 'NECESSITE_RENOVATION'].includes(loc?.etat_physique);
-  if (!loc?.est_libre) return 'OCCUPE';
-  return indispo ? 'AUTRE' : 'DISPONIBLE';
-}
-
-const LIBELLES_ETAT = Object.fromEntries(ETATS_LOCAL.map((e) => [e.value, e.label]));
+const FILTRES = [
+  { value: 'TOUS', label: 'Tous les locaux' },
+  { value: 'DISPONIBLE', label: 'Disponibles' },
+  { value: 'OCCUPE', label: 'Occupés' },
+];
 
 export default function CatalogLocaux() {
   const [locaux, setLocaux] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLocal, setSelectedLocal] = useState(null);
-  const [filtreEtat, setFiltreEtat] = useState('TOUS'); // 'TOUS', 'DISPONIBLE', 'OCCUPE', 'AUTRE'
+  const [filtreEtat, setFiltreEtat] = useState('TOUS'); // 'TOUS' | 'DISPONIBLE' | 'OCCUPE'
+  const [recherche, setRecherche] = useState('');
   const { role } = useAuth();
   const navigate = useNavigate();
 
@@ -54,10 +45,14 @@ export default function CatalogLocaux() {
     return () => { annule = true; };
   }, []);
 
-  // Clic sur un marqueur de la carte : ouvre la fiche du local correspondant.
-  const handleLocationSelect = useCallback((local) => {
-    if (local?.id && local.id !== 'GPS_CUSTOM') setSelectedLocal(local);
-  }, []);
+  const resultats = useMemo(
+    () => locaux.filter((l) => correspondRecherche(l, recherche)),
+    [locaux, recherche],
+  );
+  const affiches = useMemo(
+    () => resultats.filter((l) => filtreEtat === 'TOUS' || categorieOccupation(l) === filtreEtat),
+    [resultats, filtreEtat],
+  );
 
   const postuler = (local) => {
     setSelectedLocal(null);
@@ -73,30 +68,36 @@ export default function CatalogLocaux() {
       <SectionHeader
         eyebrow="Patrimoine & Locaux Domaniaux"
         title="Catalogue des locaux commercialisés"
-        subtitle="Carte interactive et fiches détaillées des emplacements commerciaux du campus VCN — CROUS de Thiès."
+        subtitle="Carte interactive et fiches détaillées des emplacements commerciaux du campus VCN - CROUS de Thiès."
       />
 
       <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
         <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 16 }}>
-          Pour explorer géographiquement les locaux et calculer un itinéraire piéton, 
+          Pour explorer géographiquement les locaux et calculer un itinéraire piéton,
           veuillez consulter la page <strong>Carte GPS des locaux</strong> depuis le menu.
         </p>
+        <Input
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="Rechercher un local (référence, type, localisation, gestionnaire)…"
+          style={{ marginBottom: 16, maxWidth: 460 }}
+        />
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {['TOUS', 'DISPONIBLE', 'OCCUPE'].map(f => (
+          {FILTRES.map(({ value, label }) => (
             <button
-              key={f}
-              onClick={() => setFiltreEtat(f)}
+              key={value}
+              onClick={() => setFiltreEtat(value)}
               style={{
                 padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                background: filtreEtat === f ? 'var(--navy)' : 'var(--surface-2)',
-                color: filtreEtat === f ? '#fff' : 'var(--text-navy)',
-                border: filtreEtat === f ? '1px solid var(--navy)' : '1px solid var(--border)',
+                background: filtreEtat === value ? 'var(--navy)' : 'var(--surface-2)',
+                color: filtreEtat === value ? 'var(--text-on-navy)' : 'var(--text-navy)',
+                border: filtreEtat === value ? '1px solid var(--navy)' : '1px solid var(--border)',
                 transition: 'all 0.2s'
               }}
             >
-              {f === 'TOUS' ? 'Tous les locaux' : f === 'DISPONIBLE' ? 'Disponibles' : 'Occupés'}
+              {label}
               <span style={{ marginLeft: 8, opacity: 0.7, fontVariantNumeric: 'tabular-nums' }}>
-                {f === 'TOUS' ? locaux.length : locaux.filter((l) => categorieOccupation(l) === f).length}
+                {value === 'TOUS' ? resultats.length : resultats.filter((l) => categorieOccupation(l) === value).length}
               </span>
             </button>
           ))}
@@ -105,18 +106,17 @@ export default function CatalogLocaux() {
 
       {loading ? (
         <LoadingState label="Chargement des locaux…" />
-      ) : locaux.length === 0 ? (
+      ) : affiches.length === 0 ? (
         <EmptyState
           icon={<HouseSidingOutlinedIcon style={{ fontSize: 20 }} />}
-          title="Aucun local au référentiel"
-          description="Le référentiel patrimoine est vide pour le moment."
+          title={locaux.length === 0 ? 'Aucun local au référentiel' : 'Aucun local ne correspond'}
+          description={locaux.length === 0
+            ? 'Le référentiel patrimoine est vide pour le moment.'
+            : 'Affinez votre recherche ou changez de filtre de disponibilité.'}
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-          {locaux.filter(l => {
-            if (filtreEtat === 'TOUS') return true;
-            return categorieOccupation(l) === filtreEtat;
-          }).map((loc) => (
+          {affiches.map((loc) => (
             <Card key={loc.id} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <img
@@ -125,14 +125,30 @@ export default function CatalogLocaux() {
                   loading="lazy"
                   style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 12, marginBottom: 12 }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--slate)' }}>{loc.reference}</span>
-                  <StatusBadge statut={categorieOccupation(loc)} />
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: 'var(--gold-deep)',
+                      backgroundColor: 'rgba(201, 161, 92, 0.15)',
+                      padding: '2px 6px',
+                      borderRadius: 6,
+                    }}>
+                      💰 {formatLoyerMensuel(loc)}
+                    </span>
+                    <StatusBadge statut={categorieOccupation(loc)} />
+                  </div>
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, margin: '0 0 6px', color: 'var(--text-navy)' }}>
-                  {TYPES_LOCAL_LABELS[loc.type_local] || loc.type_local} — {loc.surface_m2} m²
+                  {libelleType(loc)} - {formatSurface(loc.surface_m2)}
                 </h3>
                 <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '0 0 10px' }}>{loc.localisation}</p>
+                <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 10px' }}>
+                  Gestionnaire : {libelleGestionnaire(loc)}
+                </p>
               </div>
 
               <Button variant="primary" size="sm" onClick={() => setSelectedLocal(loc)}>
@@ -148,20 +164,33 @@ export default function CatalogLocaux() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <img src={photoLocal(selectedLocal)} alt={`Local ${selectedLocal.reference}`} loading="lazy" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 14 }} />
             <div>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--text-navy)', margin: '0 0 6px' }}>
-                {TYPES_LOCAL_LABELS[selectedLocal.type_local] || selectedLocal.type_local} ({selectedLocal.surface_m2} m²)
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--text-navy)', margin: 0 }}>
+                  {libelleType(selectedLocal)} ({formatSurface(selectedLocal.surface_m2)})
+                </h3>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: 'var(--gold-deep)',
+                  backgroundColor: 'rgba(201, 161, 92, 0.15)',
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                }}>
+                  💰 Loyer : {formatLoyerMensuel(selectedLocal)}
+                </span>
+              </div>
               <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 2 }}>
                 <div>{selectedLocal.localisation}</div>
-                <div>Capacité d'accueil : {selectedLocal.capacite_accueil ?? '—'}</div>
-                <div>État : {LIBELLES_ETAT[selectedLocal.etat_physique] || selectedLocal.etat_physique}</div>
-                <div>Gestionnaire : {selectedLocal.gestionnaire === 'AMICALE' ? 'Amicale' : 'CROUS-T'}</div>
-                <div>{selectedLocal.est_libre ? 'Disponible à la candidature' : 'Actuellement occupé'}</div>
+                <div>Surface : {formatSurface(selectedLocal.surface_m2)}</div>
+                <div>État : {libelleEtat(selectedLocal)}</div>
+                <div>Gestionnaire : {libelleGestionnaire(selectedLocal)}</div>
+                <div>{phraseDisponibilite(selectedLocal)}</div>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
               <Button variant="ghost" onClick={() => setSelectedLocal(null)}>Fermer</Button>
-              {selectedLocal.est_libre && (
+              {estCandidatable(selectedLocal) && (
                 <Button variant="amber" onClick={() => postuler(selectedLocal)}>
                   ✈ Postuler pour ce local
                 </Button>

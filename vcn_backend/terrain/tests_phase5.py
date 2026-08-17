@@ -1,4 +1,4 @@
-"""Phase 5 — tests dedies : ordres de mission, maintenance technique, rapport QHSE."""
+"""Phase 5 - tests dedies : ordres de mission, maintenance technique, rapport QHSE."""
 import datetime
 
 from django.utils import timezone

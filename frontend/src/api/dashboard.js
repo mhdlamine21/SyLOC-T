@@ -15,7 +15,7 @@ export const getPublicAnnonces = async () => {
   return response.data;
 };
 
-/** Phase 2 — blocs complementaires : 7 jours, paiements, top locaux. */
+/** Phase 2 - blocs complementaires : 7 jours, paiements, top locaux. */
 export const getDashboardComplement = async (params = {}) => {
   const response = await api.get('/dashboard/complement/', { params });
   return response.data;
@@ -47,7 +47,7 @@ export const getStatsDcuve = async () => {
   return response.data;
 };
 
-/** Serie journaliere des paiements pour un mois donne — Service Comptable. */
+/** Serie journaliere des paiements pour un mois donne - Service Comptable. */
 export const getPaiementsMois = async (annee, mois) => {
   const response = await api.get('/dashboard/paiements-mois/', { params: { annee, mois } });
   return response.data;

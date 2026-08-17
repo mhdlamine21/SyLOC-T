@@ -14,6 +14,6 @@ export const marquerNotificationLue = async (id) =>
 export const marquerToutesLues = async () =>
   (await api.post('/comptes/notifications/marquer-toutes-lues/')).data;
 
-// Audit Phase 1 — suppression d'une notification.
+// Audit Phase 1 - suppression d'une notification.
 export const supprimerNotification = async (id) =>
   (await api.delete(`/comptes/notifications/${id}/`)).data;

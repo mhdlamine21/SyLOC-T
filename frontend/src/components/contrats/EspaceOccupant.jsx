@@ -26,6 +26,7 @@ import {
   ProgressRow, MiniStat, RowActions, IconButton,
 } from '../common/dashboard';
 import QuitusFormatModal from './QuitusFormatModal';
+import { ouvrirBailPDF } from '../../utils/pdfGenerator';
 
 const STATUT_TONE = { PAYEE: 'green', EXIGIBLE: 'gold', EN_RETARD: 'red', NON_ECHUE: 'slate' };
 const fmt = (n) => `${Number(n || 0).toLocaleString('fr-FR')} FCFA`;
@@ -102,19 +103,19 @@ export default function EspaceOccupant() {
         return <strong style={{ fontFamily: 'var(--font-mono)' }}>Mois #{i + 1}</strong>;
       },
     },
-    { key: 'date_exigibilite', label: 'Date limite', render: (r) => (r.date_exigibilite ? new Date(r.date_exigibilite).toLocaleDateString('fr-FR') : '—') },
+    { key: 'date_exigibilite', label: 'Date limite', render: (r) => (r.date_exigibilite ? new Date(r.date_exigibilite).toLocaleDateString('fr-FR') : '-') },
     { key: 'montant_du', label: 'Montant', align: 'right', render: (r) => fmt(r.montant_du) },
     {
       key: 'montant_penalite',
       label: 'Penalite',
       align: 'right',
-      render: (r) => (Number(r.montant_penalite) > 0 ? <span style={{ color: 'var(--red)' }}>{fmt(r.montant_penalite)}</span> : '—'),
+      render: (r) => (Number(r.montant_penalite) > 0 ? <span style={{ color: 'var(--red)' }}>{fmt(r.montant_penalite)}</span> : '-'),
     },
     {
       key: 'reste_a_payer',
       label: 'Reste à payer',
       align: 'right',
-      render: (r) => (r.reste_a_payer != null ? fmt(r.reste_a_payer) : '—'),
+      render: (r) => (r.reste_a_payer != null ? fmt(r.reste_a_payer) : '-'),
     },
     { key: 'statut', label: 'Statut', render: (r) => <Pill tone={STATUT_TONE[r.statut] || 'slate'}>{(r.statut || '').replace(/_/g, ' ')}</Pill> },
     {
@@ -144,10 +145,10 @@ export default function EspaceOccupant() {
     {
       key: 'date_paiement',
       label: 'Date',
-      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '—'),
+      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '-'),
     },
-    { key: 'reference_quitus', label: 'N° Quitus', render: (r) => r.reference_quitus || '—' },
-    { key: 'mode_libelle', label: 'Mode', render: (r) => r.mode_libelle || r.mode || '—' },
+    { key: 'reference_quitus', label: 'N° Quitus', render: (r) => r.reference_quitus || '-' },
+    { key: 'mode_libelle', label: 'Mode', render: (r) => r.mode_libelle || r.mode || '-' },
     { key: 'montant_regle', label: 'Montant', align: 'right', render: (r) => fmt(r.montant_regle) },
     {
       key: 'actions',
@@ -164,12 +165,16 @@ export default function EspaceOccupant() {
               border: '1px solid #fcd34d',
               borderRadius: 6,
               padding: '3px 8px',
-            }}>
-              ⏳ En attente validation
+            }}
+              title={r.mode === 'ESPECES'
+                ? "Présentez-vous au Service Comptable pour remettre le montant : votre quitus sera émis après encaissement."
+                : "Le Service Comptable doit confirmer votre dépôt Mobile Money avant l'émission du quitus."}
+            >
+              ⏳ {r.mode === 'ESPECES' ? 'À régler au Service Comptable' : 'En attente de confirmation'}
             </span>
           );
         }
-        if (!r.reference_quitus) return <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>;
+        if (!r.reference_quitus) return <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>-</span>;
         return (
           <RowActions>
             <IconButton title="Réimprimer le quitus" tone="navy" onClick={() => rejouerQuitus(r)}>
@@ -191,7 +196,7 @@ export default function EspaceOccupant() {
           <Select value={selId} onChange={(e) => setSelId(e.target.value)} style={{ minWidth: 220 }}>
             {contrats.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.local_reference || 'Bail'} — {c.demandeur_nom || ''}
+                {c.local_reference || 'Bail'} - {c.demandeur_nom || ''}
               </option>
             ))}
           </Select>
@@ -256,8 +261,8 @@ export default function EspaceOccupant() {
                 <Panel icon={<HistoryEduOutlinedIcon style={{ fontSize: 20 }} />} title="Bail domanial">
                   <div style={{ display: 'grid', gap: 8 }}>
                     <MiniStat icon={<HomeOutlinedIcon style={{ fontSize: 20 }} />} label="Local attribue" value={contrat.local_reference || contrat.local} />
-                    <MiniStat icon={<PersonOutlineOutlinedIcon style={{ fontSize: 20 }} />} label="Titulaire" value={contrat.demandeur_nom || '—'} tone="navy" />
-                    <MiniStat icon={<EventOutlinedIcon style={{ fontSize: 20 }} />} label="Date d'effet" value={contrat.date_debut || '—'} />
+                    <MiniStat icon={<PersonOutlineOutlinedIcon style={{ fontSize: 20 }} />} label="Titulaire" value={contrat.demandeur_nom || '-'} tone="navy" />
+                    <MiniStat icon={<EventOutlinedIcon style={{ fontSize: 20 }} />} label="Date d'effet" value={contrat.date_debut || '-'} />
                     <MiniStat icon={<HourglassEmptyOutlinedIcon style={{ fontSize: 20 }} />} label="Duree" value={`${contrat.duree_mois || 0} mois`} />
                     <MiniStat icon={<NotificationsOutlinedIcon style={{ fontSize: 20 }} />} label="Preavis" value={`${contrat.preavis_mois || 0} mois`} />
                     <MiniStat
@@ -269,8 +274,8 @@ export default function EspaceOccupant() {
                   {contrat.motif_resiliation && (
                     <p style={{ fontSize: 12, color: 'var(--red)', margin: '10px 0 0' }}>Motif : {contrat.motif_resiliation}</p>
                   )}
-                  <Button variant="secondary" size="sm" style={{ marginTop: 12 }} onClick={() => window.print()}>
-                    Imprimer le bail
+                  <Button variant="secondary" size="sm" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => ouvrirBailPDF(contrat)}>
+                    <DownloadOutlinedIcon style={{ fontSize: 16 }} /> Consulter le bail (PDF)
                   </Button>
                 </Panel>
               )}

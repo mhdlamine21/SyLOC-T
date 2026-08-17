@@ -22,7 +22,7 @@ class TypeContrat(models.TextChoices):
 
 
 class ModeleContrat(BaseModel):
-    """Modele (gabarit) de contrat gere par le Service Juridique — Phase 4.
+    """Modele (gabarit) de contrat gere par le Service Juridique - Phase 4.
 
     `corps` contient un texte avec des variables `{{cle}}` remplacees a la
     redaction (voir contrats/services.py). Cela permet au juridique de faire

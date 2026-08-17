@@ -71,7 +71,7 @@ class InterventionMaintenanceSerializer(serializers.ModelSerializer):
         ]
 
 
-# ── Phase 6 — rapports de visite terrain & dispatch fidelite ──────────────
+# ── Phase 6 - rapports de visite terrain & dispatch fidelite ──────────────
 from .models import RapportVisiteTerrain, DispatchFidelite, CADENCE_VISITE_JOURS  # noqa: E402
 
 

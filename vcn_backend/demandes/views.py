@@ -6,12 +6,13 @@ from core.audit import journaliser
 from core.acteurs import ROLES_PUBLICATION_APPELS, peut_instruire_dossier
 from core.permissions import roles_requis
 from .models import (
-    AppelCandidature, Demande, Dossier, VoteCommission, MembreCommission, StatutDemande,
-    Commission, MotifActivationCommission,
+    AppelCandidature, CritereAppel, Demande, Dossier, VoteCommission, MembreCommission, StatutDemande,
+    Commission, MotifActivationCommission, LotCommission,
 )
 from .serializers import (
-    AppelCandidatureSerializer, DemandeSerializer, DemandeAnonymeSerializer, DossierSerializer,
+    AppelCandidatureSerializer, CritereAppelSerializer, DemandeSerializer, DemandeAnonymeSerializer, DossierSerializer,
     VoteCommissionSerializer, MembreCommissionSerializer, CommissionSerializer, ArchivageSerializer,
+    LotCommissionSerializer,
 )
 from .services import DemandeService, calculer_score_correspondance
 
@@ -39,6 +40,75 @@ class AppelCandidatureViewSet(viewsets.ModelViewSet):
         )
         serializer = self.get_serializer(appels, many=True)
         return Response(serializer.data)
+
+    def _verrou_publication(self):
+        from rest_framework.exceptions import PermissionDenied
+        user = self.request.user
+        if user.role not in ROLES_PUBLICATION_APPELS and not user.is_superuser:
+            raise PermissionDenied(
+                "Seules la Cellule Communication et l'Amicale pilotent un appel a candidature."
+            )
+
+    @action(detail=True, methods=['post'])
+    def cloturer(self, request, pk=None):
+        """Cloture manuelle d'un appel : plus aucune candidature acceptee."""
+        self._verrou_publication()
+        appel = self.get_object()
+        appel.cloturer()
+        journaliser(request.user, "CLOTURE_APPEL", f"Appel {appel.titre}")
+        return Response(self.get_serializer(appel).data)
+
+    @action(detail=True, methods=['get', 'post'])
+    def criteres(self, request, pk=None):
+        """Criteres de selection rattaches a l'appel (lecture / ajout)."""
+        appel = self.get_object()
+        if request.method.lower() == 'get':
+            return Response(
+                CritereAppelSerializer(appel.criteres.all(), many=True).data
+            )
+        self._verrou_publication()
+        serializer = CritereAppelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        critere = serializer.save(appel=appel)
+        journaliser(request.user, "AJOUT_CRITERE_APPEL", f"Appel {appel.titre}",
+                    f"{critere.type_critere}={critere.valeur_cible}")
+        return Response(CritereAppelSerializer(critere).data, status=status.HTTP_201_CREATED)
+
+
+class CritereAppelViewSet(viewsets.ModelViewSet):
+    """Criteres de selection : lecture pour tous les comptes authentifies,
+    ecriture reservee aux roles qui publient les appels."""
+    queryset = CritereAppel.objects.select_related('appel').all()
+    serializer_class = CritereAppelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        appel = self.request.query_params.get('appel')
+        if appel:
+            qs = qs.filter(appel_id=appel)
+        if self.request.query_params.get('actifs'):
+            qs = qs.filter(actif=True)
+        return qs
+
+    def _verrou(self):
+        from rest_framework.exceptions import PermissionDenied
+        user = self.request.user
+        if user.role not in ROLES_PUBLICATION_APPELS and not user.is_superuser:
+            raise PermissionDenied("Votre role ne permet pas de modifier les criteres d'un appel.")
+
+    def perform_create(self, serializer):
+        self._verrou()
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._verrou()
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._verrou()
+        instance.delete()
+
 
 class DemandeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -205,6 +275,84 @@ class DemandeViewSet(viewsets.ModelViewSet):
         dossier.enregistrer_dossier_physique()
         journaliser(request.user, "RECEPTION_PHYSIQUE", f"Dossier {demande.reference_anonyme}")
         return Response({'status': 'Pièces physiques réceptionnées avec succès.'})
+
+    @action(detail=True, methods=['post'], url_path='demander-complement',
+            permission_classes=[roles_requis(
+                'BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'DIRECTEUR_CROUS_T')])
+    def demander_complement(self, request, pk=None):
+        """La DCUVE reclame des pieces complementaires au candidat."""
+        demande = self.get_object()
+        commentaire = (request.data.get('commentaire') or '').strip()
+        if not commentaire:
+            return Response(
+                {"commentaire": ["Precisez les pieces attendues."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        demande_maj = DemandeService.changer_statut(
+            demande, StatutDemande.MITIGEE_COMPLEMENT, request.user, commentaire
+        )
+        if getattr(demande_maj, 'demandeur', None):
+            Notification.objects.create(
+                destinataire=demande_maj.demandeur.utilisateur,
+                contenu=(
+                    f"Votre dossier {demande_maj.reference_anonyme} est en attente de "
+                    f"pieces complementaires : {commentaire}"
+                ),
+            )
+        journaliser(request.user, "DEMANDE_COMPLEMENT",
+                    f"Demande {demande_maj.reference_anonyme}", commentaire)
+        return Response(DemandeSerializer(demande_maj).data)
+
+    @action(detail=True, methods=['post'], url_path='re-soumettre',
+            permission_classes=[permissions.IsAuthenticated])
+    def re_soumettre(self, request, pk=None):
+        """Re-soumission par le candidat après complétion des pièces manquantes.
+
+        Accessible uniquement au demandeur lui-même (USAGER ou OCCUPANT).
+        Remet le dossier à NOUVELLE pour qu'il réintègre la bannette du Bureau du Courrier.
+        """
+        demande = self.get_object()
+
+        est_demandeur = (
+            hasattr(demande, 'demandeur')
+            and demande.demandeur.utilisateur_id == request.user.id
+        )
+        if not est_demandeur and not request.user.is_superuser:
+            return Response(
+                {"detail": "Seul le demandeur peut re-soumettre son dossier."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if demande.statut != StatutDemande.MITIGEE_COMPLEMENT:
+            return Response(
+                {"detail": "Ce dossier n'est pas en attente de complément."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        demande_maj = DemandeService.changer_statut(
+            demande, StatutDemande.NOUVELLE, request.user,
+            "Re-soumission du candidat après complétion des pièces manquantes."
+        )
+
+        # Notifier tous les agents du Bureau du Courrier
+        from comptes.models import Utilisateur
+        agents_bc = Utilisateur.objects.filter(role='BUREAU_COURRIER')
+        for agent in agents_bc:
+            Notification.objects.create(
+                destinataire=agent,
+                contenu=(
+                    f"Le dossier {demande_maj.reference_anonyme} a été re-soumis "
+                    f"par le candidat après complétion des pièces manquantes. "
+                    f"Il est de nouveau disponible dans la bannette d'arrivée."
+                ),
+            )
+
+        journaliser(
+            request.user, "RESOUSMISSION_DEMANDE",
+            f"Demande {demande_maj.reference_anonyme}",
+            "Candidat re-soumet après complément"
+        )
+        return Response(DemandeSerializer(demande_maj).data)
 
     @action(detail=True, methods=['post'], permission_classes=[roles_requis(
         'BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'SERVICE_JURIDIQUE',
@@ -585,25 +733,203 @@ class DemandeViewSet(viewsets.ModelViewSet):
         votes = demande.votes.all()
         favorables = votes.filter(avis='FAVORABLE').count()
         defavorables = votes.filter(avis='DEFAVORABLE').count()
-        
+        abstentions = votes.filter(avis='ABSTENTION').count()
+
         notes = []
         for v in votes:
             if v.note_formelle is not None: notes.append(v.note_formelle)
             if v.note_technique is not None: notes.append(v.note_technique)
         note_moyenne = round(sum(notes) / len(notes), 2) if notes else None
-        
-        # Simuler quorum: on a 1 vote, on dit que le quorum est de 1 pour le test
-        quorum_atteint = votes.count() > 0 
+
+        membres_actifs = MembreCommission.objects.filter(actif=True).count()
+        quorum_requis = max(1, membres_actifs // 2 + 1) if membres_actifs > 0 else 1
+        quorum_atteint = votes.count() >= quorum_requis
+
         sens_majoritaire = 'FAVORABLE' if favorables > defavorables else ('DEFAVORABLE' if defavorables > favorables else 'MITIGE')
-        
+
+        votes_data = [
+            {
+                'id': str(v.id),
+                'avis': v.avis,
+                'note_formelle': v.note_formelle,
+                'note_technique': v.note_technique,
+                'commentaire': v.commentaire,
+                'est_mon_vote': bool(v.membre and v.membre.utilisateur_id == request.user.id),
+            }
+            for v in votes
+        ]
+
         return Response({
+            'reference': demande.reference_anonyme or f"DEM-{str(demande.id)[:8].upper()}",
             'total_votes': votes.count(),
             'favorables': favorables,
             'defavorables': defavorables,
+            'abstentions': abstentions,
+            'membres_actifs': membres_actifs,
+            'quorum_requis': quorum_requis,
+            'quorum_atteint': quorum_atteint,
             'sens_majoritaire': sens_majoritaire,
             'note_moyenne': note_moyenne,
-            'quorum_atteint': quorum_atteint
+            'votes': votes_data,
         })
+
+    @action(detail=False, methods=['get'], url_path='par-local',
+            permission_classes=[roles_requis('DIRECTEUR_DCUVE', 'AGENT_DCUVE')])
+    def demandes_par_local(self, request):
+        """Renvoie les demandes EN_ATTENTE_DECISION groupées par local.
+        Seuls les locaux avec au moins 2 demandes concurrentes sont retournés.
+        """
+        STATUTS_CONCURRENCE = [
+            StatutDemande.CONTROLE_RECEVABILITE,
+            StatutDemande.EN_EXPERTISE_TECHNIQUE,
+            StatutDemande.CONTROLE_HYGIENE,
+            StatutDemande.EN_ATTENTE_DECISION,
+            StatutDemande.EN_COMMISSION,
+        ]
+        qs = Demande.objects.filter(
+            statut__in=STATUTS_CONCURRENCE,
+            archive=False,
+            local__isnull=False,
+        ).select_related('local', 'demandeur__utilisateur')
+
+        # Grouper par local
+        groupes = {}
+        for d in qs:
+            lid = d.local_id
+            if lid not in groupes:
+                groupes[lid] = {
+                    'local_id': lid,
+                    'local_reference': d.local.reference if d.local else '',
+                    'local_designation': getattr(d.local, 'designation', '') or getattr(d.local, 'type_local', ''),
+                    'demandes': [],
+                }
+            groupes[lid]['demandes'].append(DemandeSerializer(d).data)
+
+        # Filtrer uniquement les locaux avec concurrence (>= 2)
+        resultats = [
+            {**g, 'nb_candidatures': len(g['demandes']), 'en_lot': False}
+            for g in groupes.values()
+            if len(g['demandes']) >= 2
+        ]
+
+        # Marquer si un lot actif existe déjà pour ce local
+        lots_actifs = set(
+            LotCommission.objects.filter(statut='EN_COURS').values_list('local_id', flat=True)
+        )
+        for r in resultats:
+            r['en_lot'] = r['local_id'] in lots_actifs
+
+        return Response(sorted(resultats, key=lambda x: -x['nb_candidatures']))
+
+    @action(detail=False, methods=['post'], url_path='creer-lot-commission',
+            permission_classes=[roles_requis('DIRECTEUR_DCUVE')])
+    def creer_lot_commission(self, request):
+        """Groupe des demandes concurrentes sur un même local, active la commission
+        automatiquement et passe les demandes à EN_COMMISSION.
+        """
+        demande_ids = request.data.get('demande_ids', [])
+        commentaire = request.data.get('commentaire', '')
+
+        if not demande_ids or len(demande_ids) < 2:
+            return Response(
+                {'detail': 'Au moins 2 demandes sont requises pour constituer un lot.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        demandes = Demande.objects.filter(
+            id__in=demande_ids, archive=False, local__isnull=False
+        )
+        if demandes.count() != len(demande_ids):
+            return Response(
+                {'detail': 'Certaines demandes sont introuvables ou archivées.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Vérifier que toutes les demandes visent le même local
+        locaux = set(demandes.values_list('local_id', flat=True))
+        if len(locaux) > 1:
+            return Response(
+                {'detail': 'Toutes les demandes doivent cibler le même local.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        local_id = locaux.pop()
+
+        # Récupérer ou créer la commission active
+        from django.utils import timezone
+        from comptes.models import Utilisateur
+        commission = Commission.objects.filter(active=True).first()
+        if not commission:
+            commission = Commission.objects.order_by('-date_creation').first()
+        if not commission:
+            commission = Commission.objects.create(
+                nom="Commission d'évaluation",
+                creee_par=request.user,
+            )
+
+        # Auto-activer si elle n'est pas déjà active
+        if not commission.active:
+            commission.active = True
+            commission.date_activation = timezone.now()
+            commission.motif_activation = MotifActivationCommission.ARBITRAGE
+            commission.commentaire_activation = (
+                f"Activation automatique - concurrence détectée sur Local {local_id}. "
+                f"Lot constitué par {request.user.nom_complet or request.user.username}."
+            )
+            commission.save()
+
+        # Créer le lot
+        lot = LotCommission.objects.create(
+            local_id=local_id,
+            commission=commission,
+            cree_par=request.user,
+            commentaire=commentaire,
+        )
+        lot.demandes.set(demandes)
+
+        # Passer toutes les demandes à EN_COMMISSION
+        for demande in demandes:
+            DemandeService.changer_statut(
+                demande, StatutDemande.EN_COMMISSION, request.user,
+                f"Transmis en commission - Lot constitué par {request.user.nom_complet or request.user.username}."
+            )
+
+        # Notifier les membres de la commission
+        membres_users = Utilisateur.objects.filter(
+            profil_commission__actif=True,
+            profil_commission__commission=commission,
+        )
+        for u in membres_users:
+            Notification.objects.create(
+                destinataire=u,
+                contenu=(
+                    f"Un lot de {len(demande_ids)} candidature(s) sur le Local {local_id} "
+                    f"vous a été soumis pour évaluation en commission. "
+                    f"Connectez-vous pour voter sur chaque dossier."
+                ),
+            )
+
+        journaliser(
+            request.user, "CREATION_LOT_COMMISSION",
+            f"Lot {lot.id} - Local {local_id}",
+            f"{len(demande_ids)} demandes transmises"
+        )
+        return Response(LotCommissionSerializer(lot).data, status=status.HTTP_201_CREATED)
+
+
+class LotCommissionViewSet(viewsets.ModelViewSet):
+    """Expose les lots en lecture + cloture."""
+    queryset = LotCommission.objects.select_related('local', 'commission', 'cree_par').prefetch_related('demandes').all()
+    serializer_class = LotCommissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        statut = self.request.query_params.get('statut')
+        if statut:
+            qs = qs.filter(statut=statut)
+        return qs
+
 
 class DossierViewSet(viewsets.ModelViewSet):
     queryset = Dossier.objects.all()

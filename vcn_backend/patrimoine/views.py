@@ -48,3 +48,27 @@ class LocalViewSet(viewsets.ModelViewSet):
         qs = [loc for loc in self.get_queryset() if loc.statut_occupation == StatutOccupation.DISPONIBLE]
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
+
+    # Correspondance entre la nature du projet deposé par le candidat et la
+    # vocation des emplacements que le CROUS-T autorise pour ce projet.
+    VOCATIONS_AUTORISEES = {
+        'LOCAL_ARTISANAL': ['ARTISANAT'],
+        'VENTE_ALIMENTAIRE': ['RESTAURATION'],
+        'VENTE_PRODUIT': ['PAPETERIE', 'MULTISERVICES'],
+        'PRESTATION_SERVICE': ['MULTISERVICES'],
+    }
+
+    @action(detail=False, methods=['get'], url_path='emplacements-autorises')
+    def emplacements_autorises(self, request):
+        """Emplacements ou un type de projet est autorise (avec photo de vitrine).
+
+        Utilise par l'assistant de depot : le candidat visualise les lieux
+        autorises pour son projet (ex. local artisanal) et choisit le sien.
+        """
+        type_demande = (request.query_params.get('type_demande') or '').upper()
+        vocations = self.VOCATIONS_AUTORISEES.get(type_demande)
+        qs = [loc for loc in self.get_queryset() if loc.statut_occupation == StatutOccupation.DISPONIBLE]
+        if vocations:
+            qs = [loc for loc in qs if loc.type_local in vocations]
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)

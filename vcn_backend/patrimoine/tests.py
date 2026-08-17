@@ -44,8 +44,7 @@ class PatrimoineAPITest(APITestCase):
             "reference": "L-002",
             "localisation": "Bâtiment B",
             "type_local": TypeLocal.MULTISERVICES,
-            "surface_m2": 12.0,
-            "capacite_accueil": 5
+            "surface_m2": 12.0
         }
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

@@ -6,26 +6,31 @@ export const getEcheances = async (params = {}) =>
 
 export const getPaiements = async () => toArray((await api.get('/paiements/')).data);
 
-export const reglerPaiement = async (echeance_id, montant_regle, mode, reference_transaction = '') => {
-  const response = await api.post('/paiements/regler/', {
-    echeance_id,
-    montant_regle,
-    mode,
-    reference_transaction,
-  });
+export const reglerPaiement = async (
+  echeance_id,
+  montant_regle,
+  mode,
+  reference_transaction = '',
+  numero_payeur = '',
+) => {
+  // `numero_payeur` est OBLIGATOIRE cote backend pour le Mobile Money :
+  // l'omettre renvoyait un 400 et donnait l'impression d'une panne serveur.
+  const payload = { echeance_id, montant_regle, mode, reference_transaction };
+  if (numero_payeur) payload.numero_payeur = numero_payeur;
+  const response = await api.post('/paiements/regler/', payload);
   return response.data;
 };
 export const validerPaiement = async (id) => (await api.post(`/paiements/${id}/valider/`)).data;
 
 export const getPaiementsEnAttente = async () => toArray((await api.get('/paiements/en_attente/')).data);
-/* Audit Phase 1 — PaiementViewSet est un ModelViewSet, EcheanceViewSet en lecture seule. */
+/* Audit Phase 1 - PaiementViewSet est un ModelViewSet, EcheanceViewSet en lecture seule. */
 export const getEcheanceById = async (id) => (await api.get(`/paiements/echeances/${id}/`)).data;
 export const getPaiementById = async (id) => (await api.get(`/paiements/${id}/`)).data;
 export const createPaiement = async (data) => (await api.post('/paiements/', data)).data;
 export const updatePaiement = async (id, data) => (await api.patch(`/paiements/${id}/`, data)).data;
 export const deletePaiement = async (id) => (await api.delete(`/paiements/${id}/`)).data;
 
-// ============================= Phase 4 — Service Comptable =============================
+// ============================= Phase 4 - Service Comptable =============================
 
 /** Force l'actualisation des statuts d'echeances (NON_ECHUE -> EXIGIBLE -> EN_RETARD + penalites). */
 export const actualiserEcheances = async () => (await api.post('/paiements/echeances/actualiser/')).data;
@@ -44,9 +49,13 @@ export const getCaisse = async () => (await api.get('/paiements/caisse/')).data;
 
 /** Liste tous les quitus emis (SERVICE_COMPTABLE, DIRECTEUR_CROUS_T) ou ceux de l'occupant connecte. */
 export const getAllQuitus = async (params = {}) =>
-  (await api.get('/paiements/registre_quitus/', { params })).data;
+  toArray((await api.get('/paiements/registre_quitus/', { params })).data);
 
 /** Paiements en especes EN_ATTENTE de validation par la caisse. */
 export const getEspecesEnAttente = async () =>
-  (await api.get('/paiements/en_attente_especes/')).data;
+  toArray((await api.get('/paiements/en_attente_especes/')).data);
 
+
+/** Numeros officiels Orange Money / Wave (accessible a tout utilisateur connecte, occupant inclus). */
+export const getConfigMobileMoney = async () =>
+  (await api.get('/paiements/config-mobile-money/')).data;

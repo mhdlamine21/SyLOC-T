@@ -6,7 +6,7 @@ import {
   PageWrapper, SectionHeader, Card, Button, Field, Input, Textarea, Select, AlertBanner,
 } from '../common/ui';
 import { TYPE_DEMANDE_OPTIONS } from '../../utils/constants';
-import { getLocaux } from '../../api/patrimoine';
+import { getLocaux, getEmplacementsAutorises } from '../../api/patrimoine';
 import { createDemande, getAppelsOuverts, uploadDocumentDemande } from '../../api/demandes';
 import { messageErreur } from '../../api/utils';
 
@@ -69,7 +69,27 @@ const ETAPES = [
   { numero: 4, titre: 'Récapitulatif', aide: 'Vérification & dépôt' },
 ];
 
-const dateLocale = (v) => (v ? new Date(v).toLocaleDateString('fr-SN') : '—');
+/**
+ * Vocations d'emplacement autorisees par nature de projet (miroir du backend
+ * patrimoine/views.py). Sert de repli si l'endpoint dedie est indisponible.
+ */
+const VOCATIONS_AUTORISEES = {
+  LOCAL_ARTISANAL: ['ARTISANAT'],
+  VENTE_ALIMENTAIRE: ['RESTAURATION'],
+  VENTE_PRODUIT: ['PAPETERIE', 'MULTISERVICES'],
+  PRESTATION_SERVICE: ['MULTISERVICES'],
+};
+
+const LIBELLE_VOCATION = {
+  ARTISANAT: 'artisanat',
+  RESTAURATION: 'restauration',
+  PAPETERIE: 'papeterie',
+  MULTISERVICES: 'multiservices',
+};
+
+const PHOTO_DEFAUT = 'https://images.unsplash.com/photo-1531379754864-96a46fdefc60?auto=format&fit=crop&w=1200&q=70';
+
+const dateLocale = (v) => (v ? new Date(v).toLocaleDateString('fr-SN') : '-');
 
 function FilAriane({ etape }) {
   return (
@@ -92,7 +112,7 @@ function FilAriane({ etape }) {
               <span style={{ fontSize: 13, fontWeight: 700 }}>{e.titre}</span>
               <span style={{ fontSize: 11, opacity: 0.75 }}>{e.aide}</span>
             </div>
-            {index < ETAPES.length - 1 && <span style={{ opacity: 0.4 }}>—</span>}
+            {index < ETAPES.length - 1 && <span style={{ opacity: 0.4 }}>-</span>}
           </div>
         );
       })}
@@ -118,6 +138,8 @@ export default function DepotDemande() {
   const [locaux, setLocaux] = useState([]);
   const [appels, setAppels] = useState([]);
   const [resultat, setResultat] = useState(null);
+  const [emplacements, setEmplacements] = useState([]);
+  const [chargementEmplacements, setChargementEmplacements] = useState(false);
 
   useEffect(() => {
     getLocaux()
@@ -131,14 +153,45 @@ export default function DepotDemande() {
     getAppelsOuverts().then(setAppels).catch(() => setAppels([]));
   }, []);
 
+  // Galerie photo des emplacements : reservee au LOCAL ARTISANAL. Pour les
+  // autres natures de projet, le candidat reste sur la liste deroulante des
+  // locaux libres (pas de selection par photo).
+  const vocations = form.type === 'LOCAL_ARTISANAL' ? VOCATIONS_AUTORISEES.LOCAL_ARTISANAL : null;
+
+  useEffect(() => {
+    if (!vocations) { setEmplacements([]); return; }
+    let annule = false;
+    setChargementEmplacements(true);
+    getEmplacementsAutorises(form.type)
+      .then((liste) => { if (!annule) setEmplacements(liste); })
+      .catch(() => {
+        // Repli local : on filtre le referentiel deja charge.
+        if (!annule) {
+          setEmplacements(locaux.filter((l) => l.est_libre && vocations.includes(l.type_local)));
+        }
+      })
+      .finally(() => { if (!annule) setChargementEmplacements(false); });
+    return () => { annule = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.type, locaux]);
+
+  // Si le local pre-selectionne n'est pas autorise pour ce type de projet, on le retire.
+  useEffect(() => {
+    if (!vocations || emplacements.length === 0 || !form.local_id) return;
+    if (!emplacements.some((l) => String(l.id) === String(form.local_id))) {
+      setForm((f) => ({ ...f, local_id: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emplacements]);
+
   const docsRequis = EXIGENCES_DOCUMENTS[form.type] || EXIGENCES_DOCUMENTS.VENTE_PRODUIT;
   const appelChoisi = useMemo(
     () => appels.find((a) => String(a.id) === String(form.appel_id)) || null,
     [appels, form.appel_id],
   );
   const localChoisi = useMemo(
-    () => locaux.find((l) => String(l.id) === String(form.local_id)) || null,
-    [locaux, form.local_id],
+    () => [...locaux, ...emplacements].find((l) => String(l.id) === String(form.local_id)) || null,
+    [locaux, emplacements, form.local_id],
   );
 
   const validerEtape = (numero) => {
@@ -149,7 +202,9 @@ export default function DepotDemande() {
       }
     }
     if (numero === 2 && !form.local_id) {
-      e.local_id = 'Sélectionnez le local visé par votre candidature.';
+      e.local_id = vocations
+        ? 'Choisissez un emplacement autorisé parmi les lieux proposés ci-dessus.'
+        : 'Sélectionnez le local visé par votre candidature.';
     }
     if (numero === 3) {
       const manquantes = docsRequis.filter((d) => d.obligatoire && !fichiers[d.code]);
@@ -313,7 +368,7 @@ export default function DepotDemande() {
                   <option value="">Candidature spontanée (hors appel)</option>
                   {appels.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.titre} — clôture le {dateLocale(a.date_cloture)}
+                      {a.titre} - clôture le {dateLocale(a.date_cloture)}
                     </option>
                   ))}
                 </Select>
@@ -321,7 +376,7 @@ export default function DepotDemande() {
 
               {appelChoisi && (
                 <AlertBanner type="info">
-                  <strong>{appelChoisi.titre}</strong> — {appelChoisi.description}
+                  <strong>{appelChoisi.titre}</strong> - {appelChoisi.description}
                   {appelChoisi.criteres?.length > 0 && (
                     <ul className="mt-2 text-xs list-disc pl-5">
                       {appelChoisi.criteres.map((c) => (
@@ -334,6 +389,82 @@ export default function DepotDemande() {
                 </AlertBanner>
               )}
 
+              {vocations ? (
+                <div>
+                  <p className="font-display font-bold text-sm text-ink mb-1">
+                    Emplacements autorisés pour ce type de projet
+                    <span className="text-teal font-mono bg-teal-pale px-2 py-0.5 rounded ml-2 text-xs">
+                      {vocations.map((v) => LIBELLE_VOCATION[v] || v.toLowerCase()).join(' / ')}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted mb-4">
+                    Le CROUS-T n'autorise ce type de projet que sur les emplacements ci-dessous.
+                    Cliquez sur la photo du lieu souhaité puis continuez votre dépôt.
+                  </p>
+
+                  {errors.local_id && <AlertBanner type="warn" className="mb-4">{errors.local_id}</AlertBanner>}
+
+                  {chargementEmplacements && (
+                    <p className="text-sm text-muted">Chargement des emplacements autorisés…</p>
+                  )}
+
+                  {!chargementEmplacements && emplacements.length === 0 && (
+                    <AlertBanner type="warn">
+                      Aucun emplacement n'est actuellement disponible pour ce type de projet.
+                      Consultez le catalogue des locaux ou les appels à candidature ultérieurement.
+                    </AlertBanner>
+                  )}
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {emplacements.map((l) => {
+                      const actif = String(form.local_id) === String(l.id);
+                      return (
+                        <button
+                          key={l.id}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, local_id: l.id }))}
+                          className="text-left rounded-lg overflow-hidden transition-all"
+                          style={{
+                            border: '2px solid ' + (actif ? 'var(--teal, #0f766e)' : 'rgba(15,23,42,.14)'),
+                            background: actif ? 'var(--teal-pale, #ecfdf5)' : 'var(--surface-2, #f8fafc)',
+                            boxShadow: actif ? '0 8px 20px rgba(15,118,110,.18)' : '0 2px 6px rgba(0,0,0,.06)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ position: 'relative' }}>
+                            <img
+                              src={l.photo_url || l.photo || PHOTO_DEFAUT}
+                              alt={`Emplacement ${l.reference} - ${l.localisation}`}
+                              loading="lazy"
+                              onError={(ev) => { ev.currentTarget.src = PHOTO_DEFAUT; }}
+                              style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }}
+                            />
+                            {actif && (
+                              <span
+                                className="font-mono"
+                                style={{
+                                  position: 'absolute', top: 8, right: 8, background: 'var(--teal, #0f766e)',
+                                  color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 8px', borderRadius: 999,
+                                }}
+                              >
+                                ✓ Choisi
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <p className="font-bold text-sm text-ink">{l.reference} - {l.localisation}</p>
+                            <p className="text-xs text-muted mt-1">
+                              {l.surface_m2} m² · {LIBELLE_VOCATION[l.type_local] || l.type_local}
+                              {l.zone_cartographie ? ` · zone ${l.zone_cartographie}` : ''}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+              <>
               <Field
                 label="Local commercial ciblé *"
                 required
@@ -344,10 +475,10 @@ export default function DepotDemande() {
                   value={form.local_id}
                   onChange={(e) => setForm((f) => ({ ...f, local_id: e.target.value }))}
                 >
-                  <option value="">— Sélectionner un local libre —</option>
+                  <option value="">- Sélectionner un local libre -</option>
                   {locaux.map((l) => (
                     <option key={l.id} value={l.id} disabled={!l.est_libre}>
-                      {l.reference} — {l.localisation} ({l.surface_m2} m²) {l.est_libre ? '— Libre' : '— Occupé (indisponible)'}
+                      {l.reference} - {l.localisation} ({l.surface_m2} m²) {l.est_libre ? '- Libre' : '- Occupé (indisponible)'}
                     </option>
                   ))}
                 </Select>
@@ -358,6 +489,8 @@ export default function DepotDemande() {
                   Les locaux marqués <strong>« Occupé »</strong> ne peuvent pas être sélectionnés : un bail domanial est
                   actuellement en cours sur ces emplacements. Ils réapparaîtront disponibles dès leur libération effective.
                 </AlertBanner>
+              )}
+              </>
               )}
             </div>
           </Card>
@@ -433,7 +566,7 @@ export default function DepotDemande() {
               <div className="p-4 rounded-lg bg-surface-2 border border-border">
                 <p className="text-[11px] text-muted uppercase font-mono tracking-wider mb-1">Local ciblé</p>
                 <p className="font-bold text-ink text-base">
-                  {localChoisi ? `${localChoisi.reference} — ${localChoisi.localisation}` : '—'}
+                  {localChoisi ? `${localChoisi.reference} - ${localChoisi.localisation}` : '-'}
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-surface-2 border border-border">

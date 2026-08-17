@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     AppelCandidature, CritereAppel, Demande, Dossier, HistoriqueStatutDemande,
-    VoteCommission, Document, MembreCommission, Commission,
+    VoteCommission, Document, MembreCommission, Commission, LotCommission,
 )
 
 class MembreCommissionSerializer(serializers.ModelSerializer):
@@ -25,6 +25,9 @@ class AppelCandidatureSerializer(serializers.ModelSerializer):
     est_ouvert = serializers.BooleanField(read_only=True)
     nombre_candidatures = serializers.SerializerMethodField()
     local_reference = serializers.CharField(source='local.reference', read_only=True)
+    local_type = serializers.CharField(source='local.type_local', read_only=True)
+    local_surface = serializers.FloatField(source='local.surface_m2', read_only=True)
+    local_localisation = serializers.CharField(source='local.localisation', read_only=True)
     publie_par_nom = serializers.CharField(source='publie_par.nom_complet', read_only=True)
 
     class Meta:
@@ -50,6 +53,8 @@ class DemandeSerializer(serializers.ModelSerializer):
     appel_titre = serializers.CharField(source='appel_candidature.titre', read_only=True)
     est_cloturee = serializers.BooleanField(read_only=True)
     nombre_documents = serializers.SerializerMethodField()
+    nb_renvois = serializers.SerializerMethodField()
+    derniere_note_complement = serializers.SerializerMethodField()
 
     class Meta:
         model = Demande
@@ -59,6 +64,15 @@ class DemandeSerializer(serializers.ModelSerializer):
     def get_nombre_documents(self, obj):
         dossier = getattr(obj, 'dossier', None)
         return dossier.documents.count() if dossier else 0
+
+    def get_nb_renvois(self, obj):
+        return obj.historique.filter(nouveau_statut='MITIGEE_COMPLEMENT').count()
+
+    def get_derniere_note_complement(self, obj):
+        dernier = obj.historique.filter(
+            nouveau_statut='MITIGEE_COMPLEMENT'
+        ).order_by('-date_creation').first()
+        return dernier.commentaire_acteur if dernier else ''
 
 class DemandeAnonymeSerializer(serializers.ModelSerializer):
     """
@@ -146,3 +160,24 @@ class ArchivageSerializer(serializers.Serializer):
         ('AUTRE', 'Autre'),
     ])
     commentaire = serializers.CharField(required=True, allow_blank=False)
+
+
+class LotCommissionSerializer(serializers.ModelSerializer):
+    demandes = DemandeSerializer(many=True, read_only=True)
+    demandes_ids = serializers.PrimaryKeyRelatedField(
+        source='demandes', many=True, queryset=Demande.objects.all(), write_only=True
+    )
+    local_reference = serializers.CharField(source='local.reference', read_only=True)
+    local_id = serializers.IntegerField(source='local.id', read_only=True)
+    commission_nom = serializers.CharField(source='commission.nom', read_only=True)
+    commission_active = serializers.BooleanField(source='commission.active', read_only=True)
+    nb_demandes = serializers.SerializerMethodField()
+    cree_par_nom = serializers.CharField(source='cree_par.nom_complet', read_only=True)
+
+    class Meta:
+        model = LotCommission
+        fields = '__all__'
+        read_only_fields = ['id', 'date_creation', 'date_modification', 'cree_par', 'commission', 'statut']
+
+    def get_nb_demandes(self, obj):
+        return obj.demandes.count()

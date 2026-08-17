@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Card, SectionHeader, Button, Field, Select, Textarea, PageWrapper } from '../common/ui';
+import { useEffect, useMemo, useState } from 'react';
+import { Card, SectionHeader, Button, Field, Input, Textarea, PageWrapper } from '../common/ui';
 import { getLocaux } from '../../api/patrimoine';
 import { createAvis } from '../../api/avis';
 import toast from 'react-hot-toast';
@@ -8,7 +8,8 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import RestaurantOutlinedIcon from '@mui/icons-material/RestaurantOutlined';
-import localFallbackImg from '../../assets/local_croust.jpeg';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import { photoLocal, libelleType, formatSurface, correspondRecherche } from '../../utils/locaux';
 
 const StarRating = ({ value, onChange }) => {
   const [hover, setHover] = useState(0);
@@ -35,11 +36,11 @@ const StarRating = ({ value, onChange }) => {
         ))}
       </div>
       <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--gold)', background: 'var(--surface-2)', padding: '6px 12px', borderRadius: 8 }}>
-        {value === 1 && "1/5 — Inacceptable"}
-        {value === 2 && "2/5 — Médiocre"}
-        {value === 3 && "3/5 — Moyen"}
-        {value === 4 && "4/5 — Très bien"}
-        {value === 5 && "5/5 — Excellent"}
+        {value === 1 && "1/5 - Inacceptable"}
+        {value === 2 && "2/5 - Médiocre"}
+        {value === 3 && "3/5 - Moyen"}
+        {value === 4 && "4/5 - Très bien"}
+        {value === 5 && "5/5 - Excellent"}
       </span>
     </div>
   );
@@ -51,6 +52,7 @@ export default function LaisserAvis() {
   const [note, setNote] = useState(5);
   const [commentaire, setCommentaire] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recherche, setRecherche] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -90,6 +92,12 @@ export default function LaisserAvis() {
     }
   };
 
+  // Recherche d'un local a evaluer : reference, type, localisation, gestionnaire.
+  const resultats = useMemo(
+    () => locaux.filter((l) => correspondRecherche(l, recherche)),
+    [locaux, recherche],
+  );
+
   const charsLeft = Math.max(0, 20 - commentaire.length);
 
   return (
@@ -115,29 +123,46 @@ export default function LaisserAvis() {
           
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <Field label="Cantine / Local évalué *" required>
-              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, snapType: 'x mandatory' }}>
-                {locaux.length === 0 && <span style={{ color: 'var(--muted)' }}>Aucun local disponible</span>}
-                {locaux.map((l) => (
-                  <div 
-                    key={l.id} 
+              <div style={{ position: 'relative', marginBottom: 14 }}>
+                <SearchOutlinedIcon style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 18, color: 'var(--muted)', pointerEvents: 'none' }} />
+                <Input
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder="Rechercher une cantine ou un local (référence, type, localisation)…"
+                  style={{ paddingLeft: 38 }}
+                />
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+                {resultats.length} local(aux) trouvé(s){recherche ? ` pour « ${recherche} »` : ''}
+              </div>
+              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16, scrollSnapType: 'x mandatory' }}>
+                {resultats.length === 0 && (
+                  <span style={{ color: 'var(--muted)', fontSize: 13 }}>
+                    {locaux.length === 0 ? 'Aucun local disponible' : 'Aucun local ne correspond à votre recherche.'}
+                  </span>
+                )}
+                {resultats.map((l) => (
+                  <div
+                    key={l.id}
                     onClick={() => setLocalId(l.id)}
-                    style={{ 
-                      flex: '0 0 auto', width: 150, cursor: 'pointer', borderRadius: 12, 
-                      border: localId === l.id ? '2px solid var(--gold)' : '1px solid var(--border)', 
-                      background: 'var(--surface)', overflow: 'hidden', transition: 'all 0.2s', 
+                    style={{
+                      flex: '0 0 auto', width: 150, cursor: 'pointer', borderRadius: 12,
+                      border: localId === l.id ? '2px solid var(--gold)' : '1px solid var(--border)',
+                      background: 'var(--surface)', overflow: 'hidden', transition: 'all 0.2s',
                       opacity: localId === l.id ? 1 : 0.6,
                       transform: localId === l.id ? 'scale(1.02)' : 'scale(1)',
                       scrollSnapAlign: 'start'
                     }}>
-                    <img 
-                      src={l.photo_url || localFallbackImg} 
-                      alt="Local" 
-                      style={{ width: '100%', height: 90, objectFit: 'cover' }} 
+                    <img
+                      src={photoLocal(l)}
+                      alt={`Local ${l.reference}`}
+                      loading="lazy"
+                      style={{ width: '100%', height: 90, objectFit: 'cover' }}
                     />
                     <div style={{ padding: '8px 10px' }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-navy)' }}>{l.reference}</div>
                       <div style={{ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {l.designation || l.type_local}
+                        {libelleType(l)} - {formatSurface(l.surface_m2)}
                       </div>
                     </div>
                   </div>
@@ -155,7 +180,7 @@ export default function LaisserAvis() {
                   borderRadius: 12, padding: 12,
                 }}>
                   <img
-                    src={localChoisi.photo_url || localFallbackImg}
+                    src={photoLocal(localChoisi)}
                     alt={`Photo du local ${localChoisi.reference}`}
                     style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: 10, flexShrink: 0, boxShadow: 'var(--shadow-sm)' }}
                   />
@@ -168,7 +193,7 @@ export default function LaisserAvis() {
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-navy)' }}>{localChoisi.reference}</div>
                     <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>
-                      {localChoisi.designation || localChoisi.type_local} — {localChoisi.localisation || 'Campus VCN'}
+                      {libelleType(localChoisi)} - {formatSurface(localChoisi.surface_m2)} - {localChoisi.localisation || 'Campus VCN'}
                     </div>
                   </div>
                 </div>

@@ -69,7 +69,7 @@ export const cloturerLocalDemande = async (local_id, gagnant_id) =>
  * Voir docs/AUDIT_ENDPOINTS.md
  * ──────────────────────────────────────────────────────────────── */
 
-// DemandeViewSet — CRUD complet + actions metier
+// DemandeViewSet - CRUD complet + actions metier
 export const updateDemande = async (id, data) => (await api.patch(`${BASE}${id}/`, data)).data;
 export const deleteDemande = async (id) => (await api.delete(`${BASE}${id}/`)).data;
 export const validerDemande = async (id, commentaire = '') =>
@@ -99,7 +99,7 @@ export const updateVoteCommission = async (id, data) => (await api.patch(`${VOTE
 export const deleteVoteCommission = async (id) => (await api.delete(`${VOTES}${id}/`)).data;
 
 /* ────────────────────────────────────────────────────────────────
- * Phase 3 — Usager/Candidat, Communication, DCUVE & Commission.
+ * Phase 3 - Usager/Candidat, Communication, DCUVE & Commission.
  * ──────────────────────────────────────────────────────────────── */
 
 /** Chronologie du dossier : etapes du parcours + evenements horodates. */
@@ -134,7 +134,7 @@ export const getMesVotes = async () =>
   toArray((await api.get(VOTES, { params: { mes_votes: 1 } })).data);
 
 /* ────────────────────────────────────────────────────────────────
- * Commission d'évaluation — délégation, rapport & tâches des membres
+ * Commission d'évaluation - délégation, rapport & tâches des membres
  * ──────────────────────────────────────────────────────────────── */
 
 /** Rapport consolidé des travaux de la Commission (vue Directeur CROUS-T). */
@@ -144,3 +144,20 @@ export const getRapportCommission = async (params = {}) =>
 /** Tâches de la commission pour le membre connecté : dossiers à voter, échéances. */
 export const getMesTachesCommission = async () =>
   (await api.get('/demandes/membres/mes-taches/')).data;
+
+/** Re-soumission par le candidat après complétion des pièces manquantes.
+ *  Remet le dossier à NOUVELLE → bannette Bureau du Courrier. */
+export const resoumettreComplement = async (id) =>
+  (await api.post(`${BASE}${id}/re-soumettre/`)).data;
+
+/** Demandes groupées par local (concurrence) - DIRECTEUR_DCUVE. */
+export const getDemandesParLocal = async () =>
+  (await api.get(`${BASE}par-local/`)).data;
+
+/** Crée un lot, passe les demandes à EN_COMMISSION et active la commission. */
+export const creerLotCommission = async ({ demande_ids, commentaire = '' }) =>
+  (await api.post(`${BASE}creer-lot-commission/`, { demande_ids, commentaire })).data;
+
+/** Liste les lots commission (optionnellement filtrés par statut). */
+export const getLots = async (statut = '') =>
+  (await api.get('/demandes/lots-commission/', { params: statut ? { statut } : {} })).data;

@@ -15,7 +15,7 @@ export const updateContrat = async (id, data) => (await api.patch(`${BASE}${id}/
 export const createContrat = async (data) => (await api.post(BASE, data)).data;
 export const deleteContrat = async (id) => (await api.delete(`${BASE}${id}/`)).data;
 
-// ============================= Phase 4 — Service Juridique =============================
+// ============================= Phase 4 - Service Juridique =============================
 
 // --- Modèles d'actes -----------------------------------------------------------------
 export const getModelesContrat = async (actifsSeulement = false) =>

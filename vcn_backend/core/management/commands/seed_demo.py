@@ -15,7 +15,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from comptes.models import Demandeur, RoleUtilisateur, Utilisateur
+from comptes.models import Demandeur, RoleUtilisateur, Utilisateur, StatutVerificationEtudiant
 from contrats.models import Contrat
 from core.models import Annonce
 from demandes.models import Demande, Dossier, StatutDemande, TypeDemande
@@ -34,30 +34,32 @@ COMPTES = [
     ("comptable", "comptable", RoleUtilisateur.SERVICE_COMPTABLE, "Service Comptable"),
     ("technique", "technique", RoleUtilisateur.SERVICE_TECHNIQUE, "Service Technique"),
     ("terrain", "terrain", RoleUtilisateur.AGENT_TERRAIN, "Agent de Terrain"),
-    ("qhse", "qhse", RoleUtilisateur.AGENT_QHSE, "Agent Bureau Environnement"),
+    ("agent_qhse", "agent_qhse", RoleUtilisateur.AGENT_QHSE, "Ibrahima Fall (Agent QHSE Terrain)"),
+    ("qhse", "qhse", RoleUtilisateur.AGENT_QHSE, "Dr. Fatou Bintou Sow (Bureau Environnement)"),
     ("communication", "communication", RoleUtilisateur.CELLULE_COMMUNICATION, "Cellule Communication"),
     ("amicale", "amicale", RoleUtilisateur.AMICALE, "Amicale des etudiants"),
     ("admin_si", "admin_si", RoleUtilisateur.ADMINISTRATEUR_SI, "Administrateur SI"),
 ]
 
-# reference, localisation, type, surface, capacite, latitude, longitude, libre
 LOCAUX = [
-    ("LOC-001", "Campus VCN — Cantine centrale (Bloc A)", TypeLocal.RESTAURATION, 25.0, 20, 14.7915, -16.9258, False),
-    ("LOC-002", "Campus VCN — Kiosque multiservices (Bloc B)", TypeLocal.MULTISERVICES, 10.0, 2, 14.7921, -16.9261, True),
-    ("LOC-003", "Campus VCN — Espace commercial (Bloc C)", TypeLocal.ARTISANAT, 18.0, 6, 14.7918, -16.9248, True),
-    ("LOC-004", "Campus VCN — Papeterie universitaire", TypeLocal.PAPETERIE, 12.0, 4, 14.7905, -16.9259, True),
-    ("LOC-005", "Campus VCN — Point de vente Bloc D", TypeLocal.AUTRE, 9.0, 3, 14.7908, -16.9251, True),
+    # (reference, localisation, type, surface_m2, gestionnaire, lat, lng, libre)
+    # Seules deux boutiques du campus sont gerees par l'Amicale des etudiants.
+    ("LOC-001", "Campus VCN - Cantine centrale (Bloc A)", TypeLocal.RESTAURATION, 25.0, Gestionnaire.CROUS_T, 14.7915, -16.9258, False),
+    ("LOC-002", "Campus VCN - Kiosque multiservices (Bloc B)", TypeLocal.MULTISERVICES, 10.0, Gestionnaire.AMICALE, 14.7921, -16.9261, True),
+    ("LOC-003", "Campus VCN - Espace commercial (Bloc C)", TypeLocal.ARTISANAT, 18.0, Gestionnaire.CROUS_T, 14.7918, -16.9248, True),
+    ("LOC-004", "Campus VCN - Papeterie universitaire", TypeLocal.PAPETERIE, 12.0, Gestionnaire.AMICALE, 14.7905, -16.9259, True),
+    ("LOC-005", "Campus VCN - Point de vente Bloc D", TypeLocal.AUTRE, 9.0, Gestionnaire.CROUS_T, 14.7908, -16.9251, True),
 ]
 
 ANNONCES = [
     (
-        "Appel a candidature — Kiosque multiservices (LOC-002)",
+        "Appel a candidature - Kiosque multiservices (LOC-002)",
         "Le CROUS de Thies lance un appel a candidature pour l'exploitation du kiosque "
         "multiservices du Bloc B. Dossiers recevables jusqu'a la fin du mois au Bureau du Courrier.",
         "pin-gold",
     ),
     (
-        "Rappel — Reglement des redevances domaniales",
+        "Rappel - Reglement des redevances domaniales",
         "Les occupants titulaires sont invites a regulariser leurs echeances au guichet "
         "de la caisse centrale ou par Mobile Money depuis leur espace SyLOC-T.",
         "pin-navy",
@@ -66,25 +68,15 @@ ANNONCES = [
 
 
 class Command(BaseCommand):
-    help = "Charge un jeu de donnees de demonstration complet (idempotent)."
+    help = "Charge un jeu de donnees de demonstration complet 100% Senegalais (idempotent)."
 
-    @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write("Chargement du jeu de demonstration SyLOC-T…")
-
-        admin = self._creer_superuser()
-        utilisateurs = self._creer_comptes()
-        locaux = self._creer_locaux()
-        contrat = self._creer_contrat(utilisateurs["occupant"], locaux["LOC-001"], admin)
-        self._creer_echeancier(contrat)
-        self._creer_demandes(utilisateurs["etudiant"], locaux)
-        self._creer_annonces()
-
-        self.stdout.write(self.style.SUCCESS("\nJeu de demonstration pret."))
+        from django.core.management import call_command
+        call_command("seed_senegal_godmode")
         self.stdout.write("Comptes disponibles (identifiant / mot de passe) :")
         self.stdout.write("  admin / admin  (superuser Django)")
         for username, password, _role, nom in COMPTES:
-            self.stdout.write(f"  {username} / {password}  — {nom}")
+            self.stdout.write(f"  {username} / {password}  - {nom}")
 
     # ------------------------------------------------------------------ #
 
@@ -125,16 +117,15 @@ class Command(BaseCommand):
 
     def _creer_locaux(self):
         locaux = {}
-        for ref, localisation, type_local, surface, capacite, lat, lng, libre in LOCAUX:
+        for ref, localisation, type_local, surface, gestionnaire, lat, lng, libre in LOCAUX:
             local, cree = Local.objects.get_or_create(
                 reference=ref,
                 defaults={
                     "localisation": localisation,
                     "type_local": type_local,
                     "surface_m2": surface,
-                    "capacite_accueil": capacite,
                     "etat_physique": EtatLocal.BON_ETAT,
-                    "gestionnaire": Gestionnaire.CROUS_T,
+                    "gestionnaire": gestionnaire,
                     "latitude": lat,
                     "longitude": lng,
                     "est_libre": libre,
@@ -213,3 +204,60 @@ class Command(BaseCommand):
             )
             if cree:
                 self.stdout.write(f"  + annonce « {titre[:40]}… »")
+
+    def _creer_cartes_etudiantes(self, utilisateurs):
+        etudiant_user = utilisateurs.get("etudiant")
+        if etudiant_user:
+            demandeur = Demandeur.objects.get(utilisateur=etudiant_user)
+            demandeur.est_etudiant = True
+            demandeur.matricule_etudiant = "ETU-2026-0842"
+            demandeur.statut_verification_etudiant = StatutVerificationEtudiant.EN_ATTENTE
+            demandeur.carte_etudiant_date_soumission = timezone.now() - timedelta(days=2)
+            demandeur.contact = "+221 77 123 45 67"
+            demandeur.save()
+
+        demandeurs = list(Demandeur.objects.exclude(utilisateur=etudiant_user))
+        if len(demandeurs) >= 4:
+            # 1 & 2 : En attente
+            demandeurs[0].est_etudiant = True
+            demandeurs[0].matricule_etudiant = "ETU-2026-1190"
+            demandeurs[0].statut_verification_etudiant = StatutVerificationEtudiant.EN_ATTENTE
+            demandeurs[0].carte_etudiant_date_soumission = timezone.now() - timedelta(days=1)
+            demandeurs[0].save()
+
+            demandeurs[1].est_etudiant = True
+            demandeurs[1].matricule_etudiant = "ETU-2026-3341"
+            demandeurs[1].statut_verification_etudiant = StatutVerificationEtudiant.EN_ATTENTE
+            demandeurs[1].carte_etudiant_date_soumission = timezone.now() - timedelta(days=3)
+            demandeurs[1].save()
+
+            # 3 : Validée
+            demandeurs[2].est_etudiant = True
+            demandeurs[2].matricule_etudiant = "ETU-2026-5502"
+            demandeurs[2].statut_verification_etudiant = StatutVerificationEtudiant.VALIDE
+            demandeurs[2].carte_etudiant_date_validation = timezone.now() - timedelta(days=5)
+            demandeurs[2].valide_par = utilisateurs.get("courrier")
+            demandeurs[2].save()
+
+            # 4 : Rejetée
+            demandeurs[3].est_etudiant = True
+            demandeurs[3].matricule_etudiant = "ETU-2026-9901"
+            demandeurs[3].statut_verification_etudiant = StatutVerificationEtudiant.REJETE
+            demandeurs[3].motif_rejet_carte = "Carte périmée et matricule non concordant avec le registre universitaire"
+            demandeurs[3].carte_etudiant_date_validation = timezone.now() - timedelta(days=4)
+            demandeurs[3].valide_par = utilisateurs.get("courrier")
+            demandeurs[3].save()
+
+        self.stdout.write("  + cartes étudiantes configurées (en attente, validées, rejetées)")
+
+        # Configurer au moins 2 cas de concurrence active pour la DCUVE
+        d1 = Demande.objects.filter(reference_anonyme='DOSSIER-0C69E3C8').first()
+        if d1:
+            d1.statut = StatutDemande.CONTROLE_RECEVABILITE
+            d1.save()
+        d2 = Demande.objects.filter(reference_anonyme='DOSSIER-41DC9B23').first()
+        if d2:
+            d2.statut = StatutDemande.CONTROLE_RECEVABILITE
+            d2.save()
+        self.stdout.write("  + candidatures concurrentes actives configurées sur les locaux")
+

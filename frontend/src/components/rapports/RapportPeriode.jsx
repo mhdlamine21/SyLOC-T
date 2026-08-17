@@ -85,7 +85,7 @@ export default function RapportPeriode() {
   return (
     <PageWrapper>
       <SectionHeader
-        eyebrow="Direction CROUS-T"
+        eyebrow="PILOTAGE & SUPERVISION"
         title="Rapport par période & exportation"
         subtitle="Synthèse réelle des indicateurs locatifs sur la période sélectionnée."
       />
@@ -118,7 +118,7 @@ export default function RapportPeriode() {
             variant="stamp"
             disabled={!lignes.length}
             onClick={() => exportToPDF(
-              `Rapport d'activité locative — ${titrePeriode}`,
+              `Rapport d'activité locative - ${titrePeriode}`,
               'Bilan des demandes, contrats, finances et terrain',
               lignes,
               colonnes,
@@ -145,7 +145,7 @@ export default function RapportPeriode() {
 
           <Card>
             <div className="flex justify-between items-center mb-5">
-              <p className="font-display font-semibold text-base text-ink">Indicateurs de la période — {titrePeriode}</p>
+              <p className="font-display font-semibold text-base text-ink">Indicateurs de la période - {titrePeriode}</p>
               <span className="font-mono text-xs text-teal font-semibold">Bilan consolidé</span>
             </div>
             <BarChart

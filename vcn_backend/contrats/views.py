@@ -33,7 +33,7 @@ def _est_juridique(user):
 
 
 class ModeleContratViewSet(viewsets.ModelViewSet):
-    """Bibliotheque de modeles d'actes — ecriture reservee au juridique."""
+    """Bibliotheque de modeles d'actes - ecriture reservee au juridique."""
 
     queryset = ModeleContrat.objects.all()
     serializer_class = ModeleContratSerializer
@@ -116,12 +116,20 @@ class ContratViewSet(viewsets.ModelViewSet):
         """Texte de l'acte pour impression / PDF cote client."""
         contrat = self.get_object()
         texte = contrat.texte_contrat or rendre_contrat(contrat)
+        demandeur = contrat.demandeur
+        utilisateur = getattr(demandeur, 'utilisateur', None)
         return Response({
             'reference': contrat.reference,
             'statut': contrat.statut,
             'texte': texte,
-            'occupant': getattr(contrat.demandeur.utilisateur, 'nom_complet', ''),
+            'occupant': getattr(utilisateur, 'nom_complet', '') or getattr(utilisateur, 'username', ''),
+            'occupant_contact': getattr(demandeur, 'contact', '') or getattr(utilisateur, 'email', ''),
             'local': contrat.local.reference,
+            'local_localisation': getattr(contrat.local, 'localisation', ''),
+            'date_debut': contrat.date_debut,
+            'date_fin': contrat.date_fin,
+            'duree_mois': contrat.duree_mois,
+            'preavis_mois': contrat.preavis_mois,
         })
 
     @action(detail=True, methods=['post'], serializer_class=RedactionSerializer)
@@ -222,12 +230,22 @@ class ContratViewSet(viewsets.ModelViewSet):
                 'id': str(c.id),
                 'reference': c.reference,
                 'occupant': getattr(c.demandeur.utilisateur, 'nom_complet', ''),
-                'local': c.local.reference,
+                'local': c.local.reference if c.local else '-',
+                'local_localisation': c.local.localisation if c.local else '',
                 'date_fin': c.date_fin,
             }
             for c in actifs
             if 0 <= (c.date_fin - aujourdhui).days <= 120
         ]
+
+        from demandes.models import Demande, StatutDemande
+        nb_baux_a_rediger = Demande.objects.filter(statut=StatutDemande.FAVORABLE).count()
+
+        redevance_totale = sum(
+            c.echeances.first().montant_du if c.echeances.exists() else (getattr(c.local, 'loyer_mensuel', 0) or 0)
+            for c in actifs if not c.est_gratuit
+        )
+
         return Response({
             'total': qs.count(),
             'par_statut': par_statut,
@@ -237,6 +255,8 @@ class ContratViewSet(viewsets.ModelViewSet):
                 statut=StatutContrat.EN_ATTENTE_SIGNATURE
             ).count(),
             'nb_gratuits': qs.filter(est_gratuit=True).count(),
+            'redevance_mensuelle_totale': float(redevance_totale),
+            'nb_baux_a_rediger': nb_baux_a_rediger,
             'echeance_proche': sorted(echeance_proche, key=lambda x: x['date_fin']),
             'nb_modeles_actifs': ModeleContrat.objects.filter(est_actif=True).count(),
         })

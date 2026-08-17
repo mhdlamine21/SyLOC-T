@@ -1,20 +1,21 @@
 /**
- * Styles d'affichage des statuts — aligné sur les TextChoices Django.
+ * Styles d'affichage des statuts - aligné sur les TextChoices Django.
  * (Anciennement dans mocks/data.js : les mocks ne doivent plus être importés
  * par du code de production.)
  */
 export const STATUT_STYLES = {
   // demandes.models.StatutDemande
-  NOUVELLE:                 { label: 'Nouvelle',                bg: 'bg-info-soft',   fg: 'text-info',       dot: 'bg-info' },
+  NOUVELLE:                 { label: 'En attente',              bg: 'bg-info-soft',   fg: 'text-info',       dot: 'bg-info' },
   CONTROLE_RECEVABILITE:    { label: 'Contrôle recevabilité',   bg: 'bg-amber-pale',  fg: 'text-amber-deep', dot: 'bg-amber' },
   MITIGEE_COMPLEMENT:       { label: 'Complément requis',       bg: 'bg-danger-soft', fg: 'text-danger',     dot: 'bg-danger' },
   EN_EXPERTISE_TECHNIQUE:   { label: 'Expertise technique',     bg: 'bg-info-soft',   fg: 'text-info',       dot: 'bg-info' },
   CONTROLE_HYGIENE:         { label: 'Contrôle hygiène',        bg: 'bg-info-soft',   fg: 'text-info',       dot: 'bg-info' },
-  EN_ATTENTE_DECISION:      { label: 'En attente de décision',  bg: 'bg-amber-pale',  fg: 'text-amber-deep', dot: 'bg-amber' },
+  EN_ATTENTE_DECISION:      { label: 'En attente de validation finale', bg: 'bg-amber-pale',  fg: 'text-amber-deep', dot: 'bg-amber' },
+  EN_COMMISSION:            { label: 'En Commission',           bg: 'bg-gold-soft',   fg: 'text-gold-deep',  dot: 'bg-gold' },
   FAVORABLE:                { label: 'Favorable',               bg: 'bg-ok-soft',     fg: 'text-ok',         dot: 'bg-ok' },
   DEFAVORABLE:              { label: 'Défavorable',             bg: 'bg-stamp-pale',  fg: 'text-stamp',      dot: 'bg-stamp' },
   MITIGEE_ARCHIVEE:         { label: 'Mitigée (archivée)',      bg: 'bg-soft',        fg: 'text-muted',      dot: 'bg-muted' },
-  EN_ATTENTE_SIGNATURE:     { label: 'En attente signature',    bg: 'bg-amber-pale',  fg: 'text-amber-deep', dot: 'bg-amber' },
+  EN_ATTENTE_SIGNATURE:     { label: 'En attente de validation finale', bg: 'bg-amber-pale',  fg: 'text-amber-deep', dot: 'bg-amber' },
   CONTRAT_ACCEPTE_RDV_FIXE: { label: 'Contrat accepté (RDV)',   bg: 'bg-ok-soft',     fg: 'text-ok',         dot: 'bg-ok' },
   CONTRAT_REFUSE:           { label: 'Contrat refusé',          bg: 'bg-stamp-pale',  fg: 'text-stamp',      dot: 'bg-stamp' },
 
@@ -49,6 +50,7 @@ export const STATUT_STYLES = {
   // Catalogue Locaux
   DISPONIBLE:               { label: 'Disponible',              bg: 'bg-ok-soft',     fg: 'text-ok',         dot: 'bg-ok' },
   OCCUPE:                   { label: 'Occupé',                  bg: 'bg-stamp-pale',  fg: 'text-stamp',      dot: 'bg-stamp' },
+  INDISPONIBLE:             { label: 'Indisponible',            bg: 'bg-soft',        fg: 'text-muted',      dot: 'bg-muted' },
   AUTRE:                    { label: 'Autre',                   bg: 'bg-soft',        fg: 'text-muted',      dot: 'bg-muted' },
 };
 

@@ -197,7 +197,7 @@ class AvisCantineViewSet(viewsets.ModelViewSet):
 
 
 # ---------------------------------------------------------------------------
-# Phase 5 — extensions QHSE/Terrain (filtres + actions metier + statistiques)
+# Phase 5 - extensions QHSE/Terrain (filtres + actions metier + statistiques)
 # ---------------------------------------------------------------------------
 from datetime import timedelta
 from django.db.models import Avg, Count
@@ -207,6 +207,23 @@ from rest_framework.exceptions import PermissionDenied
 from .models import TypeControleQHSE, NiveauSanction, StatutSanction
 
 ROLES_SANCTION = access.ROLES_SANCTION
+
+def _attacher_action(viewset, fonction, nom):
+    """Rattache une action DRF definie hors de la classe.
+
+    Le routeur DRF resout le mapping (`{'post': '<nom methode>'}`) par nom
+    d'attribut : sans realignement, la route etait silencieusement ignoree
+    (les endpoints affecter/traiter/resoudre/escalader/statistiques/lever
+    n'existaient pas cote API).
+    """
+    fonction.__name__ = nom
+    # `mapping` doit rester un MethodMapper (DRF l'exige) : on realigne les
+    # valeurs en place au lieu de le remplacer par un dict.
+    for methode in list(fonction.mapping):
+        fonction.mapping[methode] = nom
+    setattr(viewset, nom, fonction)
+
+
 
 
 def _plainte_filtree(qs, params):
@@ -333,16 +350,11 @@ def _statistiques_plainte(self, request):
     })
 
 
-_affecter.__name__ = 'affecter'
-PlainteViewSet.affecter = _affecter
-_traiter.__name__ = 'traiter'
-PlainteViewSet.traiter = _traiter
-_resoudre.__name__ = 'resoudre'
-PlainteViewSet.resoudre = _resoudre
-_escalader.__name__ = 'escalader'
-PlainteViewSet.escalader = _escalader
-_statistiques_plainte.__name__ = 'statistiques'
-PlainteViewSet.statistiques = _statistiques_plainte
+_attacher_action(PlainteViewSet, _affecter, 'affecter')
+_attacher_action(PlainteViewSet, _traiter, 'traiter')
+_attacher_action(PlainteViewSet, _resoudre, 'resoudre')
+_attacher_action(PlainteViewSet, _escalader, 'escalader')
+_attacher_action(PlainteViewSet, _statistiques_plainte, 'statistiques')
 
 
 def _inspection_get_queryset(self):
@@ -392,8 +404,7 @@ def _statistiques_inspection(self, request):
     })
 
 
-_statistiques_inspection.__name__ = 'statistiques'
-InspectionQHseViewSet.statistiques = _statistiques_inspection
+_attacher_action(InspectionQHseViewSet, _statistiques_inspection, 'statistiques')
 
 
 def _sanction_get_permissions(self):
@@ -479,7 +490,5 @@ def _statistiques_sanction(self, request):
 
 
 SanctionViewSet.perform_create = _sanction_perform_create
-_lever.__name__ = 'lever'
-SanctionViewSet.lever = _lever
-_statistiques_sanction.__name__ = 'statistiques'
-SanctionViewSet.statistiques = _statistiques_sanction
+_attacher_action(SanctionViewSet, _lever, 'lever')
+_attacher_action(SanctionViewSet, _statistiques_sanction, 'statistiques')

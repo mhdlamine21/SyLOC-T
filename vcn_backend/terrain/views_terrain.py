@@ -1,4 +1,4 @@
-"""Phase 6 — Rapports de visite terrain (cadence 10 jours) et dispatch d'agent.
+"""Phase 6 - Rapports de visite terrain (cadence 10 jours) et dispatch d'agent.
 
 Deux besoins metier :
   * l'agent de terrain / QHSE rend compte de chaque visite a SA commission,

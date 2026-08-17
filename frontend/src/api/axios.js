@@ -39,6 +39,13 @@ api.interceptors.request.use(
     if (typeof FormData !== "undefined" && config.data instanceof FormData) {
       delete config.headers["Content-Type"];
     }
+    // Anti-cache : aucune lecture ne doit jamais provenir du cache navigateur
+    // (sinon on affiche des données d'une version antérieure de l'app).
+    if ((config.method || "get").toLowerCase() === "get") {
+      config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+      config.headers.Pragma = "no-cache";
+      config.params = { ...(config.params || {}), _ts: Date.now() };
+    }
     return config;
   },
   (error) => Promise.reject(error),

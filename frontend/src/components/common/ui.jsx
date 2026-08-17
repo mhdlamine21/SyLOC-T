@@ -1,5 +1,5 @@
 /**
- * SyLOC-T — Bibliothèque de composants UI réutilisables
+ * SyLOC-T - Bibliothèque de composants UI réutilisables
  * Thème Navy / Or (Objetif/index.html reference)
  */
 
@@ -37,8 +37,8 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   return (
     <button
       className={`${base} ui-btn ${sizes[size]} ${className}`}
-      style={variantStyles[variant] || variantStyles.primary}
       {...props}
+      style={{ ...(variantStyles[variant] || variantStyles.primary), ...props.style }}
     >
       {children}
     </button>
@@ -157,22 +157,79 @@ export function StatusBadge({ statut, className = '' }) {
   );
 }
 
-// ─── SECTION HEADER ────────────────────────────────────────────────────────────
-export function SectionHeader({ eyebrow, title, subtitle }) {
+export function SectionHeader({ eyebrow, title, subtitle, action, className = '' }) {
   return (
-    <div style={{ marginBottom: 24 }}>
-      {eyebrow && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <span style={{ width: 24, height: 2, background: 'var(--gold)', display: 'inline-block' }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 800, color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '1.4px' }}>
-            {eyebrow}
-          </span>
-        </div>
-      )}
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.4rem, 2.5vw, 2rem)', fontWeight: 800, color: 'var(--text-navy)', margin: '0 0 6px', lineHeight: 1.2 }}>
-        {title}
-      </h1>
-      {subtitle && <p style={{ color: 'var(--muted)', fontSize: 14, margin: 0, lineHeight: 1.6 }}>{subtitle}</p>}
+    <div
+      className={className}
+      style={{
+        marginBottom: 24,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 16,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div>
+        {eyebrow && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: 'var(--gold)',
+                boxShadow: '0 0 0 3px var(--gold-soft)',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontWeight: 800,
+                color: 'var(--gold-deep)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                background: 'var(--gold-soft)',
+                padding: '3px 9px',
+                borderRadius: 6,
+                border: '1px solid var(--gold-tint-2)',
+              }}
+            >
+              {eyebrow}
+            </span>
+          </div>
+        )}
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(1.5rem, 2.4vw, 2.1rem)',
+            fontWeight: 800,
+            color: 'var(--text-navy)',
+            margin: '0 0 6px',
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {title}
+        </h1>
+        {subtitle && (
+          <p
+            style={{
+              color: 'var(--muted)',
+              fontSize: 14,
+              margin: 0,
+              lineHeight: 1.6,
+              maxWidth: 760,
+            }}
+          >
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {action && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{action}</div>}
     </div>
   );
 }
@@ -323,7 +380,7 @@ export function Timeline({ items }) {
             {item.statut ? <StatusBadge statut={item.statut} /> : item.titre}
           </p>
           {item.commentaire && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 0' }}>{item.commentaire}</p>}
-          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>— {item.auteur}</p>}
+          {item.auteur && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--slate)', marginTop: 4 }}>- {item.auteur}</p>}
         </li>
       ))}
     </ol>
@@ -416,6 +473,28 @@ export function AlertBanner({ type = 'info', children, className = '' }) {
       <span style={{ flexShrink: 0 }}>{icons[type]}</span>
       <span>{children}</span>
     </div>
+  );
+}
+
+export function Pill({ children, tone = 'slate', style = {} }) {
+  const tones = {
+    navy: { fg: 'var(--navy, #0d1b2a)', bg: 'rgba(13, 27, 42, 0.08)' },
+    gold: { fg: 'var(--gold-deep, #92400e)', bg: 'var(--gold-soft, #fef3c7)' },
+    green: { fg: '#047857', bg: '#d1fae5' },
+    red: { fg: '#b91c1c', bg: '#fee2e2' },
+    slate: { fg: '#475569', bg: '#f1f5f9' },
+  };
+  const t = tones[tone] || tones.slate;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 9px', borderRadius: 20, background: t.bg, color: t.fg,
+      fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-mono)',
+      textTransform: 'uppercase', letterSpacing: '.4px', whiteSpace: 'nowrap',
+      ...style,
+    }}>
+      {children}
+    </span>
   );
 }
 

@@ -6,8 +6,9 @@ import { getPublicLocaux } from '../../api/public';
 import { TYPES_LOCAL_LABELS } from '../../utils/constants';
 import { messageErreur } from '../../api/utils';
 import { useAuth } from '../../context/AuthContext';
+import { formatSurface, libelleType, libelleEtat, libelleGestionnaire, estCandidatable, phraseDisponibilite } from '../../utils/locaux';
 
-// Centre du campus VCN — CROUS de Thies (repli quand aucun local n'est geolocalise).
+// Centre du campus VCN - CROUS de Thies (repli quand aucun local n'est geolocalise).
 const CAMPUS_THIES_CENTER = [14.7912, -16.9254];
 
 // Service de calcul d'itineraire OpenStreetMap (OSRM, demo publique).
@@ -106,7 +107,7 @@ export default function InteractiveGpsMap({
     const map = L.map(mapContainerRef.current).setView(CAMPUS_THIES_CENTER, 17);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© OpenStreetMap — CROUS de Thiès (Campus VCN)',
+      attribution: '© OpenStreetMap - CROUS de Thiès (Campus VCN)',
     }).addTo(map);
     leafletMapRef.current = map;
 
@@ -132,7 +133,7 @@ export default function InteractiveGpsMap({
     markersRef.current = [];
 
     filtres.forEach((local) => {
-      const libelleType = TYPES_LOCAL_LABELS[local.type_local] || local.type_local || 'Local';
+      const libelleTypeLocal = libelleType(local);
         const fallbackImg = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=300&q=80';
         const marker = L.marker([local.latitude, local.longitude])
         .addTo(map)
@@ -141,14 +142,14 @@ export default function InteractiveGpsMap({
             <img src="${local.photo_url || fallbackImg}" alt="${local.reference}" style="width: 100%; height: 110px; object-fit: cover; display: block;" />
             <div style="padding: 12px;">
               <strong style="color:#0f1b3d; font-size:14px; display:block; margin-bottom:2px;">${local.reference}</strong>
-              <span style="font-size:12px; color:#64748b; font-weight:600;">${libelleType} — ${local.surface_m2 ?? '?'} m²</span>
+              <span style="font-size:12px; color:#64748b; font-weight:600;">${libelleTypeLocal} - ${formatSurface(local.surface_m2)}</span>
               <span style="font-size:11px; color:#64748b; font-style:italic; display:block; margin-top:6px;">📍 ${local.localisation ?? 'Campus VCN'}</span>
               
               <div style="margin-top:10px; display: flex; align-items: center; justify-content: space-between; font-size:11px; font-weight:bold;">
                 <span style="padding: 3px 8px; border-radius: 6px; background: ${local.est_libre ? 'rgba(22, 163, 74, 0.1)' : 'rgba(37, 99, 235, 0.1)'}; color:${local.est_libre ? '#16a34a' : '#2563eb'};">
                   ${local.est_libre ? 'Disponible' : 'Occupé'}
                 </span>
-                <span style="color: #c9a15c;">${local.capacite_accueil ? `👤 ${local.capacite_accueil} p.` : ''}</span>
+                <span style="color: #c9a15c;">📐 ${formatSurface(local.surface_m2)}</span>
               </div>
             </div>
           </div>
@@ -194,7 +195,7 @@ export default function InteractiveGpsMap({
       () => {
         setIsLocating(false);
         leafletMapRef.current?.setView(CAMPUS_THIES_CENTER, 17);
-        toast('Position indisponible — recentrage sur le campus VCN.');
+        toast('Position indisponible - recentrage sur le campus VCN.');
         resolve(null);
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -336,15 +337,15 @@ export default function InteractiveGpsMap({
             )}
 
             <dl style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: 0, fontSize: 12.5 }}>
-              <div><dt style={{ color: 'var(--muted)' }}>Surface</dt><dd style={{ margin: 0, fontWeight: 700 }}>{selection.surface_m2 ?? '—'} m²</dd></div>
-              <div><dt style={{ color: 'var(--muted)' }}>Capacité</dt><dd style={{ margin: 0, fontWeight: 700 }}>{selection.capacite_accueil ?? '—'}</dd></div>
-              <div><dt style={{ color: 'var(--muted)' }}>État</dt><dd style={{ margin: 0, fontWeight: 700 }}>{(selection.etat_physique || '—').replace(/_/g, ' ')}</dd></div>
-              <div><dt style={{ color: 'var(--muted)' }}>Gestionnaire</dt><dd style={{ margin: 0, fontWeight: 700 }}>{(selection.gestionnaire || '—').replace(/_/g, ' ')}</dd></div>
-              <div style={{ gridColumn: '1 / -1' }}><dt style={{ color: 'var(--muted)' }}>Localisation</dt><dd style={{ margin: 0, fontWeight: 700 }}>{selection.localisation || '—'}</dd></div>
+              <div><dt style={{ color: 'var(--muted)' }}>Surface</dt><dd style={{ margin: 0, fontWeight: 700 }}>{formatSurface(selection.surface_m2)}</dd></div>
+              <div><dt style={{ color: 'var(--muted)' }}>Type</dt><dd style={{ margin: 0, fontWeight: 700 }}>{libelleType(selection)}</dd></div>
+              <div><dt style={{ color: 'var(--muted)' }}>État</dt><dd style={{ margin: 0, fontWeight: 700 }}>{libelleEtat(selection)}</dd></div>
+              <div><dt style={{ color: 'var(--muted)' }}>Gestionnaire</dt><dd style={{ margin: 0, fontWeight: 700 }}>{libelleGestionnaire(selection)}</dd></div>
+              <div style={{ gridColumn: '1 / -1' }}><dt style={{ color: 'var(--muted)' }}>Localisation</dt><dd style={{ margin: 0, fontWeight: 700 }}>{selection.localisation || '-'}</dd></div>
             </dl>
 
-            <div style={{ fontSize: 12, fontWeight: 800, color: selection.est_libre ? '#16a34a' : '#2563eb' }}>
-              {selection.est_libre ? 'Local disponible' : 'Local occupé'}
+            <div style={{ fontSize: 12, fontWeight: 800, color: estCandidatable(selection) ? '#16a34a' : '#2563eb' }}>
+              {phraseDisponibilite(selection)}
             </div>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -362,7 +363,7 @@ export default function InteractiveGpsMap({
               )}
               {selection.type_local === 'RESTAURATION' && isAuthenticated && role === 'USAGER' && (
                 <Link to="/avis" state={{ localId: selection.id }}
-                  style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 12px', borderRadius: 8, background: '#c9a15c', color: 'white', fontWeight: 700, fontSize: 12.5, textDecoration: 'none' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 12px', borderRadius: 8, background: '#c9a15c', color: 'var(--text-on-gold)', fontWeight: 700, fontSize: 12.5, textDecoration: 'none' }}>
                   Laisser un avis
                 </Link>
               )}
@@ -387,7 +388,7 @@ export default function InteractiveGpsMap({
                 <ol style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 12, color: 'var(--muted)', maxHeight: 220, overflowY: 'auto', display: 'grid', gap: 4 }}>
                   {itineraire.etapes.map((etape, i) => (
                     <li key={`${etape.instruction}-${i}`}>
-                      {etape.instruction} — {formatDistance(etape.distance)}
+                      {etape.instruction} - {formatDistance(etape.distance)}
                     </li>
                   ))}
                 </ol>

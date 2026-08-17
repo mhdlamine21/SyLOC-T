@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", fontFamily: "Inter, sans-serif" }}>
-      {/* Colonne gauche — Illustration & Identité */}
+      {/* Colonne gauche - Illustration & Identité */}
       <div style={{ flex: "0 0 420px", background: "var(--navy-2)", color: "var(--text-on-navy)", padding: "48px 40px", display: "flex", flexDirection: "column", justifyContent: "space-between" }} className="hidden md:flex">
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
@@ -59,11 +59,11 @@ export default function Login() {
         </div>
 
         <p style={{ fontSize: 12, color: "rgba(243,238,225,0.35)", margin: 0, fontFamily: "IBM Plex Mono, monospace" }}>
-          © 2026 CROUS-T — Université Iba Der Thiam de Thiès
+          © 2026 CROUS-T - Université Iba Der Thiam de Thiès
         </p>
       </div>
 
-      {/* Colonne droite — Formulaire */}
+      {/* Colonne droite - Formulaire */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 28px", overflowY: "auto" }}>
         <div style={{ width: "100%", maxWidth: 420 }}>
           <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontFamily: "IBM Plex Mono, monospace", color: "var(--teal)", textDecoration: "none", fontWeight: 600, marginBottom: 32 }}>

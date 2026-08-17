@@ -34,6 +34,9 @@ export const deleguerUtilisateur = async (id, active, expiration = null) =>
 
 export const getRoles = async () => (await api.get('/comptes/utilisateurs/roles/')).data;
 
+export const getRapportMensuelCollaborateur = async (id, params = {}) =>
+  (await api.get(`/comptes/utilisateurs/${id}/rapport-mensuel/`, { params })).data;
+
 // ---- Demandeurs / cartes étudiant -----------------------------------------
 export const getMonProfilDemandeur = async () => (await api.get('/comptes/demandeurs/moi/')).data;
 
@@ -65,7 +68,7 @@ export const nommerMembreCommission = async (utilisateurId) =>
 export const majMembreCommission = async (id, actif) =>
   (await api.patch(`/demandes/membres/${id}/`, { actif })).data;
 
-/* Audit Phase 1 — completions CRUD. */
+/* Audit Phase 1 - completions CRUD. */
 export const getUtilisateurById = async (id) => (await api.get(`/comptes/utilisateurs/${id}/`)).data;
 export const supprimerUtilisateur = async (id) =>
   (await api.delete(`/comptes/utilisateurs/${id}/`)).data;

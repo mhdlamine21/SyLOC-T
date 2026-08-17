@@ -19,6 +19,9 @@ import MilitaryTechIcon from '@mui/icons-material/MilitaryTechOutlined';
 import NewReleasesIcon from '@mui/icons-material/NewReleasesOutlined';
 import ScienceIcon from '@mui/icons-material/ScienceOutlined';
 import SecurityIcon from '@mui/icons-material/SecurityOutlined';
+import MemoryIcon from '@mui/icons-material/Memory';
+import SpeedIcon from '@mui/icons-material/Speed';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import StarIcon from '@mui/icons-material/StarBorder';
 import TrendingUpIcon from '@mui/icons-material/TrendingUpOutlined';
 import WarningIcon from '@mui/icons-material/WarningOutlined';
@@ -30,17 +33,17 @@ import { baseOptions, cartesianScales } from '../components/charts/chartSetup';
 import { useAuth } from '../context/AuthContext';
 import { getDashboardStats, getDashboardComplement, getPaiementsMois } from '../api/dashboard';
 import { getClassementFidelite } from '../api/fidelite';
-import { getAnnonces } from '../api/annonces';
+import { getAnnonces, createAnnonce } from '../api/annonces';
 import { getMesDemandes } from '../api/demandes';
 import { getNotificationsNonLues } from '../api/notifications';
 import { getContrats } from '../api/contrats';
 import { getEcheances } from '../api/paiements';
 import { getPlaintes } from '../api/terrain';
 import { getPublicStats } from '../api/public';
-import { getUtilisateurs } from '../api/comptes';
+import { getSupervisionSysteme } from '../api/supervision';
 import { messageErreur } from '../api/utils';
 import { ROLES_LABELS } from '../utils/constants';
-import { Button } from '../components/common/ui';
+import { Button, Field, Input, Textarea, Modal } from '../components/common/ui';
 import {
   WelcomeBanner, StatGrid, KpiCard, MiniStat, Panel, SplitLayout,
   ProgressRow, RankList, Pill, SectionLabel,
@@ -125,19 +128,12 @@ function DcuveAnalyticsPanel({ stats, loading }) {
 
   const evolutionData = stats?.evolution_mensuelle || [];
   const repartitionTypes = stats?.repartition_types_locaux || [];
-  const repartitionStatuts = stats?.repartition_statuts || [];
   const totalDemandes = stats?.demandes_total || 0;
   const favorables = stats?.demandes_favorables || 0;
   const defavorables = stats?.demandes_defavorables || 0;
   const enCours = stats?.demandes_en_cours || 0;
   const totalDecidees = favorables + defavorables;
   const tauxAcceptation = stats?.taux_favorable || (totalDecidees > 0 ? ((favorables / totalDecidees) * 100).toFixed(1) : 0);
-
-  // Groupement complet des statuts
-  const statutMap = {};
-  repartitionStatuts.forEach((r) => {
-    statutMap[r.statut] = r.total;
-  });
 
   return (
     <Panel
@@ -148,9 +144,8 @@ function DcuveAnalyticsPanel({ stats, loading }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'inline-flex', background: 'var(--surface-2)', padding: 3, borderRadius: 8, gap: 4 }}>
             {[
-              { id: 'mensuel', label: 'Flux mensuel (6 mois)' },
+              { id: 'mensuel', label: 'Flux mensuel' },
               { id: 'types', label: 'Types de projets' },
-              { id: 'statuts', label: 'Pipeline workflow (54)' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -164,7 +159,7 @@ function DcuveAnalyticsPanel({ stats, loading }) {
                   border: 'none',
                   cursor: 'pointer',
                   background: vue === tab.id ? 'var(--navy)' : 'transparent',
-                  color: vue === tab.id ? '#ffffff' : 'var(--muted)',
+                  color: vue === tab.id ? 'var(--text-on-navy)' : 'var(--muted)',
                   transition: 'all 0.2s',
                 }}
               >
@@ -172,7 +167,7 @@ function DcuveAnalyticsPanel({ stats, loading }) {
               </button>
             ))}
           </div>
-          <Pill tone="green">{tauxAcceptation}% d'avis favorables</Pill>
+          <Pill tone="gold">{tauxAcceptation}% d'avis favorables</Pill>
         </div>
       )}
     >
@@ -180,7 +175,7 @@ function DcuveAnalyticsPanel({ stats, loading }) {
         <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>Chargement des données analytiques…</p>
       ) : (
         <div>
-          {/* Top Quick Summary Badges (Somme = 54) */}
+          {/* Top Quick Summary Badges */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -189,25 +184,76 @@ function DcuveAnalyticsPanel({ stats, loading }) {
             paddingBottom: 16,
             borderBottom: '1px solid var(--border)',
           }}>
-            <div style={{ background: 'var(--surface-2)', padding: '12px 14px', borderRadius: 10 }}>
-              <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>Total dossiers déposés</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy)', marginTop: 2 }}>{totalDemandes}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 2 }}>100% des candidatures</div>
+            <div style={{
+              background: 'linear-gradient(135deg, #0d1b2a 0%, #172554 100%)',
+              padding: '14px 16px',
+              borderRadius: 12,
+              border: '1px solid rgba(201, 161, 92, 0.25)',
+              boxShadow: '0 4px 14px rgba(13, 27, 42, 0.15)',
+            }}>
+              <div style={{ fontSize: 10.5, color: 'var(--gold, #c9a15c)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', fontFamily: 'var(--font-mono)' }}>
+                Total dossiers déposés
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold-soft, #f4e8d3)', fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                {totalDemandes}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(244, 232, 211, 0.75)', marginTop: 3 }}>
+                100% des candidatures
+              </div>
             </div>
-            <div style={{ background: 'rgba(22, 163, 74, 0.08)', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(22, 163, 74, 0.15)' }}>
-              <div style={{ fontSize: 11, color: 'var(--green)', fontWeight: 700 }}>Avis favorables & Contrats</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--green)', marginTop: 2 }}>{favorables}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--green)', marginTop: 2 }}>Validés, en signature & signés</div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, #0d1b2a 0%, #172554 100%)',
+              padding: '14px 16px',
+              borderRadius: 12,
+              border: '1px solid rgba(201, 161, 92, 0.25)',
+              boxShadow: '0 4px 14px rgba(13, 27, 42, 0.15)',
+            }}>
+              <div style={{ fontSize: 10.5, color: 'var(--gold, #c9a15c)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', fontFamily: 'var(--font-mono)' }}>
+                Avis favorables & Contrats
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold-soft, #f4e8d3)', fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                {favorables}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(244, 232, 211, 0.75)', marginTop: 3 }}>
+                Validés, en signature & signés
+              </div>
             </div>
-            <div style={{ background: 'rgba(220, 38, 38, 0.08)', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(220, 38, 38, 0.15)' }}>
-              <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700 }}>Avis défavorables & Archivés</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--red)', marginTop: 2 }}>{defavorables}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--red)', marginTop: 2 }}>Rejets, archivages & refus</div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, #0d1b2a 0%, #172554 100%)',
+              padding: '14px 16px',
+              borderRadius: 12,
+              border: '1px solid rgba(201, 161, 92, 0.25)',
+              boxShadow: '0 4px 14px rgba(13, 27, 42, 0.15)',
+            }}>
+              <div style={{ fontSize: 10.5, color: 'var(--gold, #c9a15c)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', fontFamily: 'var(--font-mono)' }}>
+                Avis défavorables & Archivés
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold-soft, #f4e8d3)', fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                {defavorables}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(244, 232, 211, 0.75)', marginTop: 3 }}>
+                Rejets, archivages & refus
+              </div>
             </div>
-            <div style={{ background: 'rgba(217, 119, 6, 0.08)', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(217, 119, 6, 0.15)' }}>
-              <div style={{ fontSize: 11, color: 'var(--amber)', fontWeight: 700 }}>En cours d'instruction</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--amber)', marginTop: 2 }}>{enCours}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--amber)', marginTop: 2 }}>Nouvelles & expertises actives</div>
+
+            <div style={{
+              background: 'linear-gradient(135deg, #0d1b2a 0%, #172554 100%)',
+              padding: '14px 16px',
+              borderRadius: 12,
+              border: '1px solid rgba(201, 161, 92, 0.25)',
+              boxShadow: '0 4px 14px rgba(13, 27, 42, 0.15)',
+            }}>
+              <div style={{ fontSize: 10.5, color: 'var(--gold, #c9a15c)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', fontFamily: 'var(--font-mono)' }}>
+                En cours d'instruction
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gold-soft, #f4e8d3)', fontFamily: 'var(--font-display)', marginTop: 4 }}>
+                {enCours}
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(244, 232, 211, 0.75)', marginTop: 3 }}>
+                Nouvelles & expertises actives
+              </div>
             </div>
           </div>
 
@@ -244,7 +290,7 @@ function DcuveAnalyticsPanel({ stats, loading }) {
                   repartitionTypes.map((t) => (
                     <ProgressRow
                       key={t.type_local}
-                      label={`${(t.type_local || '').replace(/_/g, ' ')} — ${t.total} projet(s)`}
+                      label={`${(t.type_local || '').replace(/_/g, ' ')} - ${t.total} projet(s)`}
                       value={t.total}
                       total={stats?.locaux_total || 1}
                       tone="gold"
@@ -266,71 +312,6 @@ function DcuveAnalyticsPanel({ stats, loading }) {
                     total={stats?.locaux_total || 1}
                     tone="green"
                   />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VUE 3 : PIPELINE WORKFLOW (Répartition exhaustive des 54 dossiers) */}
-          {vue === 'statuts' && (
-            <div style={{ display: 'grid', gap: 16 }}>
-              {/* Groupe 1: En cours */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--amber)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  ⏳ En cours d'instruction ({enCours} dossiers)
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                  {[
-                    { key: 'NOUVELLE', label: 'Nouvelles demandes' },
-                    { key: 'CONTROLE_RECEVABILITE', label: 'Contrôle recevabilité' },
-                    { key: 'MITIGEE_COMPLEMENT', label: 'En attente compléments' },
-                    { key: 'EN_EXPERTISE_TECHNIQUE', label: 'Expertise technique' },
-                    { key: 'CONTROLE_HYGIENE', label: 'Contrôle hygiène & santé' },
-                    { key: 'EN_ATTENTE_DECISION', label: 'En attente décision finale' },
-                  ].map((item) => (
-                    <div key={item.key} style={{ padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.label}</span>
-                      <span style={{ fontWeight: 800, fontSize: 12, color: 'var(--amber)' }}>{statutMap[item.key] || 0}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Groupe 2: Favorables & Contrats */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  ✅ Avis favorables & Contrats ({favorables} dossiers)
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                  {[
-                    { key: 'FAVORABLE', label: 'Avis favorable validé' },
-                    { key: 'EN_ATTENTE_SIGNATURE', label: 'En attente signature contrat' },
-                    { key: 'CONTRAT_ACCEPTE_RDV_FIXE', label: 'Contrat accepté (RDV fixé)' },
-                  ].map((item) => (
-                    <div key={item.key} style={{ padding: '10px 12px', background: 'rgba(22, 163, 74, 0.08)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.label}</span>
-                      <span style={{ fontWeight: 800, fontSize: 12, color: 'var(--green)' }}>{statutMap[item.key] || 0}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Groupe 3: Défavorables & Archivés */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  ❌ Défavorables, Archivés & Clôtures ({defavorables} dossiers)
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-                  {[
-                    { key: 'DEFAVORABLE', label: 'Avis défavorable / Rejet' },
-                    { key: 'MITIGEE_ARCHIVEE', label: 'Mitigée (Archivée)' },
-                    { key: 'CONTRAT_REFUSE', label: 'Contrat refusé par candidat' },
-                  ].map((item) => (
-                    <div key={item.key} style={{ padding: '10px 12px', background: 'rgba(220, 38, 38, 0.08)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.label}</span>
-                      <span style={{ fontWeight: 800, fontSize: 12, color: 'var(--red)' }}>{statutMap[item.key] || 0}</span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -389,6 +370,15 @@ function WeekChart({ series, estComptable }) {
 }
 
 /* ─── Tableau de bord adaptatif ─────────────────────────────────────── */
+/** Libelles metier affiches dans « Repartition des dossiers par statut ». */
+const LIBELLES_STATUT_DOSSIER = {
+  NOUVELLE: 'Nouvelle',
+  MITIGEE_ARCHIVEE: 'Archivée',
+  DEFAVORABLE: 'Avis défavorable',
+  FAVORABLE: 'Avis favorable',
+  CONTRAT_REFUSE: 'Contrat refusé',
+};
+
 export default function Dashboard() {
   const { user, role } = useAuth();
   const [stats, setStats] = useState(null);
@@ -400,7 +390,7 @@ export default function Dashboard() {
   const [nonLues, setNonLues] = useState(0);
   const [complement, setComplement] = useState(null);
   const [topOccupants, setTopOccupants] = useState([]);
-  const [comptesSI, setComptesSI] = useState(null);
+  const [supervisionSI, setSupervisionSI] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Sélecteur de mois pour le Service Comptable
@@ -413,6 +403,7 @@ export default function Dashboard() {
   const estUsager = role === 'USAGER';
   const estOccupant = role === 'OCCUPANT';
   const estDCUVE = role === 'DIRECTEUR_DCUVE' || role === 'AGENT_DCUVE';
+  const estDirection = role === 'DIRECTEUR_CROUST' || role === 'DIRECTEUR_CROUS_T' || role === 'DIRECTEUR_DCUVE';
   const estJuridique = role === 'SERVICE_JURIDIQUE';
   const estComptable = role === 'SERVICE_COMPTABLE';
   const estCommunication = role === 'CELLULE_COMMUNICATION';
@@ -425,6 +416,39 @@ export default function Dashboard() {
   // Acteurs transversaux sans perìmetre metier : ils n'ont pas acces aux KPI
   // de gestion (dossiers, recettes, contrats). Voir core/acteurs.py cote API.
   const estSansDonneesMetier = estCommunication || estAdminSI;
+
+  const [nbTopOccupantsAffiches, setNbTopOccupantsAffiches] = useState(10);
+
+  const [comModal, setComModal] = useState(false);
+  const [comForm, setComForm] = useState({ titre: '', contenu: '', consigne_direction: '' });
+  const [comSubmitting, setComSubmitting] = useState(false);
+
+  const handleEnvoyerAnnonceCom = async (e) => {
+    e?.preventDefault?.();
+    if (!comForm.titre || !comForm.contenu) {
+      toast.error('Veuillez renseigner le titre et le texte de l’annonce.');
+      return;
+    }
+    setComSubmitting(true);
+    try {
+      await createAnnonce({
+        titre: comForm.titre,
+        contenu: comForm.contenu,
+        consigne_direction: comForm.consigne_direction,
+        statut: 'A_PUBLIER',
+        est_active: false,
+      });
+      toast.success('Annonce transmise à la Cellule Communication avec succès.');
+      setComForm({ titre: '', contenu: '', consigne_direction: '' });
+      setComModal(false);
+      const a = await getAnnonces();
+      setAnnonces(a || []);
+    } catch (err) {
+      toast.error(messageErreur(err, 'Erreur lors de la transmission à la Cellule Communication.'));
+    } finally {
+      setComSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -439,8 +463,8 @@ export default function Dashboard() {
       ];
       if (estAdminSI) {
         taches.push(
-          getUtilisateurs()
-            .then((d) => setComptesSI(Array.isArray(d) ? d : (d?.results || [])))
+          getSupervisionSysteme()
+            .then(setSupervisionSI)
             .catch(() => null),
         );
       }
@@ -453,7 +477,7 @@ export default function Dashboard() {
         taches.push(getEcheances().then(setMesEcheances).catch(() => null));
         taches.push(getPlaintes().then(setMesPlaintes).catch(() => null));
         taches.push(
-          getClassementFidelite(5)
+          getClassementFidelite(10)
             .then((d) => setTopOccupants(Array.isArray(d) ? d : []))
             .catch(() => null),
         );
@@ -461,7 +485,7 @@ export default function Dashboard() {
         // Phase 2 : series 7 jours, repartition des paiements, classements.
         taches.push(getDashboardComplement({ limit: 5 }).then(setComplement).catch(() => null));
         taches.push(
-          getClassementFidelite(5)
+          getClassementFidelite(50)
             .then((d) => setTopOccupants(Array.isArray(d) ? d : []))
             .catch(() => null),
         );
@@ -543,17 +567,24 @@ export default function Dashboard() {
     }
     if (estDCUVE) {
       return [
-        { icon: <WarningIcon fontSize="large" />, label: 'Action requise', value: `${num(s.demandes_en_cours)} dossier(s)`, sub: 'En attente d\'instruction', tone: s.demandes_en_cours > 0 ? 'red' : 'green' },
+        { icon: <WarningIcon fontSize="large" />, label: 'Action requise', value: num(s.demandes_en_cours), sub: "En attente d'instruction", tone: s.demandes_en_cours > 0 ? 'red' : 'green' },
         { icon: <FolderIcon fontSize="large" />, label: 'Dossiers traités', value: num(s.demandes_total) - num(s.demandes_en_cours), sub: 'Total historiques', tone: 'navy' },
         { icon: <CheckCircleIcon fontSize="large" />, label: 'Taux favorable', value: `${s.taux_favorable ?? 0}%`, sub: `${num(s.demandes_favorables)} accords`, tone: 'green' },
         { icon: <ApartmentIcon fontSize="large" />, label: 'Locaux disponibles', value: num(s.locaux_libres), sub: 'À attribuer', tone: 'slate' },
       ];
     }
     if (estEnvironnement) {
+      const isAgentTerrain = user?.username === 'agent_qhse' || user?.nom_complet?.toLowerCase().includes('agent');
       return [
-        { icon: <ExploreIcon fontSize="large" />, label: 'Missions emises', value: num(complement?.missions?.emis), sub: `${num(complement?.missions?.en_cours)} en cours`, tone: 'navy' },
-        { icon: <ScienceIcon fontSize="large" />, label: 'Inspections sanitaires', value: num(s.inspections_mois), sub: 'Controles du mois', tone: 'green' },
-        { icon: <StarIcon fontSize="large" />, label: 'Score QHSE moyen', value: s.score_qhse_moyen ?? 0, sub: `${num(s.avis_publies)} avis collectes`, tone: 'gold' },
+        {
+          icon: <ExploreIcon fontSize="large" />,
+          label: isAgentTerrain ? 'Missions assignées' : 'Missions émises',
+          value: num(complement?.missions?.emis ?? complement?.missions?.en_cours ?? 0),
+          sub: `${num(complement?.missions?.en_cours)} en cours`,
+          tone: 'navy',
+        },
+        { icon: <ScienceIcon fontSize="large" />, label: 'Inspections sanitaires', value: num(s.inspections_mois), sub: 'Contrôles du mois', tone: 'green' },
+        { icon: <StarIcon fontSize="large" />, label: 'Score QHSE moyen', value: s.score_qhse_moyen ?? 0, sub: `${num(s.avis_publies)} avis collectés`, tone: 'gold' },
         { icon: <ErrorOutlinedIcon fontSize="large" />, label: 'Signalements ouverts', value: num(s.signalements_ouverts), sub: `${num(s.signalements_total)} au total`, tone: 'red' },
       ];
     }
@@ -574,14 +605,13 @@ export default function Dashboard() {
       ];
     }
     if (estAdminSI) {
-      const comptes = comptesSI || [];
-      const actifs = comptes.filter((c) => c.is_active !== false).length;
-      const delegations = comptes.filter((c) => c.delegation_active).length;
+      const srv = supervisionSI?.services || [];
+      const nbOk = srv.filter((service) => service.statut === 'OK').length;
       return [
-        { icon: <GroupIcon fontSize="large" />, label: 'Comptes utilisateurs', value: num(comptes.length), sub: `${num(actifs)} actif(s)`, tone: 'navy' },
-        { icon: <CheckCircleIcon fontSize="large" />, label: 'Comptes desactives', value: num(comptes.length - actifs), sub: 'A reactiver si besoin', tone: comptes.length - actifs > 0 ? 'gold' : 'green' },
-        { icon: <BalanceIcon fontSize="large" />, label: 'Delegations actives', value: num(delegations), sub: 'Interims en cours', tone: 'slate' },
-        { icon: <SecurityIcon fontSize="large" />, label: 'Perimetre', value: 'Technique', sub: 'Aucune donnee metier', tone: 'green' },
+        { icon: <MemoryIcon fontSize="large" />, label: 'Services opérationnels', value: `${nbOk}/${srv.length || 4}`, sub: supervisionSI?.status || 'OPERATIONNEL', tone: 'green' },
+        { icon: <AssignmentIcon fontSize="large" />, label: "Journal d'audit", value: num(supervisionSI?.volumetrie?.audit || 0), sub: `${num(supervisionSI?.volumetrie?.audit_24h || 0)} dernières 24h`, tone: 'navy' },
+        { icon: <SpeedIcon fontSize="large" />, label: 'Latence BDD', value: `${supervisionSI?.systeme?.db_latency_ms ?? 12} ms`, sub: 'Temps de réponse', tone: 'gold' },
+        { icon: <SecurityIcon fontSize="large" />, label: 'Mode Supervision', value: 'Actif', sub: 'Observabilité globale', tone: 'slate' },
       ];
     }
     if (estCommunication) {
@@ -601,11 +631,10 @@ export default function Dashboard() {
     }
     return [
       { icon: <FolderIcon fontSize="large" />, label: 'Demandes traitees', value: num(s.demandes_total), sub: `${num(s.demandes_en_cours)} en cours`, tone: 'navy' },
-      { icon: <CheckCircleIcon fontSize="large" />, label: 'Taux favorable', value: `${s.taux_favorable ?? 0}%`, sub: `${num(s.demandes_favorables)} accords`, tone: 'green' },
       { icon: <AttachMoneyIcon fontSize="large" />, label: 'Recettes du mois', value: fmt(s.recettes_mois), sub: `${fmt(s.impayes_montant)} d'impayes`, tone: 'gold' },
       { icon: <ApartmentIcon fontSize="large" />, label: 'Patrimoine', value: num(s.locaux_total), sub: `${num(s.locaux_libres)} locaux libres`, tone: 'slate' },
     ];
-  }, [estUsager, estOccupant, estAdminSI, estCommunication, comptesSI, annonces, complement, role, mesDemandes, nonLues, s]);
+  }, [estUsager, estOccupant, estAdminSI, estCommunication, supervisionSI, annonces, complement, role, mesDemandes, nonLues, s]);
 
   const occupantAlert = useMemo(() => {
     if (!estOccupant) return null;
@@ -626,7 +655,7 @@ export default function Dashboard() {
     <div>
       <WelcomeBanner
         title={`Bonjour ${user?.nom_complet?.split(' ')[0] || ''}`}
-        subtitle={`Espace ${ROLES_LABELS?.[role] || (role || '').replace(/_/g, ' ')} — voici la situation en temps reel du parc domanial du CROUS-T.`}
+        subtitle={`Espace ${ROLES_LABELS?.[role] || (role || '').replace(/_/g, ' ')} - voici la situation en temps reel du parc domanial du CROUS-T.`}
         meta={new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         action={nonLues > 0 ? <Pill tone="gold">{nonLues} notification(s) non lue(s)</Pill> : null}
       />
@@ -753,18 +782,147 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Administrateur SI : perimetre strictement technique */}
+      {/* Administrateur SI : supervision technique et observabilité */}
       {estAdminSI && (
         <div style={{ display: 'grid', gap: 32, marginBottom: 32 }}>
-          <Panel icon={<GroupIcon />} title="Administration du systeme" subtitle="Comptes, audit et parametres">
+          <Panel icon={<MemoryIcon />} title="Supervision & Administration Technique" subtitle="Santé système, audit, paramètres et observabilité">
             <div style={{ padding: 16, display: 'grid', gap: 12 }}>
               <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
-                Ce compte est purement technique : il gere les acces, le journal d'audit et les parametres systeme, sans acces aux donnees metier (dossiers, contrats, paiements, terrain).
+                Espace d'observabilité et d'administration technique : supervision de la santé du système, journal d'audit, paramètres et consultation du patrimoine.
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Link to="/admin/comptes"><Button variant="ghost" size="sm">Utilisateurs</Button></Link>
+                <Link to="/admin/supervision"><Button variant="ghost" size="sm">Supervision & Santé</Button></Link>
                 <Link to="/admin/audit"><Button variant="ghost" size="sm">Journal d'audit</Button></Link>
-                <Link to="/admin/parametres"><Button variant="ghost" size="sm">Parametres</Button></Link>
+                <Link to="/admin/parametres"><Button variant="ghost" size="sm">Paramètres système</Button></Link>
+                <Link to="/patrimoine/locaux"><Button variant="ghost" size="sm">Référentiel des locaux</Button></Link>
+                <Link to="/rapports"><Button variant="ghost" size="sm">Rapports d'activité</Button></Link>
+              </div>
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* Section Communication Direction : Pleine largeur horizontale */}
+      {estDirection && (
+        <div style={{ marginBottom: 32 }}>
+          <Panel
+            icon={<CampaignIcon />}
+            title="Communication Direction"
+            subtitle="Transmettre une annonce officielle à la Cellule Communication"
+            action={
+              <Button variant="primary" size="sm" onClick={() => setComModal(true)} style={{ fontWeight: 700 }}>
+                📢 Nouvelle annonce
+              </Button>
+            }
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, alignItems: 'stretch' }}>
+              <div style={{
+                padding: '16px 18px',
+                background: 'var(--surface-2)',
+                borderRadius: 12,
+                border: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: 14,
+              }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-navy)', marginBottom: 6 }}>
+                    Canal de diffusion officiel
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5 }}>
+                    Rédigez vos communiqués officiels. Ils sont directement transmis à la <strong>Cellule Communication</strong> pour mise en forme et diffusion sur le réseau vitrine.
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setComModal(true)}
+                  style={{ fontWeight: 700, alignSelf: 'flex-start' }}
+                >
+                  + Rédiger un communiqué
+                </Button>
+              </div>
+
+              <div>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: 'var(--text-navy)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px',
+                  fontFamily: 'var(--font-mono)',
+                  marginBottom: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                  <span>Dernières transmissions ({annonces.length})</span>
+                  {annonces.length > 0 && (
+                    <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>
+                      {Math.min(annonces.length, 3)} affichée(s)
+                    </span>
+                  )}
+                </div>
+
+                {annonces.length === 0 ? (
+                  <div style={{
+                    padding: '24px',
+                    background: 'var(--surface-2)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border)',
+                    fontSize: 12.5,
+                    color: 'var(--muted)',
+                    textAlign: 'center',
+                  }}>
+                    Aucune annonce transmise pour le moment.
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 12,
+                  }}>
+                    {annonces.slice(0, 3).map((a) => (
+                      <div
+                        key={a.id}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'var(--surface-2)',
+                          borderRadius: 12,
+                          border: '1px solid var(--border)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <div style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: 'var(--text-navy)',
+                            lineHeight: 1.35,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}>
+                            {a.titre}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
+                            {new Date(a.date_creation || a.date_publication).toLocaleDateString('fr-FR')}
+                          </div>
+                        </div>
+                        <div style={{ alignSelf: 'flex-start' }}>
+                          <Pill tone={a.statut === 'PUBLIEE' ? 'green' : 'gold'}>
+                            {a.statut === 'PUBLIEE' ? '✓ Diffusée' : '⏳ Transmise Com'}
+                          </Pill>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </Panel>
@@ -792,7 +950,7 @@ export default function Dashboard() {
               </Panel>
             )}
 
-            {/* Panel paiements mensuel — Service Comptable uniquement */}
+            {/* Panel paiements mensuel - Service Comptable uniquement */}
             {estComptable && (() => {
               const MOIS_NOMS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
               const seriesMois = paiementsMois?.series || [];
@@ -811,7 +969,7 @@ export default function Dashboard() {
                 <Panel
                   icon={<TrendingUpIcon />}
                   title={`Paiements de ${MOIS_NOMS[moisSel - 1]} ${anneeSel}`}
-                  subtitle={`${paiementsMois?.nb_paiements ?? '—'} encaissements · Total : ${fmt(paiementsMois?.total_montant)}`}
+                  subtitle={`${paiementsMois?.nb_paiements ?? '-'} encaissements · Total : ${fmt(paiementsMois?.total_montant)}`}
                   action={(
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <select
@@ -843,7 +1001,7 @@ export default function Dashboard() {
               );
             })()}
 
-            {/* Panel 7 derniers jours — autres rôles (hors comptable) */}
+            {/* Panel 7 derniers jours - autres rôles (hors comptable) */}
             {!(estUsager || estOccupant || estJuridique || estComptable || estTechnique || estCommunication || estCourrier || estAdminSI) && (
               <Panel
                 icon={<TrendingUpIcon />}
@@ -874,7 +1032,7 @@ export default function Dashboard() {
                   : (complement?.repartition_paiements?.lignes || []).map((l) => (
                     <ProgressRow
                       key={l.mode}
-                      label={`${(l.mode || '').replace(/_/g, ' ')} — ${fmt(l.montant)} (${l.nombre} operation(s))`}
+                      label={`${(l.mode || '').replace(/_/g, ' ')} - ${fmt(l.montant)} (${l.nombre} operation(s))`}
                       value={l.part}
                       total={100}
                       tone="green"
@@ -890,7 +1048,7 @@ export default function Dashboard() {
                   items={mesDemandes.slice(0, 5).map((d) => ({
                     key: d.id,
                     title: (d.type_demande || '').replace(/_/g, ' '),
-                    subtitle: `${d.reference_anonyme || ''} · depose le ${d.date_depot ? new Date(d.date_depot).toLocaleDateString('fr-FR') : '—'}`,
+                    subtitle: `${d.reference_anonyme || ''} · depose le ${d.date_depot ? new Date(d.date_depot).toLocaleDateString('fr-FR') : '-'}`,
                     value: (d.statut || '').replace(/_/g, ' '),
                   }))}
                   empty="Vous n'avez encore depose aucun dossier."
@@ -899,10 +1057,22 @@ export default function Dashboard() {
             )}
 
             {estOccupant && (
-              <Panel icon={<ApartmentIcon />} title="Bienvenue dans votre espace occupant" action={<Link to="/espace-occupant"><Button variant="ghost" size="sm">Mon dossier</Button></Link>}>
-                <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, margin: 0, padding: 16 }}>
-                  Retrouvez l'ensemble des services liés à votre logement universitaire dans cet espace. Vous pouvez consulter votre contrat, régler vos échéances ou signaler un problème technique aux équipes du CROUS-T directement via le menu latéral.
-                </p>
+              <Panel
+                icon={<BuildIcon />}
+                title="Suivi de mes signalements techniques"
+                subtitle="État d'avancement des interventions par le Service Technique"
+                action={<Link to="/signaler"><Button variant="ghost" size="sm">+ Signaler un problème</Button></Link>}
+              >
+                <RankList
+                  items={(Array.isArray(mesPlaintes) ? mesPlaintes : (mesPlaintes?.results || [])).map((p) => ({
+                    key: p.id,
+                    title: p.description,
+                    subtitle: `Local : ${p.local_reference || '-'} · Déposé le ${p.date_creation ? new Date(p.date_creation).toLocaleDateString('fr-FR') : '-'}`,
+                    value: p.statut === 'RESOLUE' ? '✓ Signalement traité' : p.statut === 'EN_COURS_TRAITEMENT' ? '⏳ En traitement' : '📨 Transmis',
+                    tone: p.statut === 'RESOLUE' ? 'green' : p.statut === 'EN_COURS_TRAITEMENT' ? 'gold' : 'navy',
+                  }))}
+                  empty="Aucun signalement technique déposé."
+                />
               </Panel>
             )}
 
@@ -913,7 +1083,7 @@ export default function Dashboard() {
                   : repartitionStatuts.map((r) => (
                     <ProgressRow
                       key={r.statut}
-                      label={`${(r.statut || '').replace(/_/g, ' ')} — ${r.total}`}
+                      label={`${LIBELLES_STATUT_DOSSIER[r.statut] || (r.statut || '').replace(/_/g, ' ')} - ${r.total}`}
                       value={r.total}
                       total={totalDemandes}
                       tone={r.statut === 'FAVORABLE' ? 'green' : r.statut === 'DEFAVORABLE' ? 'red' : 'navy'}
@@ -941,13 +1111,15 @@ export default function Dashboard() {
             {(estJuridique || estTechnique || estOccupant) && (
               <Panel icon={<MilitaryTechIcon />} title="Classement des occupants" subtitle="Comparez votre score avec les meilleurs locataires">
                 <RankList
-                  items={topOccupants.map((o) => ({
-                    key: o.demandeur_id,
+                  items={topOccupants.map((o, idx) => ({
+                    key: o.demandeur_id || idx,
+                    rank: o.rang,
+                    highlight: Boolean(o.est_moi || (user?.nom_complet && o.nom === user.nom_complet) || (user?.username && o.nom === user.username)),
                     title: o.nom,
-                    subtitle: `Niveau ${o.palier}`,
-                    value: o.score != null ? `${Number(o.score).toFixed(0)} pts` : '—',
+                    subtitle: `Niveau ${o.palier || 'BRONZE'}`,
+                    value: o.score != null ? `${Number(o.score).toFixed(0)} pts` : '-',
                   }))}
-                  empty="Aucun occupant note."
+                  empty="Aucun occupant noté."
                 />
               </Panel>
             )}
@@ -959,47 +1131,68 @@ export default function Dashboard() {
                 {(s.repartition_types_locaux || []).length === 0
                   ? <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0 }}>Patrimoine non renseigne.</p>
                   : (s.repartition_types_locaux || []).map((t) => (
-                    <ProgressRow key={t.type_local} label={`${(t.type_local || '').replace(/_/g, ' ')} — ${t.total}`} value={t.total} total={s.locaux_total || 1} tone="gold" />
+                    <ProgressRow key={t.type_local} label={`${(t.type_local || '').replace(/_/g, ' ')} - ${t.total}`} value={t.total} total={s.locaux_total || 1} tone="gold" />
                   ))}
               </Panel>
 
-              {!(estJuridique || estComptable || estTechnique || estCommunication || estCourrier || estAdminSI) && (
-                <Panel icon={<EmojiEventsIcon />} title="Top locaux" subtitle="Basé sur la satisfaction des usagers">
+              {!(estJuridique || estComptable || estTechnique || estCourrier || estAdminSI || estCommunication) && (
+                <Panel
+                  icon={<MilitaryTechIcon />}
+                  title="Top occupants"
+                  subtitle="Classement par score de fidélité & exemplarité"
+                  action={
+                    topOccupants.length > 0 && (
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--muted)', fontWeight: 700 }}>
+                        {Math.min(nbTopOccupantsAffiches, topOccupants.length)} / {topOccupants.length}
+                      </span>
+                    )
+                  }
+                >
                   <RankList
-                    items={(complement?.top_locaux || []).map((l) => ({
-                      key: l.local_id,
-                      title: l.reference,
-                      subtitle: `${(l.type_local || '').replace(/_/g, ' ')} · ${l.nombre_avis || 0} avis`,
-                      value: l.note_moyenne ? `${l.note_moyenne}/5` : '—',
+                    items={topOccupants.slice(0, nbTopOccupantsAffiches).map((o) => ({
+                      key: o.demandeur_id || o.nom,
+                      title: o.nom,
+                      subtitle: `Niveau ${o.palier || 'BRONZE'}${o.est_etudiant ? ' · Étudiant' : ''}`,
+                      value: o.score != null ? `${Number(o.score).toFixed(0)} pts` : '-',
                     }))}
-                    empty="Aucun avis enregistré."
+                    empty="Aucun occupant noté."
                   />
+                  {topOccupants.length > nbTopOccupantsAffiches && (
+                    <div style={{ marginTop: 12, textAlign: 'center' }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setNbTopOccupantsAffiches((prev) => prev + 10)}
+                        style={{ width: '100%', fontWeight: 700 }}
+                      >
+                        Voir plus ({topOccupants.length - nbTopOccupantsAffiches} restants) ↓
+                      </Button>
+                    </div>
+                  )}
+                  {nbTopOccupantsAffiches > 10 && (
+                    <div style={{ marginTop: 8, textAlign: 'center' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNbTopOccupantsAffiches(10)}
+                        style={{ fontSize: 11.5, color: 'var(--muted)' }}
+                      >
+                        Réduire l'affichage (10 premiers) ↑
+                      </Button>
+                    </div>
+                  )}
                 </Panel>
               )}
 
-              {!(estJuridique || estComptable || estTechnique || estCourrier || estAdminSI || estCommunication) && (
-                <Panel icon={<MilitaryTechIcon />} title="Top occupants" subtitle="Score global avis usagers + conformite QHSE">
-                  <RankList
-                    items={topOccupants.map((o) => ({
-                      key: o.contrat_id,
-                      title: o.occupant,
-                      subtitle: `${o.local_reference} · ${o.taux_conformite != null ? `${o.taux_conformite}% conforme` : 'QHSE non evalue'}`,
-                      value: o.score_global != null ? `${o.score_global}/5` : '—',
-                    }))}
-                    empty="Aucun occupant note."
-                  />
-                </Panel>
-              )}
-
-              {!(estJuridique || estComptable || estTechnique || estCourrier || estAdminSI || estCommunication) && (
-                <Panel icon={<CampaignIcon />} title="Annonces officielles" action={<Link to="/locaux-catalogue"><Button variant="ghost" size="sm">Catalogue</Button></Link>}>
+              {!(estDirection || estJuridique || estComptable || estTechnique || estCourrier || estAdminSI || estCommunication) && (
+                <Panel icon={<CampaignIcon />} title="Communiqués officiels">
                   <RankList
                     items={annonces.map((a) => ({
                       key: a.id,
                       title: a.titre,
                       subtitle: a.date_publication ? new Date(a.date_publication).toLocaleDateString('fr-FR') : '',
                     }))}
-                    empty="Aucune annonce publiee."
+                    empty="Aucune annonce publiée."
                   />
                 </Panel>
               )}
@@ -1007,6 +1200,64 @@ export default function Dashboard() {
           )}
         </SplitLayout>
       )}
+
+      {/* Modal de transmission d'une annonce à la Cellule Communication */}
+      <Modal
+        open={comModal}
+        onClose={() => setComModal(false)}
+        title="Transmettre une annonce à la Cellule Communication"
+        size="lg"
+      >
+        <form onSubmit={handleEnvoyerAnnonceCom} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{
+            padding: '12px 14px',
+            background: 'linear-gradient(135deg, #0d1b2a 0%, #172554 100%)',
+            color: 'var(--gold-soft)',
+            borderRadius: 10,
+            fontSize: 12.5,
+            border: '1px solid rgba(201, 161, 92, 0.35)',
+            lineHeight: 1.45,
+          }}>
+            🏛️ <strong>Circuit Direction ➔ Communication :</strong> Votre communiqué sera instantanément notifié et transmis à la <strong>Cellule Communication</strong> qui assurera sa vérification et sa diffusion sur la vitrine officielle.
+          </div>
+
+          <Field label="Titre de l'annonce ou du communiqué" required>
+            <Input
+              value={comForm.titre}
+              onChange={(e) => setComForm({ ...comForm, titre: e.target.value })}
+              placeholder="Ex : Appel à candidatures exceptionnel pour les kiosques du campus..."
+              required
+            />
+          </Field>
+
+          <Field label="Texte officiel de l'annonce" required>
+            <Textarea
+              value={comForm.contenu}
+              onChange={(e) => setComForm({ ...comForm, contenu: e.target.value })}
+              placeholder="Rédigez ici le contenu officiel de l'annonce à publier..."
+              rows={5}
+              required
+            />
+          </Field>
+
+          <Field label="Consignes ou directives pour la Cellule Communication (optionnel)">
+            <Input
+              value={comForm.consigne_direction}
+              onChange={(e) => setComForm({ ...comForm, consigne_direction: e.target.value })}
+              placeholder="Ex : À diffuser en priorité d'ici demain midi..."
+            />
+          </Field>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
+            <Button variant="ghost" type="button" onClick={() => setComModal(false)}>
+              Annuler
+            </Button>
+            <Button variant="primary" type="submit" disabled={comSubmitting} style={{ fontWeight: 700 }}>
+              {comSubmitting ? 'Transmission en cours...' : '📢 Envoyer à la Cellule Communication'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

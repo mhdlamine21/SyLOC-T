@@ -53,7 +53,7 @@ export default function CaisseComptable() {
   const [recus, setRecus] = useState({ total: 0, resultats: [] });
   const [recusLoading, setRecusLoading] = useState(false);
 
-  // Paiements en attente (Espèces)
+  // Paiements declares par les occupants, en attente de la caisse (especes + mobile money)
   const [attentes, setAttentes] = useState([]);
 
   const charger = async () => {
@@ -114,7 +114,7 @@ export default function CaisseComptable() {
 
   const topDebiteurs = useMemo(() => (caisse?.top_debiteurs || []).map((d, index) => {
     const rang = d.rang || (index + 1);
-    const malus = d.malus_points != null ? d.malus_points : (rang === 1 ? -15 : rang === 2 ? -12 : rang === 3 ? -10 : rang <= 5 ? -7 : -5);
+    const malus = d.malus_points != null ? d.malus_points : (d.nb >= 2 ? null : -12);
     return {
       key: `${d.occupant}-${index}`,
       occupant: d.occupant,
@@ -124,7 +124,7 @@ export default function CaisseComptable() {
       rang,
       malus_points: malus,
       score_fidelite: d.score_fidelite,
-      critique: rang <= 3 || (d.montant && d.montant >= 400000) || d.nb >= 5,
+      critique: d.nb >= 2,
     };
   }), [caisse]);
 
@@ -201,7 +201,7 @@ export default function CaisseComptable() {
       local_reference: paiement.local_reference,
       local_localisation: paiement.local_localisation,
       contrat_reference: paiement.contrat_reference,
-      organisme: 'CROUS de Thies — SyLOC-T',
+      organisme: 'CROUS de Thies - SyLOC-T',
       service_emetteur: 'Service Comptable & Financement',
     });
   };
@@ -213,7 +213,7 @@ export default function CaisseComptable() {
       render: (r) => (
         <IdentityCell
           title={r.occupant_nom || 'Occupant'}
-          subtitle={`${r.local_reference || '—'} · ${r.local_localisation || ''}`}
+          subtitle={`${r.local_reference || '-'} · ${r.local_localisation || ''}`}
           initials={(r.occupant_nom || 'OC').slice(0, 2).toUpperCase()}
         />
       ),
@@ -221,7 +221,7 @@ export default function CaisseComptable() {
     {
       key: 'date_exigibilite',
       label: 'Exigibilite',
-      render: (r) => (r.date_exigibilite ? new Date(r.date_exigibilite).toLocaleDateString('fr-FR') : '—'),
+      render: (r) => (r.date_exigibilite ? new Date(r.date_exigibilite).toLocaleDateString('fr-FR') : '-'),
     },
     { key: 'montant_du', label: 'Montant du', align: 'right', render: (r) => fmt(r.montant_du) },
     {
@@ -230,7 +230,7 @@ export default function CaisseComptable() {
       align: 'right',
       render: (r) => (Number(r.montant_penalite) > 0
         ? <span style={{ color: 'var(--red)', fontWeight: 700 }}>{fmt(r.montant_penalite)}</span>
-        : '—'),
+        : '-'),
     },
     {
       key: 'statut',
@@ -241,18 +241,38 @@ export default function CaisseComptable() {
       key: 'actions',
       label: 'Actions',
       align: 'right',
-      render: (r) => (
-        <RowActions>
-          <IconButton
-            title="Encaisser"
-            tone="green"
-            disabled={r.statut === 'PAYEE'}
+      render: (r) => {
+        if (r.statut === 'PAYEE') {
+          return (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '4px 10px',
+                borderRadius: 8,
+                background: 'rgba(22, 163, 74, 0.12)',
+                color: 'var(--green)',
+                fontWeight: 700,
+                fontSize: 11.5,
+              }}
+            >
+              ✓ Réglée
+            </span>
+          );
+        }
+        return (
+          <Button
+            size="sm"
+            variant={r.statut === 'EN_RETARD' ? 'danger' : (r.statut === 'EXIGIBLE' ? 'gold' : 'navy')}
             onClick={() => ouvrir(r)}
+            style={{ fontSize: 11.5, padding: '4px 10px', minHeight: 30 }}
+            title={r.statut === 'NON_ECHUE' ? "Encaisser par anticipation au guichet" : "Encaisser au guichet"}
           >
-            <PaidOutlinedIcon style={{ fontSize: 17 }} />
-          </IconButton>
-        </RowActions>
-      ),
+            💵 Encaisser
+          </Button>
+        );
+      },
     },
   ];
 
@@ -263,7 +283,7 @@ export default function CaisseComptable() {
       render: (r) => (
         <IdentityCell
           title={r.occupant_nom || 'Occupant'}
-          subtitle={`${r.local_reference || '—'} · ${r.local_localisation || ''}`}
+          subtitle={`${r.local_reference || '-'} · ${r.local_localisation || ''}`}
           initials={(r.occupant_nom || 'OC').slice(0, 2).toUpperCase()}
         />
       ),
@@ -271,31 +291,49 @@ export default function CaisseComptable() {
     {
       key: 'date_paiement',
       label: 'Date déclaration',
-      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '—'),
+      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '-'),
     },
-    { key: 'montant_regle', label: 'Montant (Espèces)', align: 'right', render: (r) => fmt(r.montant_regle) },
+    {
+      key: 'mode',
+      label: 'Mode',
+      render: (r) => (
+        <Pill tone={r.mode === 'ESPECES' ? 'gold' : 'navy'}>
+          {r.mode === 'ESPECES' ? 'Espèces - sur place' : (r.mode_libelle || 'Mobile Money')}
+        </Pill>
+      ),
+    },
+    {
+      key: 'reference_transaction',
+      label: 'Référence / Payeur',
+      render: (r) => (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          {r.numero_payeur ? `${r.numero_payeur} · ` : ''}{r.reference_transaction || '-'}
+        </span>
+      ),
+    },
+    { key: 'montant_regle', label: 'Montant', align: 'right', render: (r) => fmt(r.montant_regle) },
     {
       key: 'actions',
       label: 'Actions',
       align: 'right',
       render: (r) => (
         <Button variant="navy" size="sm" onClick={() => validerAttente(r.id)}>
-          Valider l'encaissement
+          {r.mode === 'ESPECES' ? "Encaisser & valider" : 'Confirmer le dépôt'}
         </Button>
       ),
     },
   ];
 
   const recusColumns = [
-    { key: 'reference_quitus', label: 'N° Quitus', render: (r) => r.reference_quitus || '—' },
+    { key: 'reference_quitus', label: 'N° Quitus', render: (r) => r.reference_quitus || '-' },
     {
       key: 'date_paiement',
       label: 'Date',
-      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '—'),
+      render: (r) => (r.date_paiement ? new Date(r.date_paiement).toLocaleString('fr-FR') : '-'),
     },
-    { key: 'occupant_nom', label: 'Occupant', render: (r) => r.occupant_nom || '—' },
-    { key: 'local_reference', label: 'Local', render: (r) => r.local_reference || '—' },
-    { key: 'mode_libelle', label: 'Mode', render: (r) => r.mode_libelle || r.mode || '—' },
+    { key: 'occupant_nom', label: 'Occupant', render: (r) => r.occupant_nom || '-' },
+    { key: 'local_reference', label: 'Local', render: (r) => r.local_reference || '-' },
+    { key: 'mode_libelle', label: 'Mode', render: (r) => r.mode_libelle || r.mode || '-' },
     { key: 'montant_regle', label: 'Montant', align: 'right', render: (r) => fmt(r.montant_regle) },
     {
       key: 'actions',
@@ -336,14 +374,14 @@ export default function CaisseComptable() {
         <KpiCard icon={<BarChartOutlinedIcon style={{ fontSize: 20 }} />} label="Taux de recouvrement" value={`${caisse?.taux_recouvrement ?? 0}%`} sub={`Pénalités : ${fmt(caisse?.penalites_cumulees)}`} tone="gold" />
       </StatGrid>
 
-      {/* Paiements en attente — pleine largeur, si présents */}
+      {/* Paiements en attente - pleine largeur, si présents */}
       {attentes.length > 0 && (
-        <Panel icon={<FolderCopyOutlinedIcon style={{ fontSize: 20 }} />} title="Paiements en attente (Espèces)" subtitle="Intentions de paiement nécessitant une validation en caisse">
+        <Panel icon={<FolderCopyOutlinedIcon style={{ fontSize: 20 }} />} title="Paiements déclarés en attente de validation" subtitle="Espèces : l'occupant se présente au guichet, vous encaissez puis validez. Mobile Money : vous confirmez simplement le dépôt. Le quitus est émis à la validation.">
           <DataTable columns={attentesColumns} rows={attentes} empty="Aucun paiement en attente." pageSize={10} dense />
         </Panel>
       )}
 
-      {/* Échéancier & Encaissements — pleine largeur */}
+      {/* Échéancier & Encaissements - pleine largeur */}
       <Panel icon={<ReceiptLongOutlinedIcon style={{ fontSize: 20 }} />} title="Échéancier & Encaissements" subtitle="Recouvrement manuel et statuts des redevances" padded={false}>
         <div style={{ padding: '14px 16px 0' }}>
           <FilterBar onReset={() => { setQ(''); setStatut(''); }}>
@@ -371,16 +409,16 @@ export default function CaisseComptable() {
         />
       </Panel>
 
-      {/* Répartition par mode de règlement — pleine largeur */}
+      {/* Répartition par mode de règlement - pleine largeur */}
       <Panel icon={<PieChartOutlinedIcon style={{ fontSize: 20 }} />} title="Répartition par mode de règlement" subtitle="Volume encaissé par canal de paiement">
         <DoughnutChart data={parModeData} height={260} />
       </Panel>
 
-      {/* Plus gros impayés & Arriérés critiques — pleine largeur */}
+      {/* Plus gros impayés & Arriérés critiques - pleine largeur */}
       <Panel
         icon={<WarningAmberOutlinedIcon style={{ fontSize: 20, color: 'var(--red, #dc2626)' }} />}
-        title="Plus gros impayés & Arriérés critiques"
-        subtitle="Occupants avec retards majeurs · Entraîne une dégradation du score de fidélité et des pénalités financières"
+        title="Arriérés d'impayés & Alertes de recouvrement"
+        subtitle="Seuil d'alerte : au-delà de 2 mois d'arriérés (60 jours), mise en demeure et engagement de la procédure de résiliation / libération des lieux."
       >
         {topDebiteurs.length === 0 ? (
           <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0 }}>Aucun impayé : parc locatif à jour.</p>
@@ -426,14 +464,14 @@ export default function CaisseComptable() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap', fontSize: 11 }}>
                       <span style={{ color: 'var(--muted)', fontWeight: 600 }}>
-                        {d.nb} échéance(s) en retard · {d.local || 'Local non spécifié'}
+                        {d.nb} échéance{d.nb > 1 ? 's' : ''} en retard ({d.nb} mois) · {d.local || 'Local non spécifié'}
                       </span>
                       <span
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 4,
-                          padding: '2px 8px',
+                          padding: '3px 9px',
                           borderRadius: 6,
                           background: d.critique ? 'rgba(220, 38, 38, 0.12)' : 'rgba(217, 119, 6, 0.1)',
                           color: d.critique ? 'var(--red, #dc2626)' : 'var(--amber, #d97706)',
@@ -441,11 +479,16 @@ export default function CaisseComptable() {
                           fontSize: 10.5,
                         }}
                       >
-                        ⚠️ Malus fidélité ({d.malus_points} pts)
+                        {d.critique
+                          ? "🚨 Avis d'expulsion (Procédure de résiliation)"
+                          : `⚠️ 1 mois de retard · Malus fidélité (${d.malus_points ?? -12} pts)`}
                       </span>
-                      {d.score_fidelite != null && (
+                      {!d.critique && d.score_fidelite != null && (
                         <span style={{ color: 'var(--muted)', fontSize: 10.5, fontWeight: 600 }}>
-                          Score : <strong style={{ color: d.score_fidelite < 50 ? 'var(--red)' : 'var(--text-navy)' }}>{d.score_fidelite} pts</strong>
+                          Score :{' '}
+                          <strong style={{ color: d.score_fidelite < 50 ? 'var(--red)' : 'var(--text-navy)' }}>
+                            {d.score_fidelite} pts
+                          </strong>
                         </span>
                       )}
                     </div>
@@ -474,17 +517,17 @@ export default function CaisseComptable() {
         )}
       </Panel>
 
-      {/* Répartition des échéances — pleine largeur */}
+      {/* Répartition des échéances - pleine largeur */}
       <Panel icon={<SquareFootOutlinedIcon style={{ fontSize: 20 }} />} title="Répartition des échéances par statut">
         <ProgressBars items={repartitionItems} />
       </Panel>
 
-      {/* Journal des encaissements — pleine largeur */}
+      {/* Journal des encaissements - pleine largeur */}
       <Panel icon={<TrendingUpOutlinedIcon style={{ fontSize: 20 }} />} title="Journal des encaissements (14 derniers jours)" subtitle="Évolution quotidienne des recettes">
         <LineChart labels={journalSeries.labels} series={journalSeries.series} height={220} />
       </Panel>
 
-      {/* Registre des reçus — pleine largeur */}
+      {/* Registre des reçus - pleine largeur */}
       <Panel icon={<FolderCopyOutlinedIcon style={{ fontSize: 20 }} />} title="Registre des reçus" subtitle="Réédition des quitus émis (période / mode de règlement)">
         <FilterBar onReset={() => { const r = { debut: '', fin: '', mode: '' }; setRecusFiltre(r); chargerRecus(r); }}>
           <FilterField label="Du">
@@ -516,7 +559,7 @@ export default function CaisseComptable() {
             <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12.5 }}>
               <div><strong>{cible.occupant_nom || 'Occupant'}</strong> · {cible.local_reference}</div>
               <div style={{ color: 'var(--muted)' }}>
-                Exigible le {cible.date_exigibilite ? new Date(cible.date_exigibilite).toLocaleDateString('fr-FR') : '—'} ·
+                Exigible le {cible.date_exigibilite ? new Date(cible.date_exigibilite).toLocaleDateString('fr-FR') : '-'} ·
                 {' '}Du : {fmt(cible.montant_du)}{Number(cible.montant_penalite) > 0 ? ` + penalite ${fmt(cible.montant_penalite)}` : ''}
               </div>
             </div>
@@ -526,7 +569,7 @@ export default function CaisseComptable() {
             </Field>
             {Number(form.montant_regle) > 0 && Number(form.montant_regle) < (Number(cible.montant_du) + Number(cible.montant_penalite)) && (
               <p style={{ fontSize: 12, color: 'var(--gold-deep, var(--gold))', margin: '-8px 0 12px' }}>
-                Règlement partiel — reste à payer estimé : {fmt((Number(cible.montant_du) + Number(cible.montant_penalite)) - Number(form.montant_regle))}
+                Règlement partiel - reste à payer estimé : {fmt((Number(cible.montant_du) + Number(cible.montant_penalite)) - Number(form.montant_regle))}
               </p>
             )}
             <Field label="Mode de paiement" required>

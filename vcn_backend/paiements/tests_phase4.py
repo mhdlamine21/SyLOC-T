@@ -1,4 +1,4 @@
-"""Tests Phase 4 — Service Comptable (caisse, echeances, reglements, recus)
+"""Tests Phase 4 - Service Comptable (caisse, echeances, reglements, recus)
 et espace Occupant (cloisonnement des donnees)."""
 
 from datetime import timedelta
@@ -46,6 +46,7 @@ class ReglementEtQuitusTest(BaseCaisse):
             'echeance_id': str(self.echeance.id),
             'montant_regle': self.echeance.montant_du,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
         self.assertEqual(reponse.status_code, status.HTTP_201_CREATED)
         quitus = reponse.data['quitus']
@@ -62,6 +63,7 @@ class ReglementEtQuitusTest(BaseCaisse):
             'echeance_id': str(self.echeance.id),
             'montant_regle': self.echeance.montant_du,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
         self.echeance.refresh_from_db()
         self.assertEqual(self.echeance.statut, StatutEcheance.PAYEE)
@@ -73,6 +75,7 @@ class ReglementEtQuitusTest(BaseCaisse):
             'echeance_id': str(self.echeance.id),
             'montant_regle': 10000.0,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
         self.echeance.refresh_from_db()
         self.assertNotEqual(self.echeance.statut, StatutEcheance.PAYEE)
@@ -129,6 +132,7 @@ class CaisseConsolideeTest(BaseCaisse):
             'echeance_id': str(self.echeance.id),
             'montant_regle': self.echeance.montant_du,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
 
         reponse = self.client.get('/api/paiements/caisse/')
@@ -152,6 +156,7 @@ class CaisseConsolideeTest(BaseCaisse):
             'echeance_id': str(self.echeance.id),
             'montant_regle': 1000.0,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
         aujourdhui = timezone.now().date().isoformat()
         reponse = self.client.get(
@@ -204,6 +209,7 @@ class CloisonnementOccupantTest(BaseCaisse):
             'echeance_id': str(echeance_autrui.id),
             'montant_regle': 1000.0,
             'mode': ModePaiement.MOBILE_MONEY,
+            'numero_payeur': '770000000',
         }, format='json')
         self.assertEqual(reponse.status_code, status.HTTP_404_NOT_FOUND)
 

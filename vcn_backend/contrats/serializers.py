@@ -29,7 +29,7 @@ class ContratSerializer(serializers.ModelSerializer):
     signataire_nom = serializers.CharField(source='signataire_crous_t.nom_complet', read_only=True)
     modele_nom = serializers.CharField(source='modele.nom', read_only=True)
 
-    # Phase 4 — donnees derivees utiles a l'edition/impression des actes.
+    # Phase 4 - donnees derivees utiles a l'edition/impression des actes.
     date_fin = serializers.DateField(read_only=True)
     date_fin_preavis = serializers.DateField(read_only=True)
     statut_libelle = serializers.CharField(source='get_statut_display', read_only=True)

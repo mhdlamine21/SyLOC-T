@@ -4,10 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "clean:cache": "node -e \"require('node:fs').rmSync('node_modules/.vite',{recursive:true,force:true})\"",
+    "dev": "vite --force",
     "lint": "eslint .",
+    "prebuild": "node scripts/ensure-deps.mjs",
+    "predev": "node scripts/ensure-deps.mjs",
+    "prepreview": "node scripts/ensure-deps.mjs",
+    "pretest": "node scripts/ensure-deps.mjs",
     "preview": "vite preview",
+    "setup": "node scripts/ensure-deps.mjs",
+    "start": "npm run dev",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },

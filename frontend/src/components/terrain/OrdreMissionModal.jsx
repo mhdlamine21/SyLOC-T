@@ -7,7 +7,7 @@ import { NIVEAUX_URGENCE, TYPES_SIGNALEMENT_TERRAIN } from '../../utils/constant
 import { messageErreur, toArray } from '../../api/utils';
 
 /**
- * Ordre de mission terrain — crée un vrai signalement (terrain.Plainte)
+ * Ordre de mission terrain - crée un vrai signalement (terrain.Plainte)
  * transmis à la Brigade de Contrôle et au Bureau QHSE.
  */
 export default function OrdreMissionModal({ open, onClose, localInitial = '', onCree }) {
@@ -86,7 +86,7 @@ export default function OrdreMissionModal({ open, onClose, localInitial = '', on
             {locaux.length === 0 && <option value="">Chargement des locaux…</option>}
             {locaux.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.reference} — {l.localisation}
+                {l.reference} - {l.localisation}
               </option>
             ))}
           </Select>

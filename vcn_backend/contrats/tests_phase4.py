@@ -1,4 +1,4 @@
-"""Tests Phase 4 — Service Juridique : redaction, cycle de vie, quitus general."""
+"""Tests Phase 4 - Service Juridique : redaction, cycle de vie, quitus general."""
 
 from django.utils import timezone
 from rest_framework import status

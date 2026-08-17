@@ -84,7 +84,7 @@ class UtilisateurSerializer(serializers.ModelSerializer):
         model = Utilisateur
         fields = (
             'id', 'username', 'email', 'nom_complet', 'role', 'role_effectif',
-            'is_active', 'is_staff', 'date_joined', 'last_login',
+            'is_active', 'is_staff', 'date_joined', 'last_login', 'telephone', 'specialite',
             'delegation_active', 'delegation_expiration', 'password', 'est_etudiant'
         )
         read_only_fields = ('id', 'date_joined', 'last_login', 'is_staff')
@@ -122,6 +122,7 @@ class MeSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'username', 'email', 'nom_complet', 'role', 'role_effectif',
             'is_active', 'date_joined', 'profil_demandeur', 'est_membre_commission',
+            'telephone', 'specialite',
         )
         read_only_fields = ('id', 'username', 'role', 'is_active', 'date_joined')
 

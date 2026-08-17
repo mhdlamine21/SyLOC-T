@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-# Phase 4 — bibliotheque de modeles du Service Juridique.
+# Phase 4 - bibliotheque de modeles du Service Juridique.
 from .models import Contrat, ModeleContrat  # noqa: E402
 
 

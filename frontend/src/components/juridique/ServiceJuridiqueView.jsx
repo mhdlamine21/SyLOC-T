@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PageWrapper, SectionHeader, Button } from '../common/ui';
+import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
 import BauxARediger from './BauxARediger';
 import PortefeuilleContrats from './PortefeuilleContrats';
 import ModelesContrats from './ModelesContrats';
@@ -11,7 +13,23 @@ const TABS = [
 ];
 
 export default function ServiceJuridiqueView() {
-  const [activeTab, setActiveTab] = useState('baux');
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabParam && TABS.some((t) => t.key === tabParam) ? tabParam : 'baux'
+  );
+
+  useEffect(() => {
+    if (tabParam && TABS.some((t) => t.key === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setSearchParams({ tab: key });
+  };
 
   return (
     <PageWrapper>
@@ -19,6 +37,17 @@ export default function ServiceJuridiqueView() {
         eyebrow="Service Juridique & Contentieux"
         title="Rédaction des Contrats & Baux Domaniaux (UC42)"
         subtitle="Émission des actes d'attribution, gestion du portefeuille contractuel et des modèles, résiliation et suivi statistique."
+        action={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            style={{ gap: 6, fontWeight: 700 }}
+          >
+            <ArrowBackOutlinedIcon style={{ fontSize: 16 }} />
+            Retour au tableau de bord
+          </Button>
+        }
       />
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -26,7 +55,7 @@ export default function ServiceJuridiqueView() {
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? 'primary' : 'ghost'}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
           >
             {tab.label}
           </Button>

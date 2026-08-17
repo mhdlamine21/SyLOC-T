@@ -4,8 +4,9 @@ guidePrompt/
 *.zip
 bk/
 bk*/
-fr/
-fr*/
+fr1/
+
+
 
 # Frontend
 frontend/node_modules/

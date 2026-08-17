@@ -6,8 +6,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, SectionHeader, Button, Field, Select, Input, PageWrapper, AlertBanner, EmptyState, LoadingState } from '../common/ui';
-import { getEcheances, reglerPaiement } from '../../api/paiements';
-import { getParametres } from '../../api/parametres';
+import { getEcheances, reglerPaiement, getConfigMobileMoney } from '../../api/paiements';
 import { messageErreur } from '../../api/utils';
 import QuitusFormatModal from './QuitusFormatModal';
 import { MODES_PAIEMENT } from '../../utils/constants';
@@ -40,6 +39,7 @@ export default function Paiement() {
   const [dernierPaiement, setDernierPaiement] = useState(null);
   const [quitusAffiche, setQuitusAffiche] = useState(null);
   const [numeroCaisse, setNumeroCaisse] = useState(NUMERO_CAISSE_DEFAUT);
+  const [numeroWave, setNumeroWave] = useState('');
   const [telError, setTelError] = useState('');
 
   const totalDu = (ech) => Number(ech?.montant_du || 0) + Number(ech?.montant_penalite || 0);
@@ -61,13 +61,12 @@ export default function Paiement() {
 
   useEffect(() => {
     fetchEcheances();
-    // Numéro officiel de dépôt configuré côté Administration système, sinon valeur de repli.
-    getParametres()
-      .then((liste) => {
-        const param = (liste || []).find((p) =>
-          /NUMERO.*(CAISSE|MOBILE|MONEY)/i.test(p.code || p.cle || ''),
-        );
-        if (param?.valeur) setNumeroCaisse(param.valeur);
+    // Numeros officiels de depot : endpoint ouvert a tout utilisateur connecte.
+    // (L'ancien appel visait /admin/parametres/, interdit a l'occupant -> 403.)
+    getConfigMobileMoney()
+      .then((cfg) => {
+        if (cfg?.orange_money) setNumeroCaisse(cfg.orange_money);
+        if (cfg?.wave) setNumeroWave(cfg.wave);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,20 +114,18 @@ export default function Paiement() {
         montantNum,
         modePaiement,
         modePaiement === 'MOBILE_MONEY'
-          ? `TEL_PAYEUR: ${normaliserTel(telephone)} | TXN: ${transactionId} | NUMERO_CAISSE: ${numeroCaisse}`
+          ? `TXN: ${transactionId} | NUMERO_CAISSE: ${numeroCaisse}`
           : '',
+        modePaiement === 'MOBILE_MONEY' ? normaliserTel(telephone) : '',
       );
 
       setDernierPaiement(paiement);
 
       toast.success(
         modePaiement === 'ESPECES'
-          ? "Votre intention de paiement a été enregistrée. Veuillez vous rendre à la caisse centrale."
-          : "Paiement enregistré avec succès !"
+          ? "Déclaration enregistrée. Présentez-vous au Service Comptable pour remettre le montant."
+          : "Dépôt déclaré. Le Service Comptable va le confirmer.",
       );
-      if (modePaiement !== 'ESPECES' && paiement.quitus) {
-        setQuitusAffiche(paiement.quitus);
-      }
       setMontant('');
       setTelephone('');
       setTransactionId('');
@@ -147,7 +144,7 @@ export default function Paiement() {
       <SectionHeader
         eyebrow="Guichet Caisse & Recouvrement"
         title="Paiement des redevances & émission du quitus"
-        subtitle="Règlement par Mobile Money ou en espèces, y compris partiel, avec émission immédiate de la quittance."
+        subtitle="Mobile Money ou espèces, règlement partiel autorisé. Le quitus est émis par le Service Comptable après contrôle."
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 1.4fr) minmax(280px, 1fr)', gap: 24, alignItems: 'start' }}>
@@ -184,8 +181,8 @@ export default function Paiement() {
                   <Select value={selectedEcheance} onChange={(e) => changerEcheance(e.target.value)}>
                     {echeances.map((ech) => (
                       <option key={ech.id} value={ech.id}>
-                        {ech.local_reference ? `${ech.local_reference} — ` : ''}
-                        Échéance du {new Date(ech.date_exigibilite).toLocaleDateString('fr-FR')} —{' '}
+                        {ech.local_reference ? `${ech.local_reference} - ` : ''}
+                        Échéance du {new Date(ech.date_exigibilite).toLocaleDateString('fr-FR')} -{' '}
                         {Number(totalDu(ech)).toLocaleString('fr-FR')} FCFA [{ech.statut}]
                       </option>
                     ))}
@@ -234,6 +231,11 @@ export default function Paiement() {
                         <p style={{ margin: '2px 0 0', fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-mono)', color: 'var(--text-navy)', letterSpacing: '.5px' }}>
                           {numeroCaisse}
                         </p>
+                        {numeroWave && (
+                          <p style={{ margin: '2px 0 0', fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                            Wave : <strong style={{ color: 'var(--text-navy)' }}>{numeroWave}</strong>
+                          </p>
+                        )}
                       </div>
                     </div>
                     <AlertBanner type="warn">
@@ -280,29 +282,31 @@ export default function Paiement() {
                   </div>
                 )}
 
-                {modePaiement === 'ESPECES' ? (
-                  <AlertBanner type="warn">
-                    Montant total dû : <strong>{Number(totalDu(echeanceCourante) || 0).toLocaleString('fr-FR')} FCFA</strong>.
-                    <br /><br />
-                    Vous devez vous rendre physiquement au guichet de la caisse centrale pour finaliser ce règlement.
-                    Votre quitus sera généré <strong>uniquement après encaissement par le service comptable</strong>.
-                  </AlertBanner>
-                ) : (
-                  <AlertBanner type="info">
-                    Montant total dû : <strong>{Number(totalDu(echeanceCourante) || 0).toLocaleString('fr-FR')} FCFA</strong>.
-                    {resteAPayer > 0 && (
-                      <>
-                        <br />
-                        Reste à payer après ce règlement : <strong>{resteAPayer.toLocaleString('fr-FR')} FCFA</strong>.
-                      </>
-                    )}
-                    <br />
-                    Vous choisirez le format d'impression (Ticket ou Facture A4) après validation.
-                  </AlertBanner>
-                )}
+                <AlertBanner type={modePaiement === 'ESPECES' ? 'warn' : 'info'}>
+                  Montant total dû : <strong>{Number(totalDu(echeanceCourante) || 0).toLocaleString('fr-FR')} FCFA</strong>.
+                  {resteAPayer > 0 && (
+                    <>
+                      {' '}Reste à payer après ce règlement :{' '}
+                      <strong>{resteAPayer.toLocaleString('fr-FR')} FCFA</strong>.
+                    </>
+                  )}
+                  <br /><br />
+                  {modePaiement === 'ESPECES' ? (
+                    <>
+                      Vous devez <strong>vous rendre physiquement au Service Comptable</strong> (guichet de la
+                      caisse centrale) pour remettre le montant. Le comptable encaisse, valide,
+                      et <strong>c'est seulement à ce moment que votre quitus apparaît</strong> dans votre espace.
+                    </>
+                  ) : (
+                    <>
+                      Aucun déplacement nécessaire : le Service Comptable <strong>confirme simplement</strong> votre
+                      dépôt, puis <strong>votre quitus devient disponible</strong> dans votre espace occupant.
+                    </>
+                  )}
+                </AlertBanner>
 
                 <Button variant="navy" type="submit" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-                  {loading ? 'Traitement en cours…' : modePaiement === 'ESPECES' ? "Déclarer l'intention de paiement" : 'Régler & émettre le quitus'}
+                  {loading ? 'Traitement en cours…' : modePaiement === 'ESPECES' ? "Déclarer le paiement en espèces" : 'Déclarer mon dépôt Mobile Money'}
                 </Button>
               </form>
             )}
@@ -321,7 +325,7 @@ export default function Paiement() {
               <div style={{ display: 'grid', gap: 8, fontSize: 13, color: 'var(--slate)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Local</span>
-                  <strong style={{ color: 'var(--text-navy)' }}>{echeanceCourante.local_reference || '—'}</strong>
+                  <strong style={{ color: 'var(--text-navy)' }}>{echeanceCourante.local_reference || '-'}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Date limite</span>
@@ -336,33 +340,50 @@ export default function Paiement() {
           )}
 
           {dernierPaiement && (
-            <Card>
+            <Card style={{ borderLeft: '4px solid var(--gold)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <ReceiptLongOutlinedIcon style={{ fontSize: 20, color: 'var(--green)' }} />
+                <ReceiptLongOutlinedIcon style={{ fontSize: 20, color: 'var(--gold-deep, var(--gold))' }} />
                 <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--text-navy)', margin: 0, fontWeight: 800 }}>
-                  Dernier quitus émis
+                  Déclaration enregistrée
                 </h3>
               </div>
+
               <div style={{ fontSize: 13, lineHeight: 1.9, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
-                <div>N° : <strong>{dernierPaiement.quitus?.reference_quitus}</strong></div>
-                <div>Date : {dernierPaiement.quitus?.date_paiement ? new Date(dernierPaiement.quitus.date_paiement).toLocaleString('fr-FR') : '—'}</div>
-                <div>Occupant : {dernierPaiement.quitus?.occupant_nom}</div>
-                <div>Local : {dernierPaiement.quitus?.local_reference}</div>
-                <div>Montant réglé : {Number(dernierPaiement.quitus?.montant_regle || 0).toLocaleString('fr-FR')} FCFA</div>
-                <div>Reste à payer : {Number(dernierPaiement.quitus?.reste_a_payer || 0).toLocaleString('fr-FR')} FCFA</div>
-                <div>Mode : {LIBELLES_MODE[dernierPaiement.quitus?.mode] || dernierPaiement.quitus?.mode_libelle}</div>
+                <div>Mode : <strong style={{ color: 'var(--text-navy)' }}>{LIBELLES_MODE[dernierPaiement.mode] || dernierPaiement.mode_libelle || dernierPaiement.mode}</strong></div>
+                <div>Montant : <strong style={{ color: 'var(--text-navy)' }}>{Number(dernierPaiement.montant_regle || 0).toLocaleString('fr-FR')} FCFA</strong></div>
+                <div>Déclaré le : {dernierPaiement.date_paiement ? new Date(dernierPaiement.date_paiement).toLocaleString('fr-FR') : '-'}</div>
               </div>
 
-              <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Button variant="secondary" onClick={() => setQuitusAffiche(dernierPaiement.quitus)}>
-                  Choisir le format & Imprimer
-                </Button>
-                <Button variant="primary" onClick={() => {
-                  import('../../utils/pdfGenerator').then(m => m.genererQuitusPDF(dernierPaiement.quitus, { format: 'A4' }));
-                }}>
-                  📥 Télécharger Quitus (PDF)
-                </Button>
+              <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+                {[
+                  { t: 'Déclaration transmise', fait: true },
+                  {
+                    t: dernierPaiement.mode === 'ESPECES'
+                      ? 'Remise du montant au Service Comptable (sur place)'
+                      : 'Confirmation du dépôt par le Service Comptable',
+                    fait: false,
+                  },
+                  { t: 'Émission de votre quitus', fait: false },
+                ].map((etape, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{
+                      width: 20, height: 20, flexShrink: 0, borderRadius: '50%',
+                      display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800,
+                      background: etape.fait ? 'var(--green)' : 'var(--gold-tint)',
+                      color: etape.fait ? '#fff' : 'var(--gold-deep)',
+                      border: etape.fait ? 'none' : '1px solid var(--gold)',
+                    }}>{etape.fait ? '✓' : i + 1}</span>
+                    <span style={{ fontSize: 12.5, color: etape.fait ? 'var(--text-navy)' : 'var(--slate)', fontWeight: etape.fait ? 700 : 500 }}>
+                      {etape.t}
+                    </span>
+                  </div>
+                ))}
               </div>
+
+              <p style={{ marginTop: 14, marginBottom: 0, fontSize: 12.5, color: 'var(--slate)', lineHeight: 1.6 }}>
+                {dernierPaiement.instruction
+                  || "Votre quitus sera consultable dans « Mes quitus » dès la validation du Service Comptable."}
+              </p>
             </Card>
           )}
         </div>

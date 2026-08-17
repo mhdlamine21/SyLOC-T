@@ -167,19 +167,19 @@ export default function Profile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                 <div>
                   <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Prénom</p>
-                  <p className="font-bold text-ink text-sm mt-1">{user?.prenom || user?.nom_complet?.split(' ')[0] || '—'}</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.prenom || user?.nom_complet?.split(' ')[0] || '-'}</p>
                 </div>
                 <div>
                   <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Nom</p>
-                  <p className="font-bold text-ink text-sm mt-1">{user?.nom || user?.nom_complet?.split(' ')[1] || '—'}</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.nom || user?.nom_complet?.split(' ')[1] || '-'}</p>
                 </div>
                 <div>
                   <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Téléphone / Contact</p>
-                  <p className="font-bold text-ink text-sm mt-1">{user?.telephone || user?.profil_demandeur?.contact || '—'}</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.telephone || user?.profil_demandeur?.contact || '-'}</p>
                 </div>
                 <div>
                   <p className="font-mono text-[11px] text-muted uppercase tracking-wider">Service / Adresse</p>
-                  <p className="font-bold text-ink text-sm mt-1">{user?.service || user?.profil_demandeur?.adresse || '—'}</p>
+                  <p className="font-bold text-ink text-sm mt-1">{user?.service || user?.profil_demandeur?.adresse || '-'}</p>
                 </div>
                 {(user?.est_etudiant || user?.profil_demandeur?.est_etudiant) && (
                   <div className="sm:col-span-2 pt-4 border-t border-border mt-2">

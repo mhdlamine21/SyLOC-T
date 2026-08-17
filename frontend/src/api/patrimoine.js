@@ -23,3 +23,13 @@ export const updateLocal = async (id, data) => {
 
 // Audit Phase 1 : LocalViewSet est un ModelViewSet complet.
 export const deleteLocal = async (id) => (await api.delete(`/patrimoine/locaux/${id}/`)).data;
+
+// Emplacements ou un type de projet est autorise (ex. local artisanal),
+// avec leur photo de vitrine, pour le choix visuel du candidat.
+export const getEmplacementsAutorises = async (typeDemande) => {
+  const response = await api.get('/patrimoine/locaux/emplacements-autorises/', {
+    params: { type_demande: typeDemande },
+  });
+  const data = response.data;
+  return Array.isArray(data) ? data : (data?.results ?? []);
+};

@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import AppLogo from '../components/common/AppLogo';
 import { getPublicStats, getPublicAnnonces, getPublicVitrine, getPublicLocaux, getPublicAppels } from '../api/public';
 import { Modal, Button } from '../components/common/ui';
+import { formatLoyerMensuel } from '../utils/locaux';
 import toast from 'react-hot-toast';
 import localCroustImg from '../assets/local_croust.jpeg';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -119,7 +120,7 @@ export default function Home() {
              dossiersTraites: data.demandes_total || 0,
              locauxGeres: data.locaux_total || 0,
              locauxLibres: data.locaux_libres ?? 0,
-             tauxConformite: data.taux_favorable != null ? `${data.taux_favorable} %` : '—',
+             tauxConformite: data.taux_favorable != null ? `${data.taux_favorable} %` : '-',
              delaiMoyen: '3 à 6 semaines'
           }));
         }
@@ -255,8 +256,9 @@ export default function Home() {
                 style={{ width: '100%', padding: 9, borderRadius: 8, border: '1.5px solid var(--gold)', fontSize: 12.5, fontWeight: 700, background: 'var(--surface-2)', color: 'var(--text-navy)', cursor: 'pointer' }}
               >
                 <option value="">-- Choisir un profil de test --</option>
-                <option value="etudiant">Usager / Candidat (etudiant)</option>
-                <option value="occupant">Occupant Titulaire (occupant)</option>
+                <option value="candidat">Candidat / Usager postulant (candidat)</option>
+                <option value="occupant">Occupant Titulaire avec local (occupant)</option>
+                <option value="etudiant">Étudiant Titulaire subventionné (etudiant)</option>
                 <option value="courrier">Bureau du Courrier (courrier)</option>
                 <option value="dcuve">Directeur DCUVE (dcuve)</option>
                 <option value="commission">Directeur Général CROUS-T (commission)</option>
@@ -264,8 +266,10 @@ export default function Home() {
                 <option value="comptable">Service Comptable (comptable)</option>
                 <option value="technique">Service Technique (technique)</option>
                 <option value="terrain">Agent de Terrain (terrain)</option>
+                <option value="agent_qhse">Agent QHSE (agent_qhse)</option>
                 <option value="qhse">Bureau d'Environnement (qhse)</option>
                 <option value="communication">Cellule Communication (communication)</option>
+                <option value="amicale">Amicale des Étudiants (amicale)</option>
                 <option value="admin_si">Administrateur Système (admin_si)</option>
               </select>
             </div>
@@ -581,7 +585,7 @@ export default function Home() {
             Locaux actuellement disponibles
           </h2>
           <p style={{ color: 'var(--text-navy)', opacity: 0.85, fontSize: 14, marginTop: 0, marginBottom: 20 }}>
-            Referentiel patrimoine en temps reel — {stats.locauxLibres ?? 0} local(aux) libre(s) sur {stats.locauxGeres}.
+            Referentiel patrimoine en temps reel - {stats.locauxLibres ?? 0} local(aux) libre(s) sur {stats.locauxGeres}.
           </p>
 
           {locauxVitrine.length === 0 ? (
@@ -594,7 +598,20 @@ export default function Home() {
                 <div key={l.id} style={{ background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
                   <div style={{ height: 120, background: `center/cover no-repeat url(${photoDuLocal(l)}), center/cover no-repeat url(${localCroustImg})` }} />
                   <div style={{ padding: 16 }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-navy)' }}>{l.reference}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-navy)' }}>{l.reference}</div>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11.5,
+                        fontWeight: 800,
+                        color: 'var(--gold-deep)',
+                        backgroundColor: 'rgba(201, 161, 92, 0.15)',
+                        padding: '2px 7px',
+                        borderRadius: 6,
+                      }}>
+                        {formatLoyerMensuel(l)}
+                      </span>
+                    </div>
                     <div style={{ fontSize: 12.5, color: 'var(--text-navy)', opacity: 0.85, marginTop: 4 }}>
                       {(l.type_local || '').replace(/_/g, ' ')} · {l.surface_m2 ?? '?'} m² · {l.localisation}
                     </div>

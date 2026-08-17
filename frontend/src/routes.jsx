@@ -38,13 +38,13 @@ import ServiceJuridiqueView from './components/juridique/ServiceJuridiqueView';
 // Service Technique & Expertise Maquettes
 import ServiceTechniqueView from './components/terrain/ServiceTechniqueView';
 
-// Agent QHSE — espace de travail unifié
+// Agent QHSE - espace de travail unifié
 import AgentQHSEView from './components/terrain/AgentQHSEView';
 
-// Cellule Communication — Publication Appels & Affiches Accueil
+// Cellule Communication - Publication Appels & Affiches Accueil
 import CelluleComView from './components/communication/CelluleComView';
 
-// Bureau du Courrier — point d'entree des dossiers
+// Bureau du Courrier - point d'entree des dossiers
 import BureauCourrierView from './components/courrier/BureauCourrierView';
 import ArchivesDossiers from './components/courrier/ArchivesDossiers';
 
@@ -53,12 +53,13 @@ import AgentTerrainView from './components/terrain/AgentTerrainView';
 import BureauEnvironnementView from './components/terrain/BureauEnvironnementView';
 import OrdresMissionView from './components/terrain/OrdresMissionView';
 import RapportsVisiteTerrain from './components/terrain/RapportsVisiteTerrain';
+import RapportsTerrainTechnique from './components/terrain/RapportsTerrainTechnique';
 import MaintenanceTechnique from './components/terrain/MaintenanceTechnique';
 
 // Patrimoine / Locaux (avec visualisation photo & CRUD)
 import GestionLocaux from './components/patrimoine/GestionLocaux';
 
-// Contrats / Occupant / Comptabilité
+// Contrats / Occupant / Comptabilité / Juridique
 import EspaceOccupant from './components/contrats/EspaceOccupant';
 import GestionQuitus from './components/contrats/GestionQuitus';
 import Paiement from './components/contrats/Paiement';
@@ -80,9 +81,10 @@ import DashboardDirection from './components/rapports/DashboardDirection';
 import RapportPeriode from './components/rapports/RapportPeriode';
 import RapportQHSE from './components/rapports/RapportQHSE';
 import ValidationDirection from './components/demandes/ValidationDirection';
+import GestionCollaborateurs from './components/utilisateurs/GestionCollaborateurs';
 
 // Administration SI
-import GestionComptes from './components/admin/GestionComptes';
+import SupervisionSysteme from './components/admin/SupervisionSysteme';
 import JournalAudit from './components/admin/JournalAudit';
 import ParametresSysteme from './components/admin/ParametresSysteme';
 
@@ -112,9 +114,11 @@ const AppRoutes = () => {
           <Route path="/carte" element={<CarteLocaux />} />
           <Route path="/appels" element={<AppelsCandidature />} />
 
-          {/* Demandes Usagers / Candidats (Strictement réservé au rôle USAGER) */}
+          {/* Demandes Usagers / Candidats (USAGER + OCCUPANT pour le suivi) */}
           <Route element={<RoleRoute allowedRoles={['USAGER']} />}>
             <Route path="/depot" element={<DepotDemande />} />
+          </Route>
+          <Route element={<RoleRoute allowedRoles={['USAGER', 'OCCUPANT']} />}>
             <Route path="/suivi" element={<SuiviDemande />} />
           </Route>
 
@@ -128,36 +132,37 @@ const AppRoutes = () => {
             <Route path="/signaler" element={<SignalerProbleme />} />
           </Route>
 
-          {/* Avis cantines — réservé aux usagers étudiants (contrôle serveur également) */}
+          {/* Avis cantines - réservé aux usagers étudiants (contrôle serveur également) */}
           <Route element={<RoleRoute allowedRoles={['USAGER']} />}>
             <Route path="/avis" element={<LaisserAvis />} />
           </Route>
 
-          {/* Score de fidelite — occupants uniquement */}
+          {/* Score de fidelite - occupants uniquement */}
           <Route element={<RoleRoute allowedRoles={['OCCUPANT']} />}>
             <Route path="/fidelite" element={<MonScoreFidelite />} />
           </Route>
 
-          {/* Cellule Communication — Publication Appels & Affiches */}
+          {/* Cellule Communication - Publication Appels & Affiches */}
           <Route element={<RoleRoute allowedRoles={['CELLULE_COMMUNICATION', 'AMICALE']} />}>
             <Route path="/communication" element={<CelluleComView />} />
             <Route path="/moderation-avis" element={<ModerationAvis />} />
           </Route>
 
-          {/* Bureau du Courrier & DCUVE — Réception & orientation des dossiers & Archives */}
+          {/* Bureau du Courrier & DCUVE - Réception & orientation des dossiers & Archives */}
           <Route element={<RoleRoute allowedRoles={['BUREAU_COURRIER', 'AGENT_DCUVE', 'DIRECTEUR_DCUVE']} />}>
             <Route path="/courrier" element={<BureauCourrierView />} />
             <Route path="/courrier/archives" element={<ArchivesDossiers />} />
           </Route>
 
-          {/* Service Juridique — Rédaction de Contrats */}
+          {/* Service Juridique - Rédaction de Contrats */}
           <Route element={<RoleRoute allowedRoles={['SERVICE_JURIDIQUE']} />}>
             <Route path="/juridique" element={<ServiceJuridiqueView />} />
           </Route>
 
-          {/* Service Technique — Expertise Maquettes & Maintenance */}
+          {/* Service Technique - Expertise Maquettes & Maintenance */}
           <Route element={<RoleRoute allowedRoles={['SERVICE_TECHNIQUE']} />}>
             <Route path="/service-technique" element={<ServiceTechniqueView />} />
+            <Route path="/technique/rapports-terrain" element={<RapportsTerrainTechnique />} />
             <Route path="/technique/maintenance" element={<MaintenanceTechnique />} />
           </Route>
 
@@ -166,9 +171,11 @@ const AppRoutes = () => {
             <Route path="/terrain/agent" element={<AgentTerrainView />} />
           </Route>
 
-          {/* Agent QHSE — espace de travail opérationnel dédié */}
+          {/* Agent QHSE - espace de travail opérationnel dédié */}
           <Route element={<RoleRoute allowedRoles={['AGENT_QHSE']} />}>
             <Route path="/agent-qhse" element={<AgentQHSEView />} />
+          </Route>
+          <Route element={<RoleRoute allowedRoles={['AGENT_QHSE', 'DIRECTEUR_DCUVE', 'AGENT_DCUVE', 'DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI']} />}>
             <Route path="/bureau-environnement" element={<BureauEnvironnementView />} />
           </Route>
 
@@ -188,9 +195,16 @@ const AppRoutes = () => {
             <Route path="/quitus" element={<GestionQuitus />} />
           </Route>
 
-          {/* Quitus lecture seule — Directeur CROUS-T */}
+          {/* Quitus lecture seule - Directeur CROUS-T */}
           <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T']} />}>
             <Route path="/direction/quitus" element={<GestionQuitus readOnly />} />
+          </Route>
+
+          {/* Service Juridique - Rédaction des contrats, modèles et baux */}
+          <Route element={<RoleRoute allowedRoles={['SERVICE_JURIDIQUE', 'DIRECTEUR_CROUS_T']} />}>
+            <Route path="/juridique" element={<ServiceJuridiqueView />} />
+            <Route path="/juridique/redaction" element={<ServiceJuridiqueView />} />
+            <Route path="/contrats" element={<ServiceJuridiqueView />} />
           </Route>
 
           {/* Services DCUVE */}
@@ -198,13 +212,13 @@ const AppRoutes = () => {
             <Route path="/instruction" element={<InstructionDCUVE />} />
           </Route>
 
-          {/* Commission Consultative — Évaluation & Votes (Réservé aux membres actifs de la commission active) */}
+          {/* Commission Consultative - Évaluation & Votes (Réservé aux membres actifs de la commission active) */}
           <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T']} allowCommissionMember={true} />}>
             <Route path="/commission" element={<CommissionVote />} />
             <Route path="/commission/mes-taches" element={<EspaceMembreCommission />} />
           </Route>
 
-          {/* Commission Consultative — Pilotage & Rapports */}
+          {/* Commission Consultative - Pilotage & Rapports */}
           <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T']} />}>
             <Route path="/commission/gestion" element={<GestionCommission />} />
             <Route path="/commission/rapport" element={<RapportCommission />} />
@@ -214,7 +228,7 @@ const AppRoutes = () => {
             <Route path="/validation-cartes" element={<ValidationCartes />} />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE']} />}>
+          <Route element={<RoleRoute allowedRoles={['AGENT_DCUVE', 'DIRECTEUR_DCUVE', 'ADMINISTRATEUR_SI']} />}>
             <Route path="/patrimoine/locaux" element={<GestionLocaux />} />
           </Route>
 
@@ -228,29 +242,34 @@ const AppRoutes = () => {
             <Route path="/terrain/inspections" element={<InspectionQHSE />} />
           </Route>
 
-          {/* Ordres de mission — Agent terrain & QHSE */}
+          {/* Ordres de mission - Agent terrain & QHSE */}
           <Route element={<RoleRoute allowedRoles={['AGENT_QHSE', 'AGENT_TERRAIN']} />}>
             <Route path="/terrain/ordres-mission" element={<OrdresMissionView />} />
           </Route>
 
-          {/* Rapports de visite terrain — Agent terrain uniquement (AGENT_QHSE utilise /agent-qhse) */}
-          <Route element={<RoleRoute allowedRoles={['AGENT_TERRAIN']} />}>
+          {/* Rapports de visite terrain - Agent terrain & Service Technique */}
+          <Route element={<RoleRoute allowedRoles={['AGENT_TERRAIN', 'SERVICE_TECHNIQUE']} />}>
             <Route path="/terrain/rapports-visite" element={<RapportsVisiteTerrain />} />
           </Route>
 
           {/* Direction & Pilotage */}
+          <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T', 'ADMINISTRATEUR_SI']} />}>
+            <Route path="/rapports" element={<RapportPeriode />} />
+          </Route>
+
           <Route element={<RoleRoute allowedRoles={['DIRECTEUR_CROUS_T']} />}>
             <Route path="/dashboard-direction" element={<DashboardDirection />} />
             <Route path="/direction/validation" element={<ValidationDirection />} />
-            <Route path="/rapports" element={<RapportPeriode />} />
-            <Route path="/rapports/qhse" element={<RapportQHSE />} />
+            <Route path="/direction/collaborateurs" element={<GestionCollaborateurs />} />
+            <Route path="/rapports/qhse" element={<Navigate to="/direction/collaborateurs" replace />} />
           </Route>
 
-          {/* Administration SI & Direction (Gestion des utilisateurs) */}
+          {/* Administration SI */}
           <Route element={<RoleRoute allowedRoles={['ADMINISTRATEUR_SI']} />}>
-            <Route path="/admin/comptes" element={<GestionComptes />} />
+            <Route path="/admin/supervision" element={<SupervisionSysteme />} />
             <Route path="/admin/audit" element={<JournalAudit />} />
             <Route path="/admin/parametres" element={<ParametresSysteme />} />
+            <Route path="/admin/comptes" element={<Navigate to="/admin/supervision" replace />} />
           </Route>
         </Route>
       </Route>

@@ -11,6 +11,23 @@ ROLE_DIRECTION = "DIRECTEUR_CROUS_T"
 ROLE_ADMIN_SI = "ADMINISTRATEUR_SI"
 
 
+def _roles_utilisateur(user):
+    if not user:
+        return set()
+    r = getattr(user, "role", None)
+    roles = {r} if r else set()
+    if r == "USAGER":
+        try:
+            from contrats.models import Contrat
+            if hasattr(user, "profil_demandeur") and Contrat.objects.filter(
+                demandeur=user.profil_demandeur, est_actif=True
+            ).exists():
+                roles.add("OCCUPANT")
+        except Exception:
+            pass
+    return roles
+
+
 def _role(user):
     return getattr(user, "role", None)
 
@@ -39,7 +56,7 @@ class HasRole(BasePermission):
             return True
         if est_supervision_lecture(request):
             return True
-        return _role(request.user) in roles_autorises
+        return bool(_roles_utilisateur(request.user).intersection(roles_autorises))
 
 
 class EstProprietaire(BasePermission):
@@ -79,6 +96,6 @@ def roles_requis(*roles):
                 return True
             if est_supervision_lecture(request):
                 return True
-            return _role(user) in roles
+            return bool(_roles_utilisateur(user).intersection(roles))
 
     return _RolesRequis

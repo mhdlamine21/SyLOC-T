@@ -3,22 +3,38 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import { useAuth } from '../context/AuthContext';
-import { getDashboardStats, getDashboardComplement, getTopOccupants } from '../api/dashboard';
+import {
+  getDashboardStats, getDashboardComplement, getTopOccupants,
+  getPaiementsMois, getSyntheseComptable, getRecettesMoisParMois,
+} from '../api/dashboard';
 import { getAnnonces } from '../api/annonces';
 import { getNotificationsNonLues } from '../api/notifications';
 import { getMesDemandes } from '../api/demandes';
-import { getStatistiquesContrats } from '../api/contrats';
+import { getStatistiquesContrats, getContrats } from '../api/contrats';
+import { getClassementFidelite } from '../api/fidelite';
+import { getEcheances } from '../api/paiements';
+import { getPlaintes } from '../api/terrain';
+import { getSupervisionSysteme } from '../api/supervision';
+import { getPublicStats } from '../api/public';
 
 vi.mock('../context/AuthContext', () => ({ useAuth: vi.fn() }));
 vi.mock('../api/dashboard', () => ({
   getDashboardStats: vi.fn(),
   getDashboardComplement: vi.fn(),
   getTopOccupants: vi.fn(),
+  getPaiementsMois: vi.fn(),
+  getSyntheseComptable: vi.fn(),
+  getRecettesMoisParMois: vi.fn(),
 }));
 vi.mock('../api/annonces', () => ({ getAnnonces: vi.fn() }));
 vi.mock('../api/notifications', () => ({ getNotificationsNonLues: vi.fn() }));
 vi.mock('../api/demandes', () => ({ getMesDemandes: vi.fn() }));
-vi.mock('../api/contrats', () => ({ getStatistiquesContrats: vi.fn() }));
+vi.mock('../api/contrats', () => ({ getStatistiquesContrats: vi.fn(), getContrats: vi.fn() }));
+vi.mock('../api/fidelite', () => ({ getClassementFidelite: vi.fn() }));
+vi.mock('../api/paiements', () => ({ getEcheances: vi.fn() }));
+vi.mock('../api/terrain', () => ({ getPlaintes: vi.fn() }));
+vi.mock('../api/supervision', () => ({ getSupervisionSysteme: vi.fn() }));
+vi.mock('../api/public', () => ({ getPublicStats: vi.fn() }));
 
 describe('Dashboard', () => {
   const mockStats = {
@@ -49,8 +65,13 @@ describe('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getDashboardStats.mockResolvedValue(mockStats);
+    getPublicStats.mockResolvedValue(mockStats);
     getDashboardComplement.mockResolvedValue({});
     getTopOccupants.mockResolvedValue([]);
+    getClassementFidelite.mockResolvedValue([]);
+    getPaiementsMois.mockResolvedValue({ paiements: [], total: 0 });
+    getSyntheseComptable.mockResolvedValue({});
+    getRecettesMoisParMois.mockResolvedValue([]);
     getAnnonces.mockResolvedValue([{ id: 1, titre: 'Appel a candidatures 2025', date_publication: '2025-05-01' }]);
     getNotificationsNonLues.mockResolvedValue([{ id: 1 }]);
     getMesDemandes.mockResolvedValue([{ id: 1, type_demande: 'ATTRIBUTION_LOCAL', statut: 'NOUVELLE', date_depot: '2025-05-02' }]);
@@ -68,15 +89,15 @@ describe('Dashboard', () => {
 
   const renderDashboard = () => render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
-  it('affiche les indicateurs de pilotage pour un administrateur', async () => {
-    useAuth.mockReturnValue({ user: { nom_complet: 'Admin Test' }, role: 'ADMINISTRATEUR_SI' });
+  it('affiche les indicateurs de pilotage pour la Direction CROUS-T', async () => {
+    useAuth.mockReturnValue({ user: { nom_complet: 'Directeur CROUS-T' }, role: 'DIRECTEUR_CROUS_T' });
     renderDashboard();
 
-    expect(screen.getByText(/Bonjour Admin/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bonjour Directeur/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('85%')).toBeInTheDocument();
-      expect(screen.getByText(/Taux favorable/i)).toBeInTheDocument();
+      expect(screen.getByText(/Recettes du mois/i)).toBeInTheDocument();
+      expect(screen.getByText(/Demandes traitees/i)).toBeInTheDocument();
       expect(screen.getByText(/Etat du reseau/i)).toBeInTheDocument();
     });
 
@@ -101,11 +122,58 @@ describe('Dashboard', () => {
       expect(screen.getByText(/Baux actifs/i)).toBeInTheDocument();
       expect(screen.getByText(/En attente de signature/i)).toBeInTheDocument();
     });
+  });
 
-    // Ne doit PAS afficher les stats générales de demandes ou de patrimoine
-    expect(screen.queryByText(/Activite des 6 derniers mois/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Types de locaux/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Classement des occupants/i)).not.toBeInTheDocument();
+  it('affiche les indicateurs DCUVE pour le Directeur DCUVE avec des valeurs numériques propres', async () => {
+    useAuth.mockReturnValue({ user: { nom_complet: 'Directeur DCUVE' }, role: 'DIRECTEUR_DCUVE' });
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Action requise')).toBeInTheDocument();
+      expect(screen.getByText('En attente d\'instruction')).toBeInTheDocument();
+      expect(screen.getAllByText('5').length).toBeGreaterThan(0);
+    });
+  }, 15000);
+
+  it('affiche le classement occupant avec la position et la mise en évidence de l\'occupant connecté', async () => {
+    useAuth.mockReturnValue({ user: { nom_complet: 'Moussa Diop' }, role: 'OCCUPANT' });
+    getContrats.mockResolvedValue([{ id: 1, est_actif: true }]);
+    getEcheances.mockResolvedValue([]);
+    getPlaintes.mockResolvedValue([]);
+    getClassementFidelite.mockResolvedValue([
+      { demandeur_id: '1', nom: 'Amadou Sow', score: 95, palier: 'PLATINE', rang: 1, est_moi: false },
+      { demandeur_id: '2', nom: 'Moussa Diop', score: 10, palier: 'BRONZE', rang: 14, est_moi: true },
+    ]);
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Classement des occupants')).toBeInTheDocument();
+      expect(screen.getByText('Amadou Sow')).toBeInTheDocument();
+      expect(screen.getByText('Moussa Diop')).toBeInTheDocument();
+      expect(screen.getByText('14')).toBeInTheDocument();
+      expect(screen.getByText('Vous')).toBeInTheDocument();
+    });
+  });
+
+  it('affiche les indicateurs de supervision et santé pour l Administrateur SI', async () => {
+    useAuth.mockReturnValue({ user: { nom_complet: 'Pape Alioune Niang' }, role: 'ADMINISTRATEUR_SI' });
+    getSupervisionSysteme.mockResolvedValue({
+      status: 'OPERATIONNEL',
+      services: [{ id: 'api', statut: 'OK' }, { id: 'db', statut: 'OK' }],
+      volumetrie: { audit: 120, audit_24h: 8 },
+      systeme: { db_latency_ms: 10 },
+    });
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Services opérationnels')).toBeInTheDocument();
+      expect(screen.getAllByText(/Journal d'audit/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Supervision & Santé')).toBeInTheDocument();
+    });
   });
 });
+
+
 

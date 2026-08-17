@@ -323,7 +323,6 @@ classDiagram
     +TypeLocal typeLocal
     +String zoneCartographie
     +Float surfaceM2
-    +Integer capaciteAccueil
     +EtatLocal etatPhysique
     +Gestionnaire gestionnaire
     +Boolean estLibre

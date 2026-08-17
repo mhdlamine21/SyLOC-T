@@ -27,12 +27,21 @@ class Annonce(BaseModel):
         ('pin-gold', 'Or (Gold)'),
     ]
 
+    STATUT_CHOICES = [
+        ('A_PUBLIER', 'À publier (Demande Direction)'),
+        ('PUBLIEE', 'Publiée'),
+        ('ARCHIVEE', 'Archivée'),
+    ]
+
     titre = models.CharField(max_length=200)
     contenu = models.TextField()
     date_publication = models.DateField(auto_now_add=True)
     pin = models.CharField(max_length=20, choices=TYPE_PIN, default='pin-navy')
     bg = models.CharField(max_length=20, default='#fffde7', help_text="Couleur de fond hexadécimale")
     est_active = models.BooleanField(default=True)
+    statut = models.CharField(max_length=30, choices=STATUT_CHOICES, default='PUBLIEE')
+    emetteur_nom = models.CharField(max_length=150, blank=True, default='')
+    consigne_direction = models.TextField(blank=True, default='', help_text="Consignes de diffusion de la Direction")
 
     class Meta:
         ordering = ["-date_publication", "-date_creation"]

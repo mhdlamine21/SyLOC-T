@@ -13,7 +13,7 @@ from core.views import (
     RapportQHSEView,
     TopLocauxView, PublicStatsView, PublicAnnoncesView, PublicLocauxView,
     PublicAppelsView, PublicAvisView, PublicVitrineView, ParametreSystemeViewSet,
-    StatsDCUVEView, PaiementsMoisView,
+    StatsDCUVEView, PaiementsMoisView, SupervisionSystemeView,
 )
 from rest_framework.routers import DefaultRouter
 
@@ -31,6 +31,9 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 
+    # Supervision & Sante Systeme
+    path('api/admin/supervision/', SupervisionSystemeView.as_view(), name='admin-supervision'),
+
     # Une entree par app/domaine du diagramme de classes.
     # Chaque personne ajoute ses routes dans son propre <app>/urls.py.
     path('api/dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
@@ -38,7 +41,7 @@ urlpatterns = [
     path('api/dashboard/dcuve/', StatsDCUVEView.as_view(), name='dashboard-dcuve'),
     path('api/dashboard/paiements-mois/', PaiementsMoisView.as_view(), name='dashboard-paiements-mois'),
 
-    # Vitrine publique — 100 % dynamique (aucune authentification requise).
+    # Vitrine publique - 100 % dynamique (aucune authentification requise).
     path('api/public/stats/', PublicStatsView.as_view(), name='public-stats'),
     path('api/public/annonces/', PublicAnnoncesView.as_view(), name='public-annonces'),
     path('api/public/locaux/', PublicLocauxView.as_view(), name='public-locaux'),

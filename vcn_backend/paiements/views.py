@@ -183,13 +183,25 @@ class PaiementViewSet(viewsets.ModelViewSet):
 
             numero_payeur = serializer.validated_data.get('numero_payeur')
 
+            # Regle metier du guichet :
+            #  * un encaissement saisi PAR la caisse (comptoir) est valide
+            #    immediatement : l'argent est deja dans le tiroir ;
+            #  * une declaration faite PAR l'occupant depuis son espace reste
+            #    EN_ATTENTE, quel que soit le mode. Le Service Comptable
+            #    confirme le depot Mobile Money, ou encaisse physiquement les
+            #    especes, et c'est seulement a ce moment que le quitus existe.
+            saisie_par_la_caisse = _est_caisse(request.user)
+            statut_initial = (
+                StatutPaiement.VALIDE if saisie_par_la_caisse else StatutPaiement.EN_ATTENTE
+            )
+
             paiement = Paiement.objects.create(
                 echeance=echeance,
                 montant_regle=montant_regle,
                 mode=mode,
                 reference_transaction=ref_transaction or None,
                 numero_payeur=numero_payeur or None,
-                statut=StatutPaiement.EN_ATTENTE if mode == ModePaiement.ESPECES else StatutPaiement.VALIDE
+                statut=statut_initial,
             )
 
             if paiement.statut == StatutPaiement.VALIDE:
@@ -198,9 +210,19 @@ class PaiementViewSet(viewsets.ModelViewSet):
             donnees = PaiementSerializer(paiement).data
             if paiement.statut == StatutPaiement.VALIDE:
                 donnees['quitus'] = paiement.editer_quitus()
+            else:
+                donnees['quitus'] = None
+                donnees['instruction'] = (
+                    "Presentez-vous au Service Comptable (guichet de la caisse centrale) "
+                    "pour remettre le montant. Votre quitus sera disponible des l'encaissement valide."
+                    if mode == ModePaiement.ESPECES else
+                    "Votre depot Mobile Money a bien ete declare. Le Service Comptable le confirme, "
+                    "puis votre quitus devient telechargeable."
+                )
             return Response(donnees, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['post'])
     def valider(self, request, pk=None):
@@ -227,7 +249,12 @@ class PaiementViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def en_attente(self, request):
-        """Paiements en espèces en attente de validation par la caisse."""
+        """Paiements declares par les occupants et en attente de la caisse.
+
+        Contient aussi bien les especes (a encaisser physiquement au guichet)
+        que les depots Mobile Money (a confirmer). Tant qu'un paiement figure
+        ici, aucun quitus n'est emis.
+        """
         self._verrou_caisse()
         attentes = Paiement.objects.filter(statut=StatutPaiement.EN_ATTENTE).select_related(
             'echeance__contrat__local', 'echeance__contrat__demandeur__utilisateur'
@@ -382,16 +409,17 @@ class PaiementViewSet(viewsets.ModelViewSet):
                 'total': _somme(lignes, 'montant_regle'),
             })
 
-        # Arrieres par occupant (pilotage du recouvrement).
+        # Arrieres par occupant (pilotage du recouvrement avec plafond metier 300 000 FCFA).
+        PLAFOND_ARRIERES = 300000.0
         arrieres = defaultdict(lambda: {'nb': 0, 'montant': 0.0, 'local': '', 'contrat': '', 'score_fidelite': 100.0, 'demandeur_id': None})
         for e in echeances:
-            if e.statut in (StatutEcheance.EN_RETARD, StatutEcheance.EXIGIBLE):
+            if e.statut in (StatutEcheance.EN_RETARD, StatutEcheance.EXIGIBLE) and e.reste_a_payer > 0:
                 demandeur = getattr(e.contrat, 'demandeur', None)
                 utilisateur = getattr(demandeur, 'utilisateur', None)
                 cle = getattr(utilisateur, 'nom_complet', None) or 'Occupant inconnu'
-                arrieres[cle]['nb'] += 1
-                arrieres[cle]['montant'] = round(arrieres[cle]['montant'] + e.reste_a_payer, 2)
-                arrieres[cle]['local'] = e.contrat.local.reference
+                arrieres[cle]['nb'] = min(arrieres[cle]['nb'] + 1, 2)
+                arrieres[cle]['montant'] = min(round(arrieres[cle]['montant'] + e.reste_a_payer, 2), PLAFOND_ARRIERES)
+                arrieres[cle]['local'] = e.contrat.local.reference if e.contrat.local else ''
                 arrieres[cle]['contrat'] = e.contrat.reference or ''
                 if demandeur:
                     arrieres[cle]['demandeur_id'] = str(demandeur.id)
@@ -404,16 +432,12 @@ class PaiementViewSet(viewsets.ModelViewSet):
 
         top_debiteurs = []
         for i, d in enumerate(debiteurs_tries, 1):
-            if i == 1:
-                malus = -15.0
-            elif i == 2:
-                malus = -12.0
-            elif i == 3:
-                malus = -10.0
-            elif i <= 5:
-                malus = -7.0
+            if d['nb'] >= 2:
+                malus = None  # Avis d'expulsion direct (procédure de résiliation)
+            elif d['nb'] == 1:
+                malus = -12.0  # 1 mois complet d'impayé (> 30 jours)
             else:
-                malus = -5.0
+                malus = -7.0   # Retard intermédiaire (après le 15)
             
             d['rang'] = i
             d['malus_points'] = malus

@@ -87,6 +87,8 @@ class Command(BaseCommand):
         locaux = []
         types_locaux = [t[0] for t in TypeLocal.choices]
         etats_locaux = [e[0] for e in EtatLocal.choices]
+        # Deux boutiques seulement sont confiees a l'Amicale.
+        refs_amicale = set(random.sample(range(count), min(2, count))) if count else set()
 
         for i in range(count):
             lat = 14.7915 + random.uniform(-0.005, 0.005)
@@ -96,10 +98,11 @@ class Command(BaseCommand):
                 reference=f"LOC-MASSIVE-{random.randint(1000, 9999)}-{i}",
                 localisation=self.fake.address(),
                 type_local=random.choice(types_locaux),
-                surface_m2=random.uniform(9.0, 50.0),
-                capacite_accueil=random.randint(2, 30),
+                surface_m2=round(random.uniform(9.0, 50.0), 1),
                 etat_physique=random.choice(etats_locaux),
-                gestionnaire=Gestionnaire.CROUS_T,
+                # L'Amicale des etudiants ne gere que deux boutiques du campus :
+                # tout le reste du patrimoine est gere par le CROUS-T.
+                gestionnaire=Gestionnaire.AMICALE if i in refs_amicale else Gestionnaire.CROUS_T,
                 latitude=lat,
                 longitude=lng,
                 est_libre=random.choice([True, False])
@@ -150,29 +153,40 @@ class Command(BaseCommand):
         return contrats
 
     def _creer_echeances_et_paiements(self, contrats):
-        self.stdout.write("Création des Echéances et Paiements...")
+        self.stdout.write("Creation des Echeances et Paiements...")
         for contrat in contrats:
-            nb_echeances = random.randint(1, 12)
+            nb_echeances = random.randint(3, 12)
+            retard_deja = 0
             for m in range(nb_echeances):
                 exigibilite = contrat.date_debut + timedelta(days=30 * m)
-                statut = random.choice([s[0] for s in StatutEcheance.choices])
+                
+                # Règle des 2 mois max : au-delà, les échéances antérieures sont payées
+                if m < nb_echeances - 2:
+                    statut = StatutEcheance.PAYEE
+                elif m == nb_echeances - 2:
+                    statut = random.choice([StatutEcheance.PAYEE, StatutEcheance.EN_RETARD])
+                elif m == nb_echeances - 1:
+                    statut = random.choice([StatutEcheance.EXIGIBLE, StatutEcheance.EN_RETARD, StatutEcheance.PAYEE])
+                else:
+                    statut = StatutEcheance.NON_ECHUE
+
                 echeance = Echeance.objects.create(
                     contrat=contrat,
                     date_exigibilite=exigibilite,
                     montant_du=contrat.redevance_mensuelle,
                     statut=statut,
+                    montant_penalite=round(contrat.redevance_mensuelle * 0.10, 2) if statut == StatutEcheance.EN_RETARD else 0.0,
                 )
                 
-                if statut == StatutEcheance.PAYEE or statut == StatutEcheance.EN_RETARD:
-                    montant_paye = echeance.montant_du if statut == StatutEcheance.PAYEE else echeance.montant_du / 2
+                if statut == StatutEcheance.PAYEE:
                     from paiements.models import Paiement
                     paiement = Paiement.objects.create(
                         echeance=echeance,
-                        montant_regle=montant_paye,
+                        montant_regle=echeance.montant_du,
                         mode=random.choice(["MOBILE_MONEY", "ESPECES"]),
-                        reference_transaction=f"TXN-{random.randint(100000, 999999)}"
+                        reference_transaction=f"TXN-{random.randint(100000, 999999)}",
+                        statut="VALIDE"
                     )
-                    echeance.actualiser_statut(appliquer_penalite=False)
                     
                     TransactionLog.objects.create(
                         paiement=paiement,

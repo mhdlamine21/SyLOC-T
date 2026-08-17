@@ -11,7 +11,7 @@ class EcheanceSerializer(serializers.ModelSerializer):
     occupant_nom = serializers.CharField(
         source='contrat.demandeur.utilisateur.nom_complet', read_only=True
     )
-    # Phase 4 — soldes calcules cote serveur (source de verite du recouvrement).
+    # Phase 4 - soldes calcules cote serveur (source de verite du recouvrement).
     contrat_reference = serializers.CharField(source='contrat.reference', read_only=True)
     montant_total_du = serializers.FloatField(read_only=True)
     montant_paye = serializers.FloatField(read_only=True)

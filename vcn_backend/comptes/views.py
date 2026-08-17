@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from core.audit import journaliser
 from core.acteurs import peut_consulter_profils
 from core.permissions import HasRole
-from .models import Demandeur, StatutVerificationEtudiant, Notification, JournalAudit
+from .models import Demandeur, StatutVerificationEtudiant, Notification, JournalAudit, RoleUtilisateur
 from .serializers import (
     RegisterSerializer,
     CustomTokenObtainPairSerializer,
@@ -33,9 +33,8 @@ def generer_mot_de_passe():
     return get_random_string(12)
 
 ROLES_VALIDATION_CARTE = ["BUREAU_COURRIER", "AGENT_DCUVE", "DIRECTEUR_DCUVE"]
-# Administration TECHNIQUE des comptes : seul l'Administrateur SI agit.
-# Le Directeur CROUS-T garde la lecture (supervision) via `HasRole`.
-ROLES_ADMIN = ["ADMINISTRATEUR_SI"]
+# Administration des comptes et supervision : Administrateur SI et Directeur CROUS-T.
+ROLES_ADMIN = ["ADMINISTRATEUR_SI", "DIRECTEUR_CROUS_T"]
 
 
 class RegisterView(generics.CreateAPIView):
@@ -101,7 +100,7 @@ class UtilisateurViewSet(viewsets.ModelViewSet):
     roles_autorises = ROLES_ADMIN
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'rapport_mensuel']:
             from comptes.models import RoleUtilisateur
             self.roles_autorises = [r[0] for r in RoleUtilisateur.choices if r[0] not in ('USAGER', 'AMICALE')]
         else:
@@ -186,6 +185,74 @@ class UtilisateurViewSet(viewsets.ModelViewSet):
     def roles(self, request):
         from .models import RoleUtilisateur
         return Response([{'value': v, 'label': l} for v, l in RoleUtilisateur.choices])
+
+    @action(detail=True, methods=['get'], url_path='rapport-mensuel')
+    def rapport_mensuel(self, request, pk=None):
+        """Rapport d'activite et de performance mensuel pour un collaborateur donne."""
+        import calendar
+        from datetime import datetime, date, time
+        user = self.get_object()
+        
+        now = timezone.now()
+        try:
+            mois = int(request.query_params.get('mois', now.month))
+            annee = int(request.query_params.get('annee', now.year))
+        except (ValueError, TypeError):
+            mois = now.month
+            annee = now.year
+
+        _, dernier_jour = calendar.monthrange(annee, mois)
+        debut = timezone.make_aware(datetime.combine(date(annee, mois, 1), time.min))
+        fin = timezone.make_aware(datetime.combine(date(annee, mois, dernier_jour), time.max))
+
+        logs_qs = JournalAudit.objects.filter(
+            utilisateur=user,
+            date_creation__range=(debut, fin)
+        ).order_by('-date_creation')
+        total_actions = logs_qs.count()
+
+        kpis = []
+        role = user.role
+
+        if role in (RoleUtilisateur.AGENT_TERRAIN, RoleUtilisateur.AGENT_QHSE):
+            from terrain.models import InspectionQHse, OrdreMission
+            nb_controles = InspectionQHse.objects.filter(inspecteur=user, date_visite__range=(debut, fin)).count()
+            nb_missions = OrdreMission.objects.filter(agent_assigne=user, date_modification__range=(debut, fin), statut='EXECUTE').count()
+            kpis.append({'label': 'Inspections QHSE', 'value': nb_controles, 'tone': 'teal'})
+            kpis.append({'label': 'Ordres de mission exécutés', 'value': nb_missions, 'tone': 'blue'})
+
+        elif role == RoleUtilisateur.SERVICE_COMPTABLE:
+            from paiements.models import Paiement
+            paiements = Paiement.objects.filter(date_paiement__range=(debut, fin), statut='VALIDE')
+            total_encaisse = sum(p.montant_regle or 0 for p in paiements)
+            kpis.append({'label': 'Paiements validés', 'value': paiements.count(), 'tone': 'green'})
+            kpis.append({'label': 'Montant encaissé', 'value': f"{int(total_encaisse):,} FCFA".replace(',', ' '), 'tone': 'gold'})
+
+        elif role == RoleUtilisateur.SERVICE_JURIDIQUE:
+            from contrats.models import Contrat
+            nb_contrats = Contrat.objects.filter(date_creation__range=(debut, fin)).count()
+            kpis.append({'label': 'Baux rédigés & créés', 'value': nb_contrats, 'tone': 'blue'})
+
+        elif role in (RoleUtilisateur.BUREAU_COURRIER, RoleUtilisateur.AGENT_DCUVE, RoleUtilisateur.DIRECTEUR_DCUVE):
+            from demandes.models import Demande
+            nb_dossiers = Demande.objects.filter(date_depot__range=(debut.date(), fin.date())).count()
+            kpis.append({'label': 'Dossiers enregistrés', 'value': nb_dossiers, 'tone': 'navy'})
+
+        from demandes.models import VoteCommission
+        nb_votes = VoteCommission.objects.filter(membre__utilisateur=user, date_creation__range=(debut, fin)).count()
+        if nb_votes > 0:
+            kpis.append({'label': 'Votes en commission', 'value': nb_votes, 'tone': 'gold'})
+
+        kpis.append({'label': 'Total actions enregistrées', 'value': total_actions, 'tone': 'navy'})
+
+        return Response({
+            'utilisateur': UtilisateurSerializer(user).data,
+            'mois': mois,
+            'annee': annee,
+            'total_actions': total_actions,
+            'kpis': kpis,
+            'actions': JournalAuditSerializer(logs_qs[:100], many=True).data,
+        })
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

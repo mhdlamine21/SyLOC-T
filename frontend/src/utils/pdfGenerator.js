@@ -13,24 +13,24 @@ const normaliserQuitus = (data = {}) => {
   // Deja au format backend (presence d'un champ caracteristique).
   if (data.reference_quitus !== undefined || data.montant_regle !== undefined) {
     return {
-      reference: data.reference_quitus || data.paiement_id || '—',
+      reference: data.reference_quitus || data.paiement_id || '-',
       referenceTransaction: data.reference_transaction || '',
-      date: data.date_paiement ? new Date(data.date_paiement).toLocaleDateString('fr-FR') : '—',
-      dateHeure: data.date_paiement ? new Date(data.date_paiement).toLocaleString('fr-FR') : '—',
-      occupant: data.occupant_nom || '—',
+      date: data.date_paiement ? new Date(data.date_paiement).toLocaleDateString('fr-FR') : '-',
+      dateHeure: data.date_paiement ? new Date(data.date_paiement).toLocaleString('fr-FR') : '-',
+      occupant: data.occupant_nom || '-',
       occupantContact: data.occupant_contact || '',
-      local: data.local_reference || '—',
+      local: data.local_reference || '-',
       localLocalisation: data.local_localisation || '',
       contratReference: data.contrat_reference || '',
       echeance: data.date_exigibilite
         ? `Échéance du ${new Date(data.date_exigibilite).toLocaleDateString('fr-FR')}`
-        : '—',
+        : '-',
       montantDu: Number(data.montant_du || 0),
       montantPenalite: Number(data.montant_penalite || 0),
       montantRegle: Number(data.montant_regle || 0),
       resteAPayer: Number(data.reste_a_payer || 0),
       statutEcheance: data.statut_echeance || '',
-      mode: data.mode_libelle || data.mode || '—',
+      mode: data.mode_libelle || data.mode || '-',
       organisme: data.organisme || 'CROUS DE THIES',
       serviceEmetteur: data.service_emetteur || 'Service Comptable',
     };
@@ -38,22 +38,22 @@ const normaliserQuitus = (data = {}) => {
 
   // Forme aplatie historique.
   return {
-    reference: data.quitusId || '—',
+    reference: data.quitusId || '-',
     referenceTransaction: '',
-    date: data.date || '—',
-    dateHeure: data.date || '—',
-    occupant: data.occupant || '—',
+    date: data.date || '-',
+    dateHeure: data.date || '-',
+    occupant: data.occupant || '-',
     occupantContact: '',
-    local: data.local || '—',
+    local: data.local || '-',
     localLocalisation: '',
     contratReference: '',
-    echeance: data.echeance || '—',
+    echeance: data.echeance || '-',
     montantDu: Number(data.montant || 0),
     montantPenalite: 0,
     montantRegle: Number(data.montant || 0),
     resteAPayer: 0,
     statutEcheance: '',
-    mode: data.modePaiement || '—',
+    mode: data.modePaiement || '-',
     organisme: 'CROUS DE THIES',
     serviceEmetteur: 'Service Comptable',
   };
@@ -89,7 +89,7 @@ const genererTicket = (q) => {
   y += 5;
   doc.setFont('courier', 'normal');
   doc.setFontSize(7.5);
-  doc.text('SyLOC-T — Gestion du patrimoine', cx, y, { align: 'center' });
+  doc.text('SyLOC-T - Gestion du patrimoine', cx, y, { align: 'center' });
   y += 5;
   doc.setLineDashPattern([1, 1], 0);
   doc.line(4, y, 76, y);
@@ -106,7 +106,7 @@ const genererTicket = (q) => {
     doc.setFont('courier', 'bold');
     doc.text(`${label} :`, 4, y);
     doc.setFont('courier', 'normal');
-    const texte = doc.splitTextToSize(String(value ?? '—'), 40);
+    const texte = doc.splitTextToSize(String(value ?? '-'), 40);
     doc.text(texte, 76, y, { align: 'right' });
     y += 6.4 * texte.length;
   });
@@ -116,7 +116,7 @@ const genererTicket = (q) => {
   y += 6;
   doc.setFont('courier', 'bold');
   doc.setFontSize(8);
-  doc.text('Reçu officiel — Merci', cx, y, { align: 'center' });
+  doc.text('Reçu officiel - Merci', cx, y, { align: 'center' });
 
   doc.save(`Ticket_${q.reference}.pdf`);
 };
@@ -131,7 +131,7 @@ const genererA4 = (q) => {
 
   doc.setFontSize(11);
   doc.setTextColor(100, 116, 139);
-  doc.text('SyLOC-T — Gestion du patrimoine domanial', 105, 28, { align: 'center' });
+  doc.text('SyLOC-T - Gestion du patrimoine domanial', 105, 28, { align: 'center' });
 
   doc.setFontSize(16);
   doc.setTextColor(180, 136, 17);
@@ -144,7 +144,7 @@ const genererA4 = (q) => {
 
   const corps = [
     ['Occupant / Bénéficiaire', q.occupant],
-    ['Local domanial', `${q.local}${q.localLocalisation ? ` — ${q.localLocalisation}` : ''}`],
+    ['Local domanial', `${q.local}${q.localLocalisation ? ` - ${q.localLocalisation}` : ''}`],
     ...(q.contratReference ? [['Contrat', q.contratReference]] : []),
     ['Échéance payée', q.echeance],
     ['Mode de règlement', q.mode],
@@ -197,6 +197,122 @@ export const genererQuitusPDF = (data, options = {}) => {
   } else {
     genererA4(q);
   }
+};
+
+/**
+ * Génère le bail domanial officiel et l'ouvre directement en PDF dans un nouvel onglet du navigateur.
+ * @param {Object} contrat Données du contrat/bail.
+ */
+export const ouvrirBailPDF = (contrat) => {
+  if (!contrat) return;
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+
+  // Header Institutionnel
+  doc.setFillColor(15, 27, 61);
+  doc.rect(0, 0, pageWidth, 28, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text('CENTRE RÉGIONAL DES ŒUVRES UNIVERSITAIRES DE THIÈS', pageWidth / 2, 12, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(201, 161, 92);
+  doc.text('SyLOC-T - Gestion du Patrimoine et Baux Domaniaux', pageWidth / 2, 19, { align: 'center' });
+
+  // Titre du document
+  let y = 38;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(15, 27, 61);
+  doc.text("CONTRAT D'OCCUPATION DOMANIALE", pageWidth / 2, y, { align: 'center' });
+  y += 5;
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`RÉFÉRENCE : ${contrat.reference || contrat.id}`, pageWidth / 2, y, { align: 'center' });
+
+  y += 8;
+
+  // Tableau récapitulatif
+  const lignesRecap = [
+    ['Occupant titulaire', contrat.demandeur_nom || '-'],
+    ['Contact occupant', contrat.demandeur_contact || '-'],
+    ['Local attribué', `${contrat.local_reference || '-'}${contrat.local_localisation ? ` (${contrat.local_localisation})` : ''}`],
+    ['Date d\'effet', contrat.date_debut ? new Date(contrat.date_debut).toLocaleDateString('fr-FR') : '-'],
+    ['Date de fin', contrat.date_fin ? new Date(contrat.date_fin).toLocaleDateString('fr-FR') : '-'],
+    ['Durée du bail', `${contrat.duree_mois || 0} mois`],
+    ['Délai de préavis', `${contrat.preavis_mois || 0} mois`],
+    ['Statut de l\'acte', contrat.est_actif ? 'ACTIF (En cours)' : `RÉSILIÉ ${contrat.date_resiliation || ''}`],
+  ];
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Élément', 'Détails du bail']],
+    body: lignesRecap,
+    theme: 'grid',
+    headStyles: { fillColor: [15, 27, 61], textColor: [255, 255, 255], fontStyle: 'bold' },
+    styles: { fontSize: 9.5, cellPadding: 3.5 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 } },
+    margin: { left: margin, right: margin },
+  });
+
+  y = (doc.lastAutoTable?.finalY || 120) + 10;
+
+  // Clauses et texte
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 27, 61);
+  doc.text("CLAUSES ET CONDITIONS D'OCCUPATION :", margin, y);
+  y += 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(51, 65, 85);
+
+  const texteCorps = contrat.texte_contrat || `ARTICLE 1 - OBJET
+Le concédant (CROUS-T) met à disposition de l'occupant désigné ci-dessus le local ${contrat.local_reference || ''} pour l'exercice de son activité autorisée.
+
+ARTICLE 2 - OBLIGATIONS DE L'OCCUPANT
+L'occupant s'engage à exploiter les lieux en bon père de famille, à respecter scrupuleusement les normes d'hygiène, de sécurité et d'environnement (QHSE), et à s'acquitter des redevances aux échéances convenues.
+
+ARTICLE 3 - RÉSILIATION ET PRÉAVIS
+Le présent acte est conclu pour une durée de ${contrat.duree_mois || 0} mois. Tout congé anticipé doit respecter le préavis statutaire de ${contrat.preavis_mois || 0} mois.
+
+ARTICLE 4 - DISPOSITIONS PARTICULIÈRES
+${contrat.clauses_particulieres || 'Néant.'}`;
+
+  const lignesTexte = doc.splitTextToSize(texteCorps, contentWidth);
+  doc.text(lignesTexte, margin, y);
+
+  const ySign = Math.min(pageHeight - 30, y + lignesTexte.length * 4.2 + 12);
+  if (ySign > pageHeight - 25) {
+    doc.addPage();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(15, 27, 61);
+    doc.text('Pour le CROUS-T', margin + 10, 30);
+    doc.text("L'Occupant", pageWidth - margin - 40, 30);
+    doc.line(margin + 5, 45, margin + 55, 45);
+    doc.line(pageWidth - margin - 45, 45, pageWidth - margin + 5, 45);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(15, 27, 61);
+    doc.text('Pour le CROUS-T', margin + 10, ySign);
+    doc.text("L'Occupant", pageWidth - margin - 40, ySign);
+    doc.line(margin + 5, ySign + 15, margin + 55, ySign + 15);
+    doc.line(pageWidth - margin - 45, ySign + 15, pageWidth - margin + 5, ySign + 15);
+  }
+
+  // Ouvrir dans le navigateur
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl, '_blank');
 };
 
 /**

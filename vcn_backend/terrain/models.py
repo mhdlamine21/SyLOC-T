@@ -108,7 +108,7 @@ class AvisCantine(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 5 — Ordres de mission (Terrain/QHSE) & Maintenance (Service Technique)
+# Phase 5 - Ordres de mission (Terrain/QHSE) & Maintenance (Service Technique)
 # ---------------------------------------------------------------------------
 
 class StatutOrdreMission(models.TextChoices):
@@ -182,7 +182,7 @@ class InterventionMaintenance(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 6 — Rapports de visite terrain (cadence 10 jours) & dispatch fidelite
+# Phase 6 - Rapports de visite terrain (cadence 10 jours) & dispatch fidelite
 # ---------------------------------------------------------------------------
 
 CADENCE_VISITE_JOURS = 10

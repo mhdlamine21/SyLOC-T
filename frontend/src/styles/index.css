@@ -1,0 +1,9 @@
+/* ═══════════════════════════════════════════════════════════
+   SyLOC-T — Point d'entree du design system (src/styles/)
+   1. tokens   -> src/index.css (conserves tels quels)
+   2. thème    -> theme.css
+   3. primitives (PageHeader, StatCard, StatRow, DataTable,
+      Section, Toolbar, Badge, EmptyState, Skeleton, Confirm)
+   ═══════════════════════════════════════════════════════════ */
+@import './theme.css';
+@import './primitives.css';

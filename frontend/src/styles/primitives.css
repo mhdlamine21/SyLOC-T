@@ -1,0 +1,334 @@
+/* ═══════════════════════════════════════════════════════════
+   SyLOC-T — Primitives du design system unifie
+   Les tokens (couleurs, typo, rayons) restent definis dans src/index.css.
+   Ce fichier ne contient QUE les classes des primitives partagees.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Section ─────────────────────────────────────────────── */
+.ds-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  margin-bottom: 28px;
+  transition: transform .28s var(--ease-premium), box-shadow .28s var(--ease-premium), border-color .28s;
+}
+.ds-section:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
+}
+.ds-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.ds-section__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text-navy);
+  margin: 0;
+}
+.ds-section__subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 3px 0 0;
+}
+
+/* ── PageHeader ──────────────────────────────────────────── */
+.ds-pageheader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ds-pageheader__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 8px;
+}
+.ds-pageheader__eyebrow::before {
+  content: '-';
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold);
+}
+.ds-pageheader__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  line-height: 1.2;
+  color: var(--text-navy);
+  margin: 0;
+}
+.ds-pageheader__subtitle {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 6px 0 0;
+  max-width: 70ch;
+}
+.ds-pageheader__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────── */
+.ds-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.ds-toolbar__spacer { flex: 1 1 auto; }
+.ds-toolbar__search {
+  flex: 1 1 220px;
+  min-width: 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+}
+.ds-toolbar__search:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-tint); }
+
+/* ── StatCard / StatRow ──────────────────────────────────── */
+.ds-statcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .28s var(--ease-premium), box-shadow .28s var(--ease-premium), border-color .28s;
+}
+.ds-statcard::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 120% at 100% 0%, var(--gold-tint) 0%, transparent 55%);
+  opacity: 0; transition: opacity .35s var(--ease-premium); pointer-events: none;
+}
+.ds-statcard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
+}
+.ds-statcard:hover::before { opacity: 1; }
+.ds-statcard__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.ds-statcard__value {
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+.ds-statcard__sub { font-size: 10.5px; color: var(--muted); margin: 5px 0 0; }
+.ds-statcard__icon { font-size: 22px; opacity: .5; color: var(--gold-deep); transition: transform .35s var(--ease-premium), opacity .3s; }
+.ds-statcard:hover .ds-statcard__icon { transform: scale(1.1) rotate(-4deg); opacity: .9; }
+
+.ds-statrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.ds-statrow:last-child { border-bottom: none; }
+.ds-statrow__label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.ds-statrow__value { font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: var(--text-navy); }
+.ds-statrow { transition: background .18s; border-radius: 8px; }
+.ds-statrow:hover { background: var(--gold-tint); }
+
+/* ── DataTable ───────────────────────────────────────────── */
+.ds-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.ds-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.ds-table th {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ds-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.ds-table tbody tr { transition: background .18s; }
+.ds-table tbody tr:hover { background: var(--gold-tint); }
+.ds-table__clickable { cursor: pointer; }
+.ds-table__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Badge ───────────────────────────────────────────────── */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.ds-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+
+/* ── EmptyState ──────────────────────────────────────────── */
+.ds-empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.ds-empty__icon { font-size: 34px; margin-bottom: 12px; color: var(--gold-deep); display: grid; place-items: center; }
+.ds-empty__icon > svg { font-size: 44px; }
+.ds-empty__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--text-navy);
+  margin: 0 0 6px;
+}
+.ds-empty__desc { font-size: 13px; margin: 0 0 16px; }
+
+/* ── Skeleton ────────────────────────────────────────────── */
+.ds-skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: ds-shimmer 1.3s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes ds-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ── Confirmation (anti-popup natif) ─────────────────────── */
+.ds-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 27, 61, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out both;
+}
+.ds-confirm {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  animation: fadeIn 0.2s ease-out both;
+}
+.ds-confirm__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--text-navy);
+  margin: 0 0 8px;
+}
+.ds-confirm__message { font-size: 13.5px; color: var(--muted); margin: 0 0 20px; line-height: 1.6; }
+.ds-confirm__actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* ── Sidebar : sections ──────────────────────────────────── */
+.ds-nav-section {
+  color: var(--gold);
+  opacity: .9;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  padding: 20px 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ds-nav-section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Fil d'ariane ────────────────────────────────────────── */
+.ds-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+}
+.ds-breadcrumb__item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-breadcrumb__item--current { color: var(--text-navy); font-weight: 800; font-family: var(--font-display); font-size: 13.5px; }
+.ds-breadcrumb__sep { color: var(--border); }
+@media (max-width: 700px) { .ds-breadcrumb__item:not(.ds-breadcrumb__item--current) { display: none; } }

@@ -1,0 +1,43 @@
+# Folders & Files ignored
+docs/
+guidePrompt/
+*.zip
+bk/
+bk*/
+fr1/
+
+
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Backend
+vcn_backend/.venv/
+vcn_backend/venv/
+vcn_backend/env/
+vcn_backend/__pycache__/
+vcn_backend/*/__pycache__/
+vcn_backend/*/*/__pycache__/
+vcn_backend/db.sqlite3
+vcn_backend/media/
+vcn_backend/staticfiles/
+vcn_backend/.env
+
+# General Python & Node
+__pycache__/
+*.py[cod]
+*$py.class
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+
+# Editors & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

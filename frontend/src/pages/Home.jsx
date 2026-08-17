@@ -129,7 +129,7 @@ export default function Home() {
 
     getPublicAnnonces()
       .then((data) => {
-        setAnnonces(data || []);
+        setAnnonces(Array.isArray(data) ? data : (data?.results || []));
       })
       .catch((err) => console.error("Erreur annonces", err))
       .finally(() => setLoadingAnnonces(false));
@@ -142,10 +142,12 @@ export default function Home() {
   // Tableau d'affichage unique : les annonces officielles ET les appels a
   // candidature ouverts sont le meme objet metier cote usager. On les fusionne
   // pour eviter deux sections redondantes sur la vitrine.
+  const safeAnnonces = Array.isArray(annonces) ? annonces : [];
+  const safeAppels = Array.isArray(appels) ? appels : [];
   const affichage = [
-    ...annonces.map((a) => ({ ...a, _kind: 'ANNONCE' })),
-    ...appels
-      .filter((ap) => !annonces.some((an) => String(an.id) === String(ap.id)))
+    ...safeAnnonces.map((a) => ({ ...a, _kind: 'ANNONCE' })),
+    ...safeAppels
+      .filter((ap) => !safeAnnonces.some((an) => String(an.id) === String(ap.id)))
       .map((ap) => ({ ...ap, _kind: 'APPEL' })),
   ];
 

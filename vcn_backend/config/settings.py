@@ -92,6 +92,14 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Origines de confiance pour les formulaires POST (Admin Django / tunnels Cloudflare, Ngrok, Localtunnel)
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000,https://*.trycloudflare.com,https://*.loca.lt,https://*.ngrok-free.app,https://*.ngrok.io',
+    ).split(',') if o.strip()
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',

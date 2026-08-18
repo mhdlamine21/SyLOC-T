@@ -100,7 +100,7 @@ class MonScoreFideliteView(views.APIView):
         gagnes = int(round(sum(h.points_modifies for h in historique if h.points_modifies > 0)))
         perdus = int(round(sum(h.points_modifies for h in historique if h.points_modifies < 0)))
 
-        # --- Tendance sur 30 / 90 jours -------------------------------------
+        # Tendance sur 30 / 90 jours
         def delta_depuis(jours):
             limite = maintenant - timedelta(days=jours)
             return int(round(sum(h.points_modifies for h in historique if h.date_creation >= limite)))
@@ -108,7 +108,7 @@ class MonScoreFideliteView(views.APIView):
         delta_30 = delta_depuis(30)
         delta_90 = delta_depuis(90)
 
-        # --- Serie mensuelle (6 derniers mois) ------------------------------
+        # Serie mensuelle (6 derniers mois)
         serie = []
         for i in range(5, -1, -1):
             ref = (maintenant.replace(day=1) - timedelta(days=31 * i))
@@ -128,7 +128,7 @@ class MonScoreFideliteView(views.APIView):
                 "mouvements": len(mouvements),
             })
 
-        # --- Repartition par famille d'evenement ----------------------------
+        # Repartition par famille d'evenement
         repartition = {}
         for h in historique:
             code, libelle = categoriser(h.motif)
@@ -146,19 +146,19 @@ class MonScoreFideliteView(views.APIView):
             key=lambda b: abs(b["impact"]), reverse=True,
         )
 
-        # --- Fiabilite de paiement ------------------------------------------
+        # Fiabilite de paiement
         nb_paiements = sum(1 for h in historique if categoriser(h.motif)[0] == "PAIEMENT" and h.points_modifies > 0)
         nb_incidents = sum(1 for h in historique if categoriser(h.motif)[0] in ("IMPAYE", "SANCTION"))
         base = nb_paiements + nb_incidents
         fiabilite = int(round((nb_paiements / base) * 100)) if base else 100
 
-        # --- Serie sans incident --------------------------------------------
+        # Serie sans incident
         dernier_incident = next((h for h in historique if h.points_modifies < 0), None)
         jours_sans_incident = (maintenant - dernier_incident.date_creation).days if dernier_incident else (
             (maintenant - historique[-1].date_creation).days if historique else 0
         )
 
-        # --- Positionnement anonyme parmi les occupants ----------------------
+        # Positionnement anonyme parmi les occupants
         total_occupants = Demandeur.objects.count()
         meilleurs = Demandeur.objects.filter(score_fidelite__gt=score).count()
         rang = meilleurs + 1
@@ -168,14 +168,14 @@ class MonScoreFideliteView(views.APIView):
 
         palier = palier_du_score(score)
 
-        # --- Projection : rythme moyen des 90 derniers jours -----------------
+        # Projection : rythme moyen des 90 derniers jours
         rythme_mensuel = int(round(delta_90 / 3))
         if palier["prochain_palier"] and rythme_mensuel > 0:
             mois_estimes = max(1, int(round(palier["points_restants"] / rythme_mensuel)))
         else:
             mois_estimes = None
 
-        # --- Recommandations d'actions ---------------------------------------
+        # Recommandations d'actions
         recommandations = []
         if palier["prochain_palier"]:
             recommandations.append({

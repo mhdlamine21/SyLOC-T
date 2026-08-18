@@ -3,10 +3,7 @@ title SyLOC-T - CROUS de Thies
 
 cd /d "%~dp0"
 
-echo ================================================================
-echo       SyLOC-T : Systeme de Gestion du Patrimoine Domanial
-echo                   CROUS de Thies (UIDT)
-echo ================================================================
+echo Demarrage de SyLOC-T (CROUS de Thies)
 echo.
 
 echo [1/3] Verification de l'environnement Backend Python...
@@ -29,10 +26,8 @@ start "SyLOC-T Backend API - Port 8000" cmd /k "cd /d %~dp0vcn_backend && .venv\
 start "SyLOC-T Frontend - Port 5173" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
-echo ================================================================
-echo   SyLOC-T est demarre avec succes !
-echo   - Interface Web : http://localhost:5173
-echo   - API Swagger   : http://127.0.0.1:8000/api/docs/
-echo ================================================================
+echo SyLOC-T est demarre :
+echo - Interface Web : http://localhost:5173
+echo - API Swagger   : http://127.0.0.1:8000/api/docs/
 echo.
 pause

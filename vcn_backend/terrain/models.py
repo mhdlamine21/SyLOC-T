@@ -107,9 +107,7 @@ class AvisCantine(BaseModel):
     statut = models.CharField(max_length=50, choices=StatutAvis.choices, default=StatutAvis.PUBLIE)
 
 
-# ---------------------------------------------------------------------------
-# Phase 5 - Ordres de mission (Terrain/QHSE) & Maintenance (Service Technique)
-# ---------------------------------------------------------------------------
+# Modeles de mission et d'inspection terrain
 
 class StatutOrdreMission(models.TextChoices):
     EMIS = 'EMIS', 'Emis'
@@ -181,9 +179,7 @@ class InterventionMaintenance(BaseModel):
     rapport = models.TextField(blank=True)
 
 
-# ---------------------------------------------------------------------------
-# Phase 6 - Rapports de visite terrain (cadence 10 jours) & dispatch fidelite
-# ---------------------------------------------------------------------------
+# Rapports decadaires et dispatch fidelite
 
 CADENCE_VISITE_JOURS = 10
 

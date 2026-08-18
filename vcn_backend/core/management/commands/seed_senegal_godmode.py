@@ -87,13 +87,11 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write(self.style.WARNING("================================================================="))
-        self.stdout.write(self.style.WARNING(">>> NETTOYAGE COMPLET ET REINITIALISATION DE LA BASE SYLOC-T <<<"))
-        self.stdout.write(self.style.WARNING("================================================================="))
+        self.stdout.write(self.style.WARNING("Reinitialisation de la base SyLOC-T..."))
 
         self._nettoyer_base()
 
-        self.stdout.write(self.style.SUCCESS("\n[1/10] Creation des parametres systeme et annonces officielles..."))
+        self.stdout.write(self.style.SUCCESS("[1/10] Creation des parametres systeme et annonces officielles..."))
         self._creer_parametres_et_annonces()
 
         self.stdout.write(self.style.SUCCESS("[2/10] Creation des modeles de contrat juridiques CROUS-T..."))
@@ -125,9 +123,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("[10/10] Generation du pole Terrain, QHSE, Maintenance, Visites & Fidelite..."))
         self._creer_donnees_terrain_qhse_maintenance(locaux, comptes_metier, usagers_etudiants, usagers_commercants, contrats)
 
-        self.stdout.write(self.style.SUCCESS("\n================================================================="))
-        self.stdout.write(self.style.SUCCESS(">>> BASE DE DONNEES RECHARGEE AVEC SUCCES (GOD MODE SENEGAL) <<<"))
-        self.stdout.write(self.style.SUCCESS("================================================================="))
+        self.stdout.write(self.style.SUCCESS("Base de donnees initialisee avec succes."))
         self._afficher_resume()
 
     def _nettoyer_base(self):
@@ -1238,9 +1234,7 @@ class Command(BaseCommand):
             JournalAudit.objects.create(utilisateur=u, action=act, cible=cib, details=det)
 
     def _afficher_resume(self):
-        self.stdout.write("\n" + "=" * 65)
-        self.stdout.write(self.style.SUCCESS("  RESUME STATISTIQUE DU CHARGEMENT SYLOC-T (CROUS-T)"))
-        self.stdout.write("=" * 65)
+        self.stdout.write(self.style.SUCCESS("Resume du chargement SyLOC-T (CROUS-T) :"))
         self.stdout.write(f"  Utilisateurs actifs          : {Utilisateur.objects.count()}")
         self.stdout.write(f"  Demandeurs enregistres       : {Demandeur.objects.count()}")
         self.stdout.write(f"  Locaux du patrimoine VCN     : {Local.objects.count()}")
@@ -1255,7 +1249,6 @@ class Command(BaseCommand):
         self.stdout.write(f"  Interventions Maintenance    : {InterventionMaintenance.objects.count()}")
         self.stdout.write(f"  Rapports de visite (10 jrs)  : {RapportVisiteTerrain.objects.count()}")
         self.stdout.write(f"  Annonces officielles vitrine : {Annonce.objects.count()}")
-        self.stdout.write("=" * 65)
         self.stdout.write("\nIdentifiants de connexion aux differents roles (mot de passe = identifiant) :")
         self.stdout.write("  - Super Admin SI        : admin / admin")
         self.stdout.write("  - Etudiant Titulaire    : etudiant / etudiant")
@@ -1273,4 +1266,3 @@ class Command(BaseCommand):
         self.stdout.write("  - Amicale des Etudiants : amicale / amicale")
         self.stdout.write("  - Electricien Batiment  : tech_elec / electricien")
         self.stdout.write("  - Plombier Sanitaire    : tech_plomb / plombier")
-        self.stdout.write("=" * 65)

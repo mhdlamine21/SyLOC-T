@@ -20,11 +20,7 @@ from rest_framework.routers import DefaultRouter
 parametres_router = DefaultRouter()
 parametres_router.register('parametres', ParametreSystemeViewSet, basename='parametre-si')
 
-from django.views.generic import RedirectView
-
 urlpatterns = [
-    # Redirection automatique de l'accueil vers Swagger UI
-    path('', RedirectView.as_view(url='/api/docs/', permanent=False)),
     path('admin/', admin.site.urls),
 
     # Auth JWT

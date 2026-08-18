@@ -196,9 +196,7 @@ class AvisCantineViewSet(viewsets.ModelViewSet):
         serializer.save(auteur=demandeur)
 
 
-# ---------------------------------------------------------------------------
-# Phase 5 - extensions QHSE/Terrain (filtres + actions metier + statistiques)
-# ---------------------------------------------------------------------------
+# Extensions QHSE et Terrain
 from datetime import timedelta
 from django.db.models import Avg, Count
 from rest_framework.decorators import action

@@ -4,10 +4,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
-echo "================================================================"
-echo "      SyLOC-T : Systeme de Gestion du Patrimoine Domanial"
-echo "                  CROUS de Thies (UIDT)"
-echo "================================================================"
+echo "Demarrage de SyLOC-T (CROUS de Thies)"
 echo ""
 
 # 1. Detection Python
@@ -65,12 +62,10 @@ BACKEND_PID=$!
 FRONTEND_PID=$!
 
 echo ""
-echo "================================================================"
-echo "  SyLOC-T est demarre avec succes !"
-echo "  - Application Web : http://localhost:5173"
-echo "  - API Swagger     : http://127.0.0.1:8000/api/docs/"
-echo "================================================================"
-echo "Appuyez sur Ctrl+C pour arreter tous les services."
+echo "SyLOC-T est demarre :"
+echo "- Application Web : http://localhost:5173"
+echo "- API Swagger     : http://127.0.0.1:8000/api/docs/"
+echo "Appuyez sur Ctrl+C pour arreter les services."
 echo ""
 
 cleanup() {
